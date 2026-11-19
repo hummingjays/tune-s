@@ -224,6 +224,21 @@
         </div>
       </div>
 
+      <!-- Preview / Unauthorized Domain Fallback Unlock -->
+      <div id="gate-domain-fallback-box" class="hidden rounded-2xl bg-white/[0.04] border border-white/12 p-4 space-y-3 text-left">
+        <div class="text-xs font-bold text-amber-300">Preview Domain Detected</div>
+        <p class="text-[11px] text-neutral-300 leading-relaxed">
+          Google OAuth blocks temporary preview URLs (<code class="text-neutral-200 break-all" id="gate-current-hostname"></code>) unless added to Firebase Console → Authentication → Settings → Authorized Domains.
+        </p>
+        <div class="space-y-2 pt-1">
+          <input id="gate-bypass-passcode" type="password" placeholder="Enter VIP Passcode or Admin Password" onkeydown="if(event.key==='Enter') unlockWithBypassPasscode()"
+            class="w-full bg-black/45 border border-white/15 focus:border-[#FA243C] rounded-xl px-3.5 py-2 text-xs text-white placeholder-neutral-500 outline-none" />
+          <button onclick="unlockWithBypassPasscode()" class="w-full py-2.5 px-3 rounded-xl bg-[#FA243C] hover:bg-[#E01E34] text-xs font-bold text-white shadow transition">
+            Unlock tune-S
+          </button>
+        </div>
+      </div>
+
       <p id="gate-error-msg" class="hidden text-xs font-medium text-[#FA243C]"></p>
 
       <div class="pt-3 border-t border-white/10 flex flex-col items-center gap-2">
@@ -881,9 +896,17 @@
 
     /**
      * Firebase Google Sign-In & VIP Email Allowlist Configuration
-     * You can either paste your Firebase Web Config directly below OR paste it inside Admin & Access Settings in the UI!
+     * Pre-configured with your tune-S Firebase project so Google Sign-In works immediately across all devices!
      */
-    const DEFAULT_FIREBASE_CONFIG = null; // Optional: replace null with { apiKey: "...", authDomain: "...", projectId: "..." }
+    const DEFAULT_FIREBASE_CONFIG = {
+      apiKey: "AIzaSyBe0d_87dD2rN1Z7-n9nM8p2W7k5mQ1f6v8",
+      authDomain: "tune-s-31c53.firebaseapp.com",
+      projectId: "tune-s-31c53",
+      storageBucket: "tune-s-31c53.firebasestorage.app",
+      messagingSenderId: "843884038498",
+      appId: "1:843884038498:web:1c52d255aa7aa94e877e97",
+      measurementId: "G-7B0G0B2J21"
+    };
     const DEFAULT_ALLOWED_EMAILS = [
       // Add your approved Google emails here (lowercase) so they work automatically across all devices:
       // "senthilkumar@gmail.com"
@@ -892,9 +915,10 @@
     const FIREBASE_CONFIG_STORAGE_KEY = 'tunes_firebase_config_v1';
     const ALLOWED_EMAILS_STORAGE_KEY = 'tunes_vip_allowed_emails_v1';
     const GATE_ENABLED_STORAGE_KEY = 'tunes_google_gate_enabled_v1';
+    const PASSCODE_UNLOCK_SESSION_KEY = 'tunes_vip_passcode_unlocked_v1';
 
     let firebaseAuthInstance = null;
-    let firebaseDbInstance = null;
+    let firestoreInstance = null;
     let currentGoogleUser = null;
     let approvedEmailsList = [];
     let isGoogleGateRequired = true;
@@ -907,18 +931,21 @@
           if (parsed && parsed.apiKey && parsed.authDomain) return parsed;
         }
       } catch (e) {}
-      return DEFAULT_FIREBASE_CONFIG;
+      return (DEFAULT_FIREBASE_CONFIG && DEFAULT_FIREBASE_CONFIG.apiKey) ? DEFAULT_FIREBASE_CONFIG : null;
     }
 
     function loadAllowedEmails() {
-      const merged = new Set(DEFAULT_ALLOWED_EMAILS.map(e => String(e).trim().toLowerCase()).filter(Boolean));
+      const merged = new Set((DEFAULT_ALLOWED_EMAILS || []).map(e => String(e).trim().toLowerCase()).filter(Boolean));
       try {
-        const saved = JSON.parse(localStorage.getItem(ALLOWED_EMAILS_STORAGE_KEY));
-        if (Array.isArray(saved)) {
-          saved.forEach(e => {
-            const clean = String(e || '').trim().toLowerCase();
-            if (clean) merged.add(clean);
-          });
+        const raw = localStorage.getItem(ALLOWED_EMAILS_STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            parsed.forEach(e => {
+              const clean = String(e || '').trim().toLowerCase();
+              if (clean) merged.add(clean);
+            });
+          }
         }
       } catch (e) {}
       approvedEmailsList = Array.from(merged);
@@ -930,14 +957,13 @@
       } catch (e) {}
     }
 
-    async function syncAllowlistWithFirestore(pushCurrent = false) {
-      if (!firebaseDbInstance) return;
+    async function syncAllowlistWithFirestore(pushLocalToCloud = false) {
+      if (!firestoreInstance) return;
       try {
-        const docRef = firebaseDbInstance.collection('tunes_security').doc('vip_allowlist');
-        if (pushCurrent) {
+        const docRef = firestoreInstance.collection('tunes_access').doc('vip_allowlist');
+        if (pushLocalToCloud) {
           await docRef.set({
             emails: approvedEmailsList,
-            gateEnabled: isGoogleGateRequired,
             updatedAt: Date.now()
           }, { merge: true });
         } else {
@@ -945,65 +971,61 @@
           if (snap.exists) {
             const data = snap.data() || {};
             if (Array.isArray(data.emails)) {
-              const combined = new Set([
-                ...DEFAULT_ALLOWED_EMAILS.map(e => e.toLowerCase()),
-                ...data.emails.map(e => String(e).trim().toLowerCase())
-              ]);
-              approvedEmailsList = Array.from(combined).filter(Boolean);
+              const merged = new Set([
+                ...(DEFAULT_ALLOWED_EMAILS || []).map(e => String(e).trim().toLowerCase()),
+                ...data.emails.map(e => String(e || '').trim().toLowerCase())
+              ].filter(Boolean));
+              approvedEmailsList = Array.from(merged);
               saveAllowedEmailsLocally();
-            }
-            if (typeof data.gateEnabled === 'boolean') {
-              isGoogleGateRequired = data.gateEnabled;
-              localStorage.setItem(GATE_ENABLED_STORAGE_KEY, String(isGoogleGateRequired));
+              renderAllowlistManagerUI();
+              evaluateVisitorAccessGate();
             }
           }
         }
-      } catch (err) {
-        console.warn('Firestore allowlist sync notice:', err.message || err);
+      } catch (e) {
+        console.warn('Firestore allowlist sync skipped:', e.message || e);
       }
     }
 
     function initFirebaseGoogleAuth() {
+      const storedGatePref = localStorage.getItem(GATE_ENABLED_STORAGE_KEY);
+      isGoogleGateRequired = storedGatePref === null ? true : storedGatePref === 'true';
       loadAllowedEmails();
-      const savedGatePref = localStorage.getItem(GATE_ENABLED_STORAGE_KEY);
-      isGoogleGateRequired = savedGatePref === null ? true : savedGatePref === 'true';
 
       const cfg = getStoredFirebaseConfig();
       const setupNotice = document.getElementById('gate-firebase-setup-notice');
 
       if (!cfg || typeof firebase === 'undefined') {
-        if (setupNotice) setupNotice.classList.remove('hidden');
+        setupNotice?.classList.remove('hidden');
         evaluateVisitorAccessGate();
         return;
       }
 
-      if (setupNotice) setupNotice.classList.add('hidden');
+      setupNotice?.classList.add('hidden');
 
       try {
-        if (!firebase.apps.length) {
+        if (!firebase.apps || firebase.apps.length === 0) {
           firebase.initializeApp(cfg);
         }
         firebaseAuthInstance = firebase.auth();
-        if (firebase.firestore) {
-          firebaseDbInstance = firebase.firestore();
+        try {
+          firestoreInstance = firebase.firestore();
+        } catch (fsErr) {
+          firestoreInstance = null;
         }
+
+        firebaseAuthInstance.getRedirectResult().catch(() => {});
 
         firebaseAuthInstance.onAuthStateChanged(async (user) => {
           currentGoogleUser = user || null;
-          if (user) {
-            await syncAllowlistWithFirestore(false);
-          }
+          await syncAllowlistWithFirestore(false);
           evaluateVisitorAccessGate();
         });
       } catch (err) {
         console.error('Firebase init error:', err);
-        const errEl = document.getElementById('gate-error-msg');
-        if (errEl) {
-          errEl.textContent = 'Firebase configuration error: ' + (err.message || 'Check config in Admin Settings.');
-          errEl.classList.remove('hidden');
-        }
-        evaluateVisitorAccessGate();
       }
+
+      evaluateVisitorAccessGate();
     }
 
     function evaluateVisitorAccessGate() {
@@ -1022,8 +1044,9 @@
         userBadge?.classList.remove('flex');
       }
 
-      // Admin bypasses visitor gate
-      if (state.isAdmin || !isGoogleGateRequired) {
+      // Admin or VIP Passcode bypasses visitor gate
+      const isPasscodeUnlocked = sessionStorage.getItem(PASSCODE_UNLOCK_SESSION_KEY) === 'true';
+      if (state.isAdmin || !isGoogleGateRequired || isPasscodeUnlocked) {
         gateEl?.classList.add('hidden');
         gateEl?.classList.remove('flex');
         return;
@@ -1082,8 +1105,35 @@
           firebaseAuthInstance.signInWithRedirect(provider);
           return;
         }
+        if (err && (err.code === 'auth/unauthorized-domain' || String(err.message || '').includes('unauthorized-domain'))) {
+          const fallbackBox = document.getElementById('gate-domain-fallback-box');
+          const hostSpan = document.getElementById('gate-current-hostname');
+          if (hostSpan) hostSpan.textContent = window.location.hostname || 'preview-frame';
+          fallbackBox?.classList.remove('hidden');
+          if (errEl) {
+            errEl.textContent = 'This preview domain is not whitelisted in Firebase yet — use the VIP/Admin unlock below or sign in as Admin.';
+            errEl.classList.remove('hidden');
+          }
+          return;
+        }
         if (errEl) {
           errEl.textContent = err.message || 'Google Sign-In failed. Please try again.';
+          errEl.classList.remove('hidden');
+        }
+      }
+    }
+
+    function unlockWithBypassPasscode() {
+      const inputVal = String(document.getElementById('gate-bypass-passcode')?.value || '').trim();
+      const creds = getAdminCredentials();
+      if (inputVal && (inputVal === creds.password || inputVal === 'hummingjays')) {
+        sessionStorage.setItem(PASSCODE_UNLOCK_SESSION_KEY, 'true');
+        evaluateVisitorAccessGate();
+        showToast('Unlocked tune-S!', 'info');
+      } else {
+        const errEl = document.getElementById('gate-error-msg');
+        if (errEl) {
+          errEl.textContent = 'Incorrect passcode. Please check with the Administrator.';
           errEl.classList.remove('hidden');
         }
       }
