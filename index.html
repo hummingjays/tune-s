@@ -226,9 +226,9 @@
 
       <!-- Preview / Unauthorized Domain Fallback Unlock -->
       <div id="gate-domain-fallback-box" class="hidden rounded-2xl bg-white/[0.04] border border-white/12 p-4 space-y-3 text-left">
-        <div class="text-xs font-bold text-amber-300">Preview Domain Detected</div>
-        <p class="text-[11px] text-neutral-300 leading-relaxed">
-          Google OAuth blocks temporary preview URLs (<code class="text-neutral-200 break-all" id="gate-current-hostname"></code>) unless added to Firebase Console → Authentication → Settings → Authorized Domains.
+        <div id="gate-fallback-title" class="text-xs font-bold text-amber-300">Firebase Setup / Preview Unlock</div>
+        <p id="gate-fallback-desc" class="text-[11px] text-neutral-300 leading-relaxed">
+          If you haven't pasted your valid Firebase Web Config in Admin Settings yet, or if this preview domain (<code class="text-neutral-200 break-all" id="gate-current-hostname"></code>) isn't whitelisted in Firebase Auth, enter your Admin Password below to unlock.
         </p>
         <div class="space-y-2 pt-1">
           <input id="gate-bypass-passcode" type="password" placeholder="Enter VIP Passcode or Admin Password" onkeydown="if(event.key==='Enter') unlockWithBypassPasscode()"
@@ -894,19 +894,476 @@
       console.error('tune-S runtime notice:', event.message || event.error);
     });
 
+    // ==========================================
+    // Core Constants, Artists Directory & App State
+    // ==========================================
+    const FALLBACK_COVER_ART = window.FALLBACK_COVER_ART;
+
+    const STORAGE_KEY = 'tunes_albums_library_v5';
+    const LEGACY_STORAGE_KEYS = [
+      'tunes_albums_library_v4',
+      'tunes_albums_library_v3',
+      'tunes_albums_library_v2',
+      'tunes_albums_library_v1'
+    ];
+    const PERMANENT_COVERS_KEY = 'tunes_permanent_album_covers_v1';
+    const ARTWORK_CACHE_KEY = 'tunes_official_artwork_cache_v1';
+    const PLAYLISTS_STORAGE_KEY = 'tunes_user_playlists_v1';
+    const HIDDEN_ALBUMS_KEY = 'tunes_hidden_albums_v1';
+    const ADMIN_CREDS_KEY = 'tunes_admin_credentials_v1';
+    const ADMIN_SESSION_KEY = 'tunes_admin_logged_in_v1';
+    const LAST_PLAYED_KEY = 'tunes_last_played_track_v1';
+
+    const ARTISTS_DIRECTORY = [
+      {
+        id: 'ar-rahman',
+        name: 'A.R. Rahman',
+        tagline: 'Academy & Grammy Award-Winning Composer',
+        cover: 'https://archive.org/download/ar-rahman-tamil-1992-2025-flac/01.%20Roja%20(1992)/Folder.jpg'
+      },
+      {
+        id: 'anirudh-ravichander',
+        name: 'Anirudh Ravichander',
+        tagline: 'Contemporary Blockbuster & Electronic Composer',
+        cover: 'https://archive.org/download/anirudh-ravichander-flac-discography/3%20(2012)/Folder.jpg'
+      },
+      {
+        id: 'bharadwaj',
+        name: 'Bharadwaj',
+        tagline: 'Soulful Melodies & Tamil Cinema Composer',
+        cover: 'https://archive.org/download/bharadwaj-tamil-flac/Kadhal%20Mannan%20(1998)/Folder.jpg'
+      },
+      {
+        id: 'd-imman',
+        name: 'D. Imman',
+        tagline: 'National Award-Winning Folk & Melody Composer',
+        cover: 'https://archive.org/download/d-imman-tamil-flac/Mynaa%20(2010)/Folder.jpg'
+      },
+      {
+        id: 'darbuka-siva',
+        name: 'Darbuka Siva',
+        tagline: 'Indie, Classical & Contemporary Film Composer',
+        cover: 'https://archive.org/download/darbuka-siva-tamil-flac/Enai%20Noki%20Paayum%20Thota%20(2019)/Folder.jpg'
+      },
+      {
+        id: 'deva',
+        name: 'Deva',
+        tagline: 'Thenisai Thendral • Gaana & Evergreen Melodies',
+        cover: 'https://archive.org/download/deva-tamil-flac/Baasha%20(1995)/Folder.jpg'
+      },
+      {
+        id: 'harris-jayaraj',
+        name: 'Harris Jayaraj',
+        tagline: 'Hi-Fi Orchestral & Acoustic Pop Maestro',
+        cover: 'https://archive.org/download/harris-jayaraj-tamil-flac/Minnale%20(2001)/Folder.jpg'
+      },
+      {
+        id: 'ilayaraja',
+        name: 'Ilayaraja',
+        tagline: 'Isaignani • Symphonic & Timeless Classics',
+        cover: 'https://archive.org/download/ilayaraja-tamil-flac/Mouna%20Ragam%20(1986)/Folder.jpg'
+      },
+      {
+        id: 'nivas-k-prasanna',
+        name: 'Nivas K. Prasanna',
+        tagline: 'Rich Orchestral & Soulful Contemporary Scores',
+        cover: 'https://archive.org/download/nivas-k-prasanna-tamil-flac/Thegidi%20(2014)/Folder.jpg'
+      },
+      {
+        id: 'sai-abhyankkar',
+        name: 'Sai Abhyankkar',
+        tagline: 'Viral Indie Pop & Fresh Tamil Soundscapes',
+        cover: 'https://archive.org/download/sai-abhyankkar-flac/Katchi%20Sera%20(2024)/Folder.jpg'
+      },
+      {
+        id: 'santhosh-narayanan',
+        name: 'Santhosh Narayanan',
+        tagline: 'Experimental Brass, Folk & Indie Fusion',
+        cover: 'https://archive.org/download/santhosh-narayanan-tamil-flac/Attakathi%20(2012)/Folder.jpg'
+      },
+      {
+        id: 'sean-roldan',
+        name: 'Sean Roldan',
+        tagline: 'Earthy Acoustic, Blues & Carnatic Fusion',
+        cover: 'https://archive.org/download/sean-roldan-tamil-flac/Mundasupatti%20(2014)/Folder.jpg'
+      },
+      {
+        id: 'vidyasagar',
+        name: 'Vidyasagar',
+        tagline: 'Melody King • Lush Orchestral Soundtracks',
+        cover: 'https://archive.org/download/vidyasagar-tamil-flac/Ghilli%20(2004)/Folder.jpg'
+      },
+      {
+        id: 'yuvan-shankar-raja',
+        name: 'Yuvan Shankar Raja',
+        tagline: 'Youth Icon • Electronic, Sufi & Soulful Scores',
+        cover: 'https://archive.org/download/yuvan-shankar-raja-tamil-flac/7G%20Rainbow%20Colony%20(2004)/Folder.jpg'
+      }
+    ];
+
+    const MULTI_ALBUM_COLLECTIONS = [
+      { identifier: 'ar-rahman-tamil-1992-2025-flac', defaultArtist: 'A.R. Rahman', genre: 'Tamil Soundtrack • Lossless', artistId: 'ar-rahman' },
+      { identifier: 'anirudh-ravichander-flac-discography', defaultArtist: 'Anirudh Ravichander', genre: 'Tamil Soundtrack • Lossless', artistId: 'anirudh-ravichander' },
+      { identifier: 'bharadwaj-tamil-flac', defaultArtist: 'Bharadwaj', genre: 'Tamil Soundtrack • Lossless', artistId: 'bharadwaj' },
+      { identifier: 'd-imman-tamil-flac', defaultArtist: 'D. Imman', genre: 'Tamil Soundtrack • Lossless', artistId: 'd-imman' },
+      { identifier: 'darbuka-siva-tamil-flac', defaultArtist: 'Darbuka Siva', genre: 'Tamil Soundtrack • Lossless', artistId: 'darbuka-siva' },
+      { identifier: 'deva-tamil-flac', defaultArtist: 'Deva', genre: 'Tamil Soundtrack • Lossless', artistId: 'deva' },
+      { identifier: 'harris-jayaraj-tamil-flac', defaultArtist: 'Harris Jayaraj', genre: 'Tamil Soundtrack • Lossless', artistId: 'harris-jayaraj' },
+      { identifier: 'ilayaraja-tamil-flac', defaultArtist: 'Ilayaraja', genre: 'Tamil Soundtrack • Lossless', artistId: 'ilayaraja' },
+      { identifier: 'nivas-k-prasanna-tamil-flac', defaultArtist: 'Nivas K. Prasanna', genre: 'Tamil Soundtrack • Lossless', artistId: 'nivas-k-prasanna' },
+      { identifier: 'sai-abhyankkar-flac', defaultArtist: 'Sai Abhyankkar', genre: 'Indie & Soundtrack • Lossless', artistId: 'sai-abhyankkar' },
+      { identifier: 'santhosh-narayanan-tamil-flac', defaultArtist: 'Santhosh Narayanan', genre: 'Tamil Soundtrack • Lossless', artistId: 'santhosh-narayanan' },
+      { identifier: 'sean-roldan-tamil-flac', defaultArtist: 'Sean Roldan', genre: 'Tamil Soundtrack • Lossless', artistId: 'sean-roldan' },
+      { identifier: 'vidyasagar-tamil-flac', defaultArtist: 'Vidyasagar', genre: 'Tamil Soundtrack • Lossless', artistId: 'vidyasagar' },
+      { identifier: 'yuvan-shankar-raja-tamil-flac', defaultArtist: 'Yuvan Shankar Raja', genre: 'Tamil Soundtrack • Lossless', artistId: 'yuvan-shankar-raja' }
+    ];
+
+    const state = {
+      albums: [],
+      playlists: [],
+      hiddenAlbumIds: [],
+      currentView: 'home',
+      selectedArtistId: 'ar-rahman',
+      selectedArtistName: null,
+      selectedAlbumId: null,
+      selectedPlaylistId: null,
+      selectedArtistFilter: 'all',
+      albumFilterQuery: '',
+      searchQuery: '',
+      searchTab: 'library',
+      queue: [],
+      currentIndex: -1,
+      lastPlayedTrack: null,
+      isPlaying: false,
+      isShuffle: false,
+      repeatMode: 'off',
+      isRadioMode: false,
+      activeRadioArtistId: null,
+      currentPlayingPlaylist: null,
+      volume: 1,
+      isMuted: false,
+      isSeeking: false,
+      queueOpen: false,
+      collectionLoading: false,
+      isAdmin: false,
+      pendingTrackForPlaylist: null
+    };
+
+    let artworkCache = {};
+    let permanentCoverVault = {};
+    let currentSharePayload = null;
+    const audio = document.getElementById('bg-audio-engine') || new Audio();
+    const preloadAudio = document.getElementById('bg-audio-preload') || new Audio();
+
+    // ==========================================
+    // Permanent Album Cover Protection Vault
+    // ==========================================
+    function loadPermanentCoverVault() {
+      try {
+        const raw = localStorage.getItem(PERMANENT_COVERS_KEY);
+        if (raw) permanentCoverVault = JSON.parse(raw) || {};
+      } catch (e) {
+        permanentCoverVault = {};
+      }
+    }
+
+    function savePermanentCoverVault() {
+      try {
+        localStorage.setItem(PERMANENT_COVERS_KEY, JSON.stringify(permanentCoverVault));
+      } catch (e) {}
+    }
+
+    function isValidRealCoverUrl(url) {
+      if (!url || typeof url !== 'string') return false;
+      const trimmed = url.trim();
+      if (!trimmed || trimmed.startsWith('data:image/svg+xml')) return false;
+      return trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:image/png') || trimmed.startsWith('data:image/jpeg');
+    }
+
+    function normalizeCoverKey(str) {
+      return String(str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+
+    function lockPermanentAlbumCover(albumId, albumTitle, artistName, coverUrl) {
+      if (!isValidRealCoverUrl(coverUrl)) return;
+      if (albumId) permanentCoverVault[`id::${albumId}`] = coverUrl;
+      const tKey = normalizeCoverKey(albumTitle);
+      const aKey = normalizeCoverKey(artistName);
+      if (tKey && aKey) permanentCoverVault[`ta::${tKey}::${aKey}`] = coverUrl;
+      if (tKey) permanentCoverVault[`t::${tKey}`] = coverUrl;
+      savePermanentCoverVault();
+    }
+
+    function resolveLockedAlbumCover(albumId, albumTitle, artistName, candidateUrl = null) {
+      if (isValidRealCoverUrl(candidateUrl)) {
+        lockPermanentAlbumCover(albumId, albumTitle, artistName, candidateUrl);
+        return candidateUrl;
+      }
+      if (albumId && isValidRealCoverUrl(permanentCoverVault[`id::${albumId}`])) {
+        return permanentCoverVault[`id::${albumId}`];
+      }
+      const tKey = normalizeCoverKey(albumTitle);
+      const aKey = normalizeCoverKey(artistName);
+      if (tKey && aKey && isValidRealCoverUrl(permanentCoverVault[`ta::${tKey}::${aKey}`])) {
+        return permanentCoverVault[`ta::${tKey}::${aKey}`];
+      }
+      if (tKey && isValidRealCoverUrl(permanentCoverVault[`t::${tKey}`])) {
+        return permanentCoverVault[`t::${tKey}`];
+      }
+      return null;
+    }
+
+    // ==========================================
+    // Admin Credentials & Session Helpers
+    // ==========================================
+    function getAdminCredentials() {
+      try {
+        const raw = localStorage.getItem(ADMIN_CREDS_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.username && parsed.password) return parsed;
+        }
+      } catch (e) {}
+      return { username: 'admin', password: 'hummingjays' };
+    }
+
+    function checkAdminSession() {
+      state.isAdmin = localStorage.getItem(ADMIN_SESSION_KEY) === 'true';
+      updateAdminUI();
+    }
+
+    function updateAdminUI() {
+      const signInBtn = document.getElementById('admin-signin-btn');
+      const badgeGroup = document.getElementById('admin-badge-group');
+      const headerAddBtn = document.getElementById('header-add-album-btn');
+      const sidebarAddBtn = document.getElementById('sidebar-add-album-btn');
+
+      if (state.isAdmin) {
+        signInBtn?.classList.add('hidden');
+        badgeGroup?.classList.remove('hidden');
+        badgeGroup?.classList.add('flex');
+        headerAddBtn?.classList.remove('hidden');
+        sidebarAddBtn?.classList.remove('hidden');
+      } else {
+        signInBtn?.classList.remove('hidden');
+        badgeGroup?.classList.add('hidden');
+        badgeGroup?.classList.remove('flex');
+        headerAddBtn?.classList.add('hidden');
+        sidebarAddBtn?.classList.add('hidden');
+      }
+    }
+
+    function openAdminLoginModal() {
+      const errEl = document.getElementById('admin-login-error');
+      errEl?.classList.add('hidden');
+      const modal = document.getElementById('admin-login-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      setTimeout(() => document.getElementById('admin-username-input')?.focus(), 50);
+    }
+
+    function closeAdminLoginModal() {
+      const modal = document.getElementById('admin-login-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function submitAdminLogin() {
+      const userVal = (document.getElementById('admin-username-input')?.value || '').trim();
+      const passVal = (document.getElementById('admin-password-input')?.value || '').trim();
+      const creds = getAdminCredentials();
+      const errEl = document.getElementById('admin-login-error');
+
+      const isDefaultMatch = userVal.toLowerCase() === 'admin' && passVal === 'hummingjays';
+      const isStoredMatch = userVal.toLowerCase() === creds.username.toLowerCase() && passVal === creds.password;
+
+      if (isDefaultMatch || isStoredMatch) {
+        state.isAdmin = true;
+        localStorage.setItem(ADMIN_SESSION_KEY, 'true');
+        closeAdminLoginModal();
+        updateAdminUI();
+        evaluateVisitorAccessGate();
+        renderSidebarAlbums();
+        renderCurrentView();
+        showToast('Signed in as Administrator', 'info');
+      } else if (errEl) {
+        errEl.textContent = 'Invalid administrator username or password.';
+        errEl.classList.remove('hidden');
+      }
+    }
+
+    // ==========================================
+    // Background Audio, Lock Screen & MediaSession
+    // ==========================================
+    let audioCtxKeepAlive = null;
+    function ensureBackgroundAudioSession() {
+      try {
+        if (!audioCtxKeepAlive && (window.AudioContext || window.webkitAudioContext)) {
+          const Ctx = window.AudioContext || window.webkitAudioContext;
+          audioCtxKeepAlive = new Ctx();
+        }
+        if (audioCtxKeepAlive && audioCtxKeepAlive.state === 'suspended') {
+          audioCtxKeepAlive.resume().catch(() => {});
+        }
+      } catch (e) {}
+    }
+
+    async function resolveRasterArtworkUrl(src) {
+      if (!src || !src.startsWith('data:image/svg+xml')) return src || FALLBACK_COVER_ART;
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const c = document.createElement('canvas');
+            c.width = 512;
+            c.height = 512;
+            const ctx = c.getContext('2d');
+            ctx.drawImage(img, 0, 0, 512, 512);
+            resolve(c.toDataURL('image/png'));
+          } catch (e) {
+            resolve(src);
+          }
+        };
+        img.onerror = () => resolve(src);
+        img.src = src;
+      });
+    }
+
+    async function updateMediaSession(track) {
+      if (!('mediaSession' in navigator) || !track) return;
+      try {
+        const artUrl = await resolveRasterArtworkUrl(track.cover || FALLBACK_COVER_ART);
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: track.title || 'tune-S Track',
+          artist: track.artist || 'tune-S Artist',
+          album: track.albumTitle || 'tune-S Collection',
+          artwork: [
+            { src: artUrl, sizes: '256x256', type: 'image/png' },
+            { src: artUrl, sizes: '512x512', type: 'image/png' }
+          ]
+        });
+        bindMediaSessionHandlers();
+      } catch (e) {}
+    }
+
+    function bindMediaSessionHandlers() {
+      if (!('mediaSession' in navigator)) return;
+      const safeSet = (action, handler) => {
+        try { navigator.mediaSession.setActionHandler(action, handler); } catch (e) {}
+      };
+      safeSet('play', () => togglePlayPause());
+      safeSet('pause', () => togglePlayPause());
+      safeSet('previoustrack', () => prevTrack());
+      safeSet('nexttrack', () => nextTrack());
+      safeSet('seekto', (details) => {
+        if (details && typeof details.seekTime === 'number' && isFinite(details.seekTime)) {
+          audio.currentTime = details.seekTime;
+        }
+      });
+      safeSet('seekbackward', (details) => {
+        audio.currentTime = Math.max(0, (audio.currentTime || 0) - (details?.seekOffset || 10));
+      });
+      safeSet('seekforward', (details) => {
+        const dur = audio.duration || Infinity;
+        audio.currentTime = Math.min(dur, (audio.currentTime || 0) + (details?.seekOffset || 10));
+      });
+    }
+
+    function preloadUpcomingTrack() {
+      if (state.queue.length <= 1) return;
+      const nextIdx = (state.currentIndex + 1) % state.queue.length;
+      const nextItem = state.queue[nextIdx];
+      if (nextItem && nextItem.url && preloadAudio.src !== nextItem.url) {
+        preloadAudio.src = nextItem.url;
+      }
+    }
+
+    function saveLastPlayedState(track) {
+      if (!track) return;
+      state.lastPlayedTrack = track;
+      try {
+        localStorage.setItem(LAST_PLAYED_KEY, JSON.stringify(track));
+      } catch (e) {}
+    }
+
+    function loadLastPlayedState() {
+      try {
+        const raw = localStorage.getItem(LAST_PLAYED_KEY);
+        if (raw) state.lastPlayedTrack = JSON.parse(raw);
+      } catch (e) {}
+    }
+
+    function loadHiddenAlbums() {
+      try {
+        const raw = localStorage.getItem(HIDDEN_ALBUMS_KEY);
+        if (raw) state.hiddenAlbumIds = JSON.parse(raw) || [];
+      } catch (e) {
+        state.hiddenAlbumIds = [];
+      }
+    }
+
+    function saveHiddenAlbums() {
+      try {
+        localStorage.setItem(HIDDEN_ALBUMS_KEY, JSON.stringify(state.hiddenAlbumIds));
+      } catch (e) {}
+    }
+
+    function handleDeepLinkShareParams() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const shareType = params.get('share');
+        const shareId = params.get('id');
+        if (!shareType || !shareId) return;
+
+        if (shareType === 'album') {
+          const alb = state.albums.find(a => a.id === shareId);
+          if (alb) switchView('album', alb.id);
+        } else if (shareType === 'song') {
+          for (const alb of state.albums) {
+            const idx = (alb.tracks || []).findIndex(t => t.id === shareId);
+            if (idx !== -1) {
+              switchView('album', alb.id);
+              playTrackFromList(alb.tracks, idx);
+              break;
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    // ==========================================
+    // Main Application Entry Point
+    // ==========================================
+    function initializeTuneSApp() {
+      loadPermanentCoverVault();
+      loadArtworkCache();
+      loadHiddenAlbums();
+      loadAlbumsFromStorage();
+      loadPlaylistsFromStorage();
+      loadLastPlayedState();
+      checkAdminSession();
+      initFirebaseGoogleAuth();
+
+      setupAudioEvents();
+      setupKeyboardShortcuts();
+      syncSliderVisualFills();
+
+      renderSidebarArtists();
+      renderSidebarPlaylists();
+      renderSidebarAlbums();
+      renderCurrentView();
+      handleDeepLinkShareParams();
+
+      MULTI_ALBUM_COLLECTIONS.forEach(col => {
+        fetchMultiAlbumCollection(col.identifier, col.defaultArtist, col.genre, col.artistId);
+      });
+    }
+
     /**
      * Firebase Google Sign-In & VIP Email Allowlist Configuration
-     * Pre-configured with your tune-S Firebase project so Google Sign-In works immediately across all devices!
+     * Paste your exact firebaseConfig object from Firebase Console -> Project Settings -> General -> Your Apps
      */
-    const DEFAULT_FIREBASE_CONFIG = {
-      apiKey: "AIzaSyBe0d_87dD2rN1Z7-n9nM8p2W7k5mQ1f6v8",
-      authDomain: "tune-s-31c53.firebaseapp.com",
-      projectId: "tune-s-31c53",
-      storageBucket: "tune-s-31c53.firebasestorage.app",
-      messagingSenderId: "843884038498",
-      appId: "1:843884038498:web:1c52d255aa7aa94e877e97",
-      measurementId: "G-7B0G0B2J21"
-    };
+    const DEFAULT_FIREBASE_CONFIG = null;
     const DEFAULT_ALLOWED_EMAILS = [
       // Add your approved Google emails here (lowercase) so they work automatically across all devices:
       // "senthilkumar@gmail.com"
@@ -996,6 +1453,7 @@
       const setupNotice = document.getElementById('gate-firebase-setup-notice');
 
       if (!cfg || typeof firebase === 'undefined') {
+        firebaseAuthInstance = null;
         setupNotice?.classList.remove('hidden');
         evaluateVisitorAccessGate();
         return;
@@ -1014,7 +1472,11 @@
           firestoreInstance = null;
         }
 
-        firebaseAuthInstance.getRedirectResult().catch(() => {});
+        firebaseAuthInstance.getRedirectResult().catch((err) => {
+          if (err && (err.code === 'auth/api-key-not-valid.-please-pass-a-valid-api-key.' || err.code === 'auth/invalid-api-key')) {
+            handleInvalidFirebaseKeyError();
+          }
+        });
 
         firebaseAuthInstance.onAuthStateChanged(async (user) => {
           currentGoogleUser = user || null;
@@ -1023,743 +1485,22 @@
         });
       } catch (err) {
         console.error('Firebase init error:', err);
+        if (err && (String(err.code || '').includes('api-key') || String(err.message || '').includes('api-key'))) {
+          handleInvalidFirebaseKeyError();
+        }
       }
 
       evaluateVisitorAccessGate();
     }
 
-    function evaluateVisitorAccessGate() {
-      const gateEl = document.getElementById('google-auth-gate');
-      const signinBox = document.getElementById('gate-signin-box');
-      const deniedBox = document.getElementById('gate-denied-box');
-      const userBadge = document.getElementById('google-user-badge');
-      const userBadgeEmail = document.getElementById('google-user-badge-email');
-
-      if (currentGoogleUser && currentGoogleUser.email) {
-        userBadge?.classList.remove('hidden');
-        userBadge?.classList.add('flex');
-        if (userBadgeEmail) userBadgeEmail.textContent = currentGoogleUser.email;
-      } else {
-        userBadge?.classList.add('hidden');
-        userBadge?.classList.remove('flex');
-      }
-
-      // Admin or VIP Passcode bypasses visitor gate
-      const isPasscodeUnlocked = sessionStorage.getItem(PASSCODE_UNLOCK_SESSION_KEY) === 'true';
-      if (state.isAdmin || !isGoogleGateRequired || isPasscodeUnlocked) {
-        gateEl?.classList.add('hidden');
-        gateEl?.classList.remove('flex');
-        return;
-      }
-
-      // Check if signed-in Google user is on the VIP email allowlist
-      if (currentGoogleUser && currentGoogleUser.email) {
-        const emailLower = currentGoogleUser.email.trim().toLowerCase();
-        if (approvedEmailsList.includes(emailLower)) {
-          gateEl?.classList.add('hidden');
-          gateEl?.classList.remove('flex');
-          return;
-        } else {
-          // Signed in with Google, but email is NOT approved
-          gateEl?.classList.remove('hidden');
-          gateEl?.classList.add('flex');
-          signinBox?.classList.add('hidden');
-          deniedBox?.classList.remove('hidden');
-          const emailDisplay = document.getElementById('gate-user-email');
-          if (emailDisplay) emailDisplay.textContent = currentGoogleUser.email;
-          const photoEl = document.getElementById('gate-user-photo');
-          if (photoEl && currentGoogleUser.photoURL) {
-            photoEl.src = currentGoogleUser.photoURL;
-            photoEl.classList.remove('hidden');
-          }
-          return;
-        }
-      }
-
-      // Not signed in yet -> show Google Sign-In prompt
-      gateEl?.classList.remove('hidden');
-      gateEl?.classList.add('flex');
-      signinBox?.classList.remove('hidden');
-      deniedBox?.classList.add('hidden');
-    }
-
-    async function signInWithGoogleFirebase() {
+    function handleInvalidFirebaseKeyError() {
+      localStorage.removeItem(FIREBASE_CONFIG_STORAGE_KEY);
+      firebaseAuthInstance = null;
+      const setupNotice = document.getElementById('gate-firebase-setup-notice');
+      setupNotice?.classList.remove('hidden');
       const errEl = document.getElementById('gate-error-msg');
-      errEl?.classList.add('hidden');
-
-      if (!firebaseAuthInstance) {
-        if (errEl) {
-          errEl.textContent = 'Google Sign-In is not configured yet. Sign in as Admin below to paste your Firebase config.';
-          errEl.classList.remove('hidden');
-        }
-        return;
-      }
-
-      try {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        provider.setCustomParameters({ prompt: 'select_account' });
-        await firebaseAuthInstance.signInWithPopup(provider);
-      } catch (err) {
-        if (err && err.code === 'auth/popup-blocked') {
-          const provider = new firebase.auth.GoogleAuthProvider();
-          firebaseAuthInstance.signInWithRedirect(provider);
-          return;
-        }
-        if (err && (err.code === 'auth/unauthorized-domain' || String(err.message || '').includes('unauthorized-domain'))) {
-          const fallbackBox = document.getElementById('gate-domain-fallback-box');
-          const hostSpan = document.getElementById('gate-current-hostname');
-          if (hostSpan) hostSpan.textContent = window.location.hostname || 'preview-frame';
-          fallbackBox?.classList.remove('hidden');
-          if (errEl) {
-            errEl.textContent = 'This preview domain is not whitelisted in Firebase yet — use the VIP/Admin unlock below or sign in as Admin.';
-            errEl.classList.remove('hidden');
-          }
-          return;
-        }
-        if (errEl) {
-          errEl.textContent = err.message || 'Google Sign-In failed. Please try again.';
-          errEl.classList.remove('hidden');
-        }
-      }
-    }
-
-    function unlockWithBypassPasscode() {
-      const inputVal = String(document.getElementById('gate-bypass-passcode')?.value || '').trim();
-      const creds = getAdminCredentials();
-      if (inputVal && (inputVal === creds.password || inputVal === 'hummingjays')) {
-        sessionStorage.setItem(PASSCODE_UNLOCK_SESSION_KEY, 'true');
-        evaluateVisitorAccessGate();
-        showToast('Unlocked tune-S!', 'info');
-      } else {
-        const errEl = document.getElementById('gate-error-msg');
-        if (errEl) {
-          errEl.textContent = 'Incorrect passcode. Please check with the Administrator.';
-          errEl.classList.remove('hidden');
-        }
-      }
-    }
-
-    async function signOutGoogleFirebase() {
-      try {
-        if (firebaseAuthInstance) {
-          await firebaseAuthInstance.signOut();
-        }
-      } catch (e) {}
-      currentGoogleUser = null;
-      evaluateVisitorAccessGate();
-      showToast('Signed out of Google', 'info');
-    }
-
-    function copyGateEmail() {
-      if (!currentGoogleUser || !currentGoogleUser.email) return;
-      const temp = document.createElement('textarea');
-      temp.value = currentGoogleUser.email;
-      temp.style.position = 'fixed';
-      temp.style.opacity = '0';
-      document.body.appendChild(temp);
-      temp.select();
-      try {
-        document.execCommand('copy');
-        showToast('Copied email to send to Admin', 'info');
-      } catch (e) {}
-      document.body.removeChild(temp);
-    }
-
-    function renderAllowlistManagerUI() {
-      const container = document.getElementById('allowlist-emails-container');
-      if (!container) return;
-
-      if (approvedEmailsList.length === 0) {
-        container.innerHTML = `<div class="text-[11px] text-neutral-500 py-2 text-center bg-black/25 rounded-xl">No approved Google emails added yet.</div>`;
-        return;
-      }
-
-      container.innerHTML = approvedEmailsList.map(email => `
-        <div class="flex items-center justify-between px-3 py-1.5 rounded-xl bg-white/[0.05] border border-white/[0.08] text-xs">
-          <span class="text-neutral-200 truncate pr-2">${escapeHtml(email)}</span>
-          <button onclick="removeEmailFromAllowlist('${escapeHtml(email).replace(/'/g, "\\'")}')"
-            class="text-[11px] font-semibold text-red-400 hover:text-red-300 shrink-0 px-1.5 py-0.5 rounded hover:bg-red-500/15 transition">
-            Revoke
-          </button>
-        </div>
-      `).join('');
-    }
-
-    async function addEmailToAllowlist() {
-      const input = document.getElementById('allowlist-email-input');
-      const email = String(input?.value || '').trim().toLowerCase();
-      if (!email || !email.includes('@')) {
-        showToast('Enter a valid Gmail / Google email address.', 'error');
-        return;
-      }
-      if (!approvedEmailsList.includes(email)) {
-        approvedEmailsList.push(email);
-        saveAllowedEmailsLocally();
-        await syncAllowlistWithFirestore(true);
-      }
-      if (input) input.value = '';
-      renderAllowlistManagerUI();
-      showToast(`Approved ${email}`, 'info');
-    }
-
-    async function removeEmailFromAllowlist(email) {
-      approvedEmailsList = approvedEmailsList.filter(e => e !== email);
-      saveAllowedEmailsLocally();
-      await syncAllowlistWithFirestore(true);
-      renderAllowlistManagerUI();
-      showToast(`Revoked access for ${email}`, 'info');
-    }
-
-    /**
-     * Brushed Vinyl-and-Rose-Gold Artist Avatar & Permanent Album Cover Vault
-     */
-    const UNIFORM_ARTIST_AVATAR = "data:image/svg+xml;utf8," + encodeURIComponent(`
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
-        <defs>
-          <radialGradient id="vinylGrad" cx="35%" cy="30%" r="75%">
-            <stop offset="0%" stop-color="#2E2634"/>
-            <stop offset="55%" stop-color="#17151E"/>
-            <stop offset="100%" stop-color="#0B0B0F"/>
-          </radialGradient>
-          <linearGradient id="roseGoldRing" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#FF7A90"/>
-            <stop offset="50%" stop-color="#FA243C"/>
-            <stop offset="100%" stop-color="#D97706"/>
-          </linearGradient>
-        </defs>
-        <rect width="400" height="400" fill="url(#vinylGrad)"/>
-        <circle cx="200" cy="200" r="145" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.5"/>
-        <circle cx="200" cy="200" r="118" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1.5"/>
-        <circle cx="200" cy="200" r="92" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1.5"/>
-        <circle cx="200" cy="200" r="68" fill="none" stroke="url(#roseGoldRing)" stroke-width="5"/>
-        <circle cx="200" cy="200" r="24" fill="url(#roseGoldRing)"/>
-        <circle cx="200" cy="200" r="6" fill="#0E0E12"/>
-      </svg>
-    `);
-
-    const FALLBACK_COVER_ART = window.FALLBACK_COVER_ART || UNIFORM_ARTIST_AVATAR;
-
-    const ARTISTS_DIRECTORY = [
-      { id: 'ar-rahman', name: 'A.R. Rahman', identifier: 'ARRTamilFlac', cover: UNIFORM_ARTIST_AVATAR, tagline: 'Academy Award-Winning Composer & Mozart of Madras', genre: 'Tamil, Hindi & International Soundtracks • Lossless' },
-      { id: 'anirudh-ravichander', name: 'Anirudh Ravichander', identifier: 'anirudh_202611', cover: UNIFORM_ARTIST_AVATAR, tagline: 'Rockstar Composer & Chart-Topping Hitmaker', genre: 'Tamil, Telugu & Hindi Soundtracks • Hi-Fi' },
-      { id: 'bharadwaj', name: 'Bharadwaj', identifier: 'Bharadwaj', cover: UNIFORM_ARTIST_AVATAR, tagline: 'Soulful Melody Composer of Tamil Cinema Classics', genre: 'Tamil & Telugu Soundtracks • Hi-Fi' },
-      { id: 'd-imman', name: 'D. Imman', identifier: 'dimaan', cover: UNIFORM_ARTIST_AVATAR, tagline: 'National Award-Winning Composer & Melody Hitmaker', genre: 'Tamil & Telugu Film Soundtracks • Hi-Fi' },
-      { id: 'darbuka-siva', name: 'Darbuka Siva', identifier: 'darbuka-siva', cover: UNIFORM_ARTIST_AVATAR, tagline: 'Percussionist, Singer-Songwriter & Soulful Film Composer', genre: 'Tamil & Indie Film Soundtracks • Hi-Fi' },
-      { id: 'deva', name: 'Deva', identifier: 'deva_20261116', cover: UNIFORM_ARTIST_AVATAR, tagline: 'Thenisai Thendral & King of Gaana Classics', genre: 'Tamil Evergreen & Mass Soundtracks • Hi-Fi' },
-      { id: 'harris-jayaraj', name: 'Harris Jayaraj', identifier: 'harris_202611', cover: UNIFORM_ARTIST_AVATAR, tagline: 'Melodic Maestro of South Indian Cinema', genre: 'Tamil & Telugu Soundtracks • Hi-Fi' },
-      { id: 'ilayaraja', name: 'Ilayaraja', identifier: 'ilayaraja_202611', cover: UNIFORM_ARTIST_AVATAR, tagline: 'Isaignani & Legendary Maestro of Indian Film Music', genre: 'Tamil, Telugu & Malayalam Classics • Hi-Fi' },
-      { id: 'nivas-k-prasanna', name: 'Nivas K. Prasanna', identifier: 'nivas-k-prasanna', cover: UNIFORM_ARTIST_AVATAR, tagline: 'Soulful Contemporary Composer & Melodic Virtuoso', genre: 'Tamil & Telugu Film Soundtracks • Hi-Fi' },
-      { id: 'sai-abhyankkar', name: 'Sai Abhyankkar', identifier: 'sai-abhyankkar-verappa', cover: UNIFORM_ARTIST_AVATAR, tagline: 'Viral Indie Hitmaker & New-Gen Composer', genre: 'Tamil Indie & Film Soundtracks • Hi-Fi' },
-      { id: 'santhosh-narayanan', name: 'Santhosh Narayanan', identifier: 'sana_20261115', cover: UNIFORM_ARTIST_AVATAR, tagline: 'Visionary Folk & Electronic Film Composer', genre: 'Tamil & Telugu Soundtracks • Hi-Fi' },
-      { id: 'sean-roldan', name: 'Sean Roldan', identifier: 'sean-roldan_202611', cover: UNIFORM_ARTIST_AVATAR, tagline: 'Soulful Folk, Blues & Independent Film Composer', genre: 'Tamil & Telugu Soundtracks • Hi-Fi' },
-      { id: 'vidyasagar', name: 'Vidyasagar', identifier: 'vidyasagar_202611', cover: UNIFORM_ARTIST_AVATAR, tagline: 'Melody King of South Indian Film Music', genre: 'Tamil, Malayalam & Telugu Soundtracks • Hi-Fi' },
-      { id: 'yuvan-shankar-raja', name: 'Yuvan Shankar Raja', identifier: 'yuvan_202611', cover: UNIFORM_ARTIST_AVATAR, tagline: 'Soulful Maestro & Youth Icon of Tamil Cinema', genre: 'Tamil & Telugu Soundtracks • Hi-Fi' }
-    ];
-
-    const MULTI_ALBUM_COLLECTIONS = [
-      { identifier: 'ARRTamilFlac', artistId: 'ar-rahman', defaultArtist: 'A.R. Rahman', genre: 'Tamil Soundtracks • Lossless' },
-      { identifier: 'harris_202611', artistId: 'harris-jayaraj', defaultArtist: 'Harris Jayaraj', genre: 'Tamil & Telugu Soundtracks • Hi-Fi' },
-      { identifier: 'sana_20261115', artistId: 'santhosh-narayanan', defaultArtist: 'Santhosh Narayanan', genre: 'Tamil & Telugu Soundtracks • Hi-Fi' },
-      { identifier: 'anirudh_202611', artistId: 'anirudh-ravichander', defaultArtist: 'Anirudh Ravichander', genre: 'Tamil, Telugu & Hindi Soundtracks • Hi-Fi' },
-      { identifier: 'yuvan_202611', artistId: 'yuvan-shankar-raja', defaultArtist: 'Yuvan Shankar Raja', genre: 'Tamil & Telugu Soundtracks • Hi-Fi' },
-      { identifier: 'nivas-k-prasanna', artistId: 'nivas-k-prasanna', defaultArtist: 'Nivas K. Prasanna', genre: 'Tamil & Telugu Film Soundtracks • Hi-Fi' },
-      { identifier: 'sai-abhyankkar-verappa', artistId: 'sai-abhyankkar', defaultArtist: 'Sai Abhyankkar', genre: 'Tamil Indie & Film Soundtracks • Hi-Fi' },
-      { identifier: 'sean-roldan_202611', artistId: 'sean-roldan', defaultArtist: 'Sean Roldan', genre: 'Tamil & Telugu Soundtracks • Hi-Fi' },
-      { identifier: 'deva_20261116', artistId: 'deva', defaultArtist: 'Deva', genre: 'Tamil Evergreen & Mass Soundtracks • Hi-Fi' },
-      { identifier: 'vidyasagar_202611', artistId: 'vidyasagar', defaultArtist: 'Vidyasagar', genre: 'Tamil, Malayalam & Telugu Soundtracks • Hi-Fi' },
-      { identifier: 'Bharadwaj', artistId: 'bharadwaj', defaultArtist: 'Bharadwaj', genre: 'Tamil & Telugu Soundtracks • Hi-Fi' },
-      { identifier: 'ilayaraja_202611', artistId: 'ilayaraja', defaultArtist: 'Ilayaraja', genre: 'Tamil, Telugu & Malayalam Classics • Hi-Fi' },
-      { identifier: 'darbuka-siva', artistId: 'darbuka-siva', defaultArtist: 'Darbuka Siva', genre: 'Tamil & Indie Film Soundtracks • Hi-Fi' },
-      { identifier: 'dimaan', artistId: 'd-imman', defaultArtist: 'D. Imman', genre: 'Tamil & Telugu Film Soundtracks • Hi-Fi' }
-    ];
-
-    const STORAGE_KEY = 'apple_music_arr_albums_v4';
-    const LEGACY_STORAGE_KEYS = ['apple_music_arr_albums_v3', 'apple_music_arr_albums_v2', 'apple_music_arr_albums_v1'];
-    const PERMANENT_COVERS_KEY = 'tunes_permanent_album_covers_v1';
-    const PLAYLISTS_STORAGE_KEY = 'apple_music_arr_playlists_v1';
-    const ARTWORK_CACHE_KEY = 'apple_music_arr_artwork_cache_v3';
-    const LAST_PLAYED_STORAGE_KEY = 'apple_music_last_played_v1';
-    const ADMIN_CREDS_KEY = 'apple_music_admin_creds_v1';
-    const ADMIN_SESSION_KEY = 'apple_music_admin_logged_in_v1';
-    const HIDDEN_ALBUMS_KEY = 'apple_music_hidden_albums_v1';
-
-    let permanentCoverVault = {};
-    let artworkCache = {};
-    const rasterArtworkCache = new Map();
-
-    let state = {
-      albums: [],
-      playlists: [],
-      hiddenAlbumIds: [],
-      isAdmin: false,
-      selectedArtistId: 'ar-rahman',
-      selectedArtistName: null,
-      selectedAlbumId: null,
-      selectedPlaylistId: null,
-      currentPlayingPlaylist: null,
-      currentView: 'home',
-      searchQuery: '',
-      searchTab: 'library',
-      albumFilterQuery: '',
-      selectedArtistFilter: 'all',
-      queue: [],
-      currentIndex: -1,
-      lastPlayedTrack: null,
-      isPlaying: false,
-      isShuffle: false,
-      isRadioMode: false,
-      activeRadioArtistId: null,
-      repeatMode: 'all',
-      volume: 1.0,
-      isMuted: false,
-      isSeeking: false,
-      queueOpen: false,
-      collectionLoading: false,
-      pendingTrackForPlaylist: null
-    };
-
-    let currentSharePayload = null;
-
-    // DOM-mounted Audio Engines for uninterrupted background, lock-screen & car head-unit playback
-    const audio = document.getElementById('bg-audio-engine') || new Audio();
-    const preloadAudio = document.getElementById('bg-audio-preload') || new Audio();
-    audio.setAttribute('playsinline', '');
-    audio.setAttribute('webkit-playsinline', '');
-    audio.preload = 'auto';
-    audio.volume = 1.0;
-
-    // ==========================================
-    // Permanent Album Cover Protection
-    // ==========================================
-    function isValidRealCoverUrl(url) {
-      if (!url || typeof url !== 'string') return false;
-      const trimmed = url.trim();
-      if (!trimmed) return false;
-      if (trimmed.startsWith('data:image/svg+xml')) return false;
-      if (trimmed === FALLBACK_COVER_ART || trimmed === UNIFORM_ARTIST_AVATAR) return false;
-      return trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:image/png') || trimmed.startsWith('data:image/jpeg');
-    }
-
-    function normalizeCoverKey(title, artist = '') {
-      const cleanT = String(title || '')
-        .replace(/\(.*?\)|\[.*?\]/g, '')
-        .replace(/\b(19|20)\d{2}\b/g, '')
-        .replace(/[^a-zA-Z0-9]+/g, ' ')
-        .trim()
-        .toLowerCase();
-      const cleanA = String(artist || '').replace(/[^a-zA-Z0-9]+/g, ' ').trim().toLowerCase();
-      return {
-        byId: null,
-        byTitleArtist: `${cleanT}::${cleanA}`,
-        byTitleOnly: cleanT
-      };
-    }
-
-    function loadPermanentCoverVault() {
-      try {
-        const raw = localStorage.getItem(PERMANENT_COVERS_KEY);
-        if (raw) permanentCoverVault = JSON.parse(raw) || {};
-      } catch (e) {
-        permanentCoverVault = {};
-      }
-    }
-
-    function savePermanentCoverVault() {
-      try {
-        localStorage.setItem(PERMANENT_COVERS_KEY, JSON.stringify(permanentCoverVault));
-      } catch (e) {}
-    }
-
-    function lockPermanentAlbumCover(albumId, title, artist, coverUrl) {
-      if (!isValidRealCoverUrl(coverUrl)) return;
-      const keys = normalizeCoverKey(title, artist);
-      let changed = false;
-      if (albumId && permanentCoverVault[`id::${albumId}`] !== coverUrl) {
-        permanentCoverVault[`id::${albumId}`] = coverUrl;
-        changed = true;
-      }
-      if (keys.byTitleArtist && permanentCoverVault[`ta::${keys.byTitleArtist}`] !== coverUrl) {
-        permanentCoverVault[`ta::${keys.byTitleArtist}`] = coverUrl;
-        changed = true;
-      }
-      if (keys.byTitleOnly && permanentCoverVault[`t::${keys.byTitleOnly}`] !== coverUrl) {
-        permanentCoverVault[`t::${keys.byTitleOnly}`] = coverUrl;
-        changed = true;
-      }
-      if (changed) savePermanentCoverVault();
-    }
-
-    function resolveLockedAlbumCover(albumId, title, artist, candidateCover = null) {
-      if (isValidRealCoverUrl(candidateCover)) {
-        lockPermanentAlbumCover(albumId, title, artist, candidateCover);
-        return candidateCover;
-      }
-      if (albumId && isValidRealCoverUrl(permanentCoverVault[`id::${albumId}`])) {
-        return permanentCoverVault[`id::${albumId}`];
-      }
-      const keys = normalizeCoverKey(title, artist);
-      if (keys.byTitleArtist && isValidRealCoverUrl(permanentCoverVault[`ta::${keys.byTitleArtist}`])) {
-        return permanentCoverVault[`ta::${keys.byTitleArtist}`];
-      }
-      if (keys.byTitleOnly && isValidRealCoverUrl(permanentCoverVault[`t::${keys.byTitleOnly}`])) {
-        return permanentCoverVault[`t::${keys.byTitleOnly}`];
-      }
-      const cacheKey = `${keys.byTitleOnly}::${String(artist || '').toLowerCase()}`;
-      if (isValidRealCoverUrl(artworkCache[cacheKey])) {
-        lockPermanentAlbumCover(albumId, title, artist, artworkCache[cacheKey]);
-        return artworkCache[cacheKey];
-      }
-      return null;
-    }
-
-    // ==========================================
-    // Background Audio Keep-Alive & Car Head-Unit Support
-    // ==========================================
-    let keepAliveCtx = null;
-    let keepAliveOsc = null;
-    let keepAliveGain = null;
-
-    function ensureBackgroundAudioSession() {
-      try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        if (!keepAliveCtx) {
-          keepAliveCtx = new AudioCtx();
-          keepAliveOsc = keepAliveCtx.createOscillator();
-          keepAliveGain = keepAliveCtx.createGain();
-          keepAliveOsc.type = 'sine';
-          keepAliveOsc.frequency.setValueAtTime(1, keepAliveCtx.currentTime);
-          keepAliveGain.gain.setValueAtTime(0.00001, keepAliveCtx.currentTime);
-          keepAliveOsc.connect(keepAliveGain);
-          keepAliveGain.connect(keepAliveCtx.destination);
-          keepAliveOsc.start();
-        }
-        if (keepAliveCtx.state === 'suspended') {
-          keepAliveCtx.resume().catch(() => {});
-        }
-      } catch (e) {}
-    }
-
-    async function resolveRasterArtworkUrl(coverUrl) {
-      if (!coverUrl) return FALLBACK_COVER_ART;
-      if (!coverUrl.startsWith('data:image/svg')) return coverUrl;
-      if (rasterArtworkCache.has(coverUrl)) return rasterArtworkCache.get(coverUrl);
-
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-          try {
-            const canvas = document.createElement('canvas');
-            canvas.width = 512;
-            canvas.height = 512;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, 512, 512);
-            const pngUri = canvas.toDataURL('image/png');
-            rasterArtworkCache.set(coverUrl, pngUri);
-            resolve(pngUri);
-          } catch (e) {
-            resolve(coverUrl);
-          }
-        };
-        img.onerror = () => resolve(coverUrl);
-        img.src = coverUrl;
-      });
-    }
-
-    function bindMediaSessionHandlers() {
-      if (!('mediaSession' in navigator)) return;
-      const handlers = {
-        play: () => {
-          ensureBackgroundAudioSession();
-          if (!audio.src && getCurrentTrack()) {
-            loadAndPlayCurrentTrack();
-          } else {
-            audio.play().catch(() => {});
-          }
-        },
-        pause: () => {
-          audio.pause();
-        },
-        stop: () => {
-          audio.pause();
-          audio.currentTime = 0;
-        },
-        previoustrack: () => {
-          prevTrack();
-        },
-        nexttrack: () => {
-          nextTrack();
-        },
-        seekbackward: (details) => {
-          if (details && typeof details.seekOffset === 'number' && details.seekOffset > 0) {
-            audio.currentTime = Math.max(0, audio.currentTime - details.seekOffset);
-          } else {
-            prevTrack();
-          }
-        },
-        seekforward: (details) => {
-          if (details && typeof details.seekOffset === 'number' && details.seekOffset > 0) {
-            audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + details.seekOffset);
-          } else {
-            nextTrack();
-          }
-        },
-        seekto: (details) => {
-          if (!details || typeof details.seekTime !== 'number') return;
-          if (details.fastSeek && 'fastSeek' in audio) {
-            audio.fastSeek(details.seekTime);
-          } else {
-            audio.currentTime = details.seekTime;
-          }
-        }
-      };
-
-      Object.entries(handlers).forEach(([action, fn]) => {
-        try {
-          navigator.mediaSession.setActionHandler(action, fn);
-        } catch (e) {}
-      });
-    }
-
-    async function updateMediaSession(track) {
-      if (!('mediaSession' in navigator) || !track) return;
-      const artUrl = await resolveRasterArtworkUrl(track.cover || FALLBACK_COVER_ART);
-      const mimeType = artUrl.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
-
-      try {
-        navigator.mediaSession.metadata = new MediaMetadata({
-          title: track.title || 'tune-S',
-          artist: track.artist || 'tune-S Music',
-          album: track.albumTitle || 'tune-S Collection',
-          artwork: [
-            { src: artUrl, sizes: '96x96', type: mimeType },
-            { src: artUrl, sizes: '128x128', type: mimeType },
-            { src: artUrl, sizes: '192x192', type: mimeType },
-            { src: artUrl, sizes: '256x256', type: mimeType },
-            { src: artUrl, sizes: '384x384', type: mimeType },
-            { src: artUrl, sizes: '512x512', type: mimeType }
-          ]
-        });
-      } catch (e) {}
-
-      bindMediaSessionHandlers();
-      if ('playbackState' in navigator.mediaSession) {
-        navigator.mediaSession.playbackState = state.isPlaying ? 'playing' : 'paused';
-      }
-    }
-
-    function preloadUpcomingTrack() {
-      if (!state.queue || state.queue.length <= 1) return;
-      const nextIdx = (state.currentIndex + 1) % state.queue.length;
-      const nextItem = state.queue[nextIdx];
-      if (nextItem && nextItem.url && preloadAudio.src !== nextItem.url) {
-        preloadAudio.src = nextItem.url;
-      }
-    }
-
-    // ==========================================
-    // App Initialization
-    // ==========================================
-    function initializeTuneSApp() {
-      try {
-        loadPermanentCoverVault();
-        loadAdminSession();
-        initFirebaseGoogleAuth();
-        loadArtworkCache();
-        loadHiddenAlbums();
-        loadAlbumsFromStorage();
-        loadPlaylistsFromStorage();
-        restoreLastPlayedState();
-
-        setupAudioEvents();
-        setupKeyboardShortcuts();
-        bindMediaSessionHandlers();
-        syncSliderVisualFills();
-
-        renderSidebarArtists();
-        renderSidebarPlaylists();
-        renderSidebarAlbums();
-        renderCurrentView();
-
-        // Sync multi-album collections for all 14 composers
-        MULTI_ALBUM_COLLECTIONS.forEach(col => {
-          fetchMultiAlbumCollection(col.identifier, col.defaultArtist, col.genre, col.artistId);
-        });
-
-        // Handle deep links (?share=album|song, ?action=radio|search)
-        handleInitialUrlParams();
-      } catch (err) {
-        console.error('Initialization error:', err);
-        const area = document.getElementById('main-scroll-area');
-        if (area && !area.innerHTML.trim()) {
-          renderMultiArtistHomeView(area);
-        }
-      }
-    }
-
-    function handleInitialUrlParams() {
-      const params = new URLSearchParams(window.location.search);
-      const action = params.get('action');
-      const shareType = params.get('share');
-      const shareId = params.get('id');
-
-      if (action === 'search') {
-        switchView('search');
-        return;
-      }
-      if (action === 'radio') {
-        switchView('radio');
-        return;
-      }
-      if (shareType && shareId) {
-        setTimeout(() => {
-          if (shareType === 'album') {
-            const alb = state.albums.find(a => a.id === shareId || a.id.includes(shareId));
-            if (alb) switchView('album', alb.id);
-          } else if (shareType === 'song') {
-            for (const alb of state.albums) {
-              const tr = (alb.tracks || []).find(t => t.id === shareId || t.id.includes(shareId));
-              if (tr) {
-                switchView('album', alb.id);
-                playTrackFromList(alb.tracks, alb.tracks.indexOf(tr));
-                break;
-              }
-            }
-          }
-        }, 650);
-      }
-    }
-
-    function saveLastPlayedState(track) {
-      if (!track) return;
-      state.lastPlayedTrack = track;
-      try {
-        localStorage.setItem(LAST_PLAYED_STORAGE_KEY, JSON.stringify({
-          track,
-          queue: state.queue.slice(0, 100),
-          currentIndex: state.currentIndex
-        }));
-      } catch (e) {}
-    }
-
-    function restoreLastPlayedState() {
-      const artEl = document.getElementById('player-art');
-      const titleEl = document.getElementById('player-title');
-      const artistEl = document.getElementById('player-artist');
-      const albumLinkBtn = document.getElementById('player-album-link');
-      const badge = document.getElementById('player-format-badge');
-
-      if (artEl) {
-        artEl.onerror = () => { artEl.src = FALLBACK_COVER_ART; };
-      }
-
-      try {
-        const raw = localStorage.getItem(LAST_PLAYED_STORAGE_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (parsed && parsed.track) {
-            const lockedCover = resolveLockedAlbumCover(parsed.track.albumId, parsed.track.albumTitle, parsed.track.artist, parsed.track.cover);
-            if (lockedCover) parsed.track.cover = lockedCover;
-
-            state.lastPlayedTrack = parsed.track;
-            if (Array.isArray(parsed.queue) && parsed.queue.length > 0) {
-              state.queue = parsed.queue;
-              state.currentIndex = typeof parsed.currentIndex === 'number' ? parsed.currentIndex : 0;
-            } else {
-              state.queue = [parsed.track];
-              state.currentIndex = 0;
-            }
-            if (artEl) artEl.src = parsed.track.cover || FALLBACK_COVER_ART;
-            if (titleEl) titleEl.textContent = parsed.track.title || 'Select a song to play';
-            if (artistEl) artistEl.textContent = `${parsed.track.artist} — ${parsed.track.albumTitle}`;
-            if (albumLinkBtn && parsed.track.albumTitle) {
-              albumLinkBtn.textContent = parsed.track.albumTitle;
-              albumLinkBtn.classList.remove('hidden');
-            }
-            if (badge) {
-              badge.textContent = parsed.track.formatBadge || 'LOSSLESS';
-              badge.classList.remove('hidden');
-            }
-            document.getElementById('player-add-playlist-btn')?.classList.remove('hidden');
-            document.getElementById('player-share-btn')?.classList.remove('hidden');
-            updateMediaSession(parsed.track);
-            return;
-          }
-        }
-      } catch (e) {}
-
-      const firstAlbumWithCover = state.albums.find(a => isValidRealCoverUrl(a.cover));
-      if (artEl) artEl.src = firstAlbumWithCover ? firstAlbumWithCover.cover : FALLBACK_COVER_ART;
-    }
-
-    // ==========================================
-    // Admin Authentication & Controls
-    // ==========================================
-    function getAdminCredentials() {
-      try {
-        const saved = JSON.parse(localStorage.getItem(ADMIN_CREDS_KEY));
-        if (saved && saved.username && saved.password) return saved;
-      } catch (e) {}
-      return { username: 'admin', password: 'hummingjays' };
-    }
-
-    function loadAdminSession() {
-      state.isAdmin = localStorage.getItem(ADMIN_SESSION_KEY) === 'true';
-      updateAdminUI();
-    }
-
-    function updateAdminUI() {
-      const signInBtn = document.getElementById('admin-signin-btn');
-      const badgeGroup = document.getElementById('admin-badge-group');
-      const headerAddBtn = document.getElementById('header-add-album-btn');
-      const sidebarAddBtn = document.getElementById('sidebar-add-album-btn');
-
-      if (state.isAdmin) {
-        signInBtn?.classList.add('hidden');
-        badgeGroup?.classList.remove('hidden');
-        headerAddBtn?.classList.remove('hidden');
-        sidebarAddBtn?.classList.remove('hidden');
-      } else {
-        signInBtn?.classList.remove('hidden');
-        badgeGroup?.classList.add('hidden');
-        headerAddBtn?.classList.add('hidden');
-        sidebarAddBtn?.classList.add('hidden');
-      }
-    }
-
-    function openAdminLoginModal() {
-      const modal = document.getElementById('admin-login-modal');
-      document.getElementById('admin-username-input').value = '';
-      document.getElementById('admin-password-input').value = '';
-      document.getElementById('admin-login-error').classList.add('hidden');
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-      setTimeout(() => document.getElementById('admin-username-input').focus(), 50);
-    }
-
-    function closeAdminLoginModal() {
-      const modal = document.getElementById('admin-login-modal');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    }
-
-    function submitAdminLogin() {
-      const userVal = document.getElementById('admin-username-input').value.trim();
-      const passVal = document.getElementById('admin-password-input').value;
-      const errEl = document.getElementById('admin-login-error');
-      const creds = getAdminCredentials();
-
-      if (userVal === creds.username && passVal === creds.password) {
-        state.isAdmin = true;
-        localStorage.setItem(ADMIN_SESSION_KEY, 'true');
-        updateAdminUI();
-        evaluateVisitorAccessGate();
-        closeAdminLoginModal();
-        renderSidebarAlbums();
-        renderCurrentView();
-        showToast('Signed in as Admin', 'info');
-      } else {
-        errEl.textContent = 'Invalid administrator username or password.';
+      if (errEl) {
+        errEl.textContent = 'Firebase API key is missing or invalid. Sign in as Admin below and paste your exact firebaseConfig from Firebase Console.';
         errEl.classList.remove('hidden');
       }
     }
@@ -1808,15 +1549,195 @@
       modal.classList.add('hidden');
       modal.classList.remove('flex');
     }
+    async function signInWithGoogleFirebase() {
+      const errEl = document.getElementById('gate-error-msg');
+      errEl?.classList.add('hidden');
 
-    async function saveAdminAndFirebaseSettings() {
-      const username = document.getElementById('admin-new-username').value.trim();
-      const password = document.getElementById('admin-new-password').value;
-      if (!username || !password) {
-        showToast('Username and password cannot be empty.', 'error');
+      if (!firebaseAuthInstance) {
+        const fallbackBox = document.getElementById('gate-domain-fallback-box');
+        const hostSpan = document.getElementById('gate-current-hostname');
+        if (hostSpan) hostSpan.textContent = window.location.hostname || 'preview-frame';
+        fallbackBox?.classList.remove('hidden');
+        if (errEl) {
+          errEl.textContent = 'Google Sign-In needs your Firebase Web Config first. Sign in as Admin below to paste it, or unlock with your Admin password.';
+          errEl.classList.remove('hidden');
+        }
         return;
       }
-      localStorage.setItem(ADMIN_CREDS_KEY, JSON.stringify({ username, password }));
+
+      try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        await firebaseAuthInstance.signInWithPopup(provider);
+      } catch (err) {
+        const errCode = String(err?.code || '');
+        const errMsg = String(err?.message || '');
+        if (errCode.includes('api-key') || errMsg.includes('api-key-not-valid')) {
+          handleInvalidFirebaseKeyError();
+          return;
+        }
+        if (errCode === 'auth/popup-blocked') {
+          const provider = new firebase.auth.GoogleAuthProvider();
+          firebaseAuthInstance.signInWithRedirect(provider);
+          return;
+        }
+        if (errCode === 'auth/unauthorized-domain' || errMsg.includes('unauthorized-domain')) {
+          const fallbackBox = document.getElementById('gate-domain-fallback-box');
+          const hostSpan = document.getElementById('gate-current-hostname');
+          if (hostSpan) hostSpan.textContent = window.location.hostname || 'preview-frame';
+          fallbackBox?.classList.remove('hidden');
+          if (errEl) {
+            errEl.textContent = 'This preview domain is not whitelisted in Firebase yet — use the VIP/Admin unlock below or sign in as Admin.';
+            errEl.classList.remove('hidden');
+          }
+          return;
+        }
+        if (errEl) {
+          errEl.textContent = err.message || 'Google Sign-In failed. Please try again.';
+          errEl.classList.remove('hidden');
+        }
+      }
+    }
+
+    async function signOutGoogleFirebase() {
+      if (firebaseAuthInstance) {
+        try {
+          await firebaseAuthInstance.signOut();
+        } catch (e) {}
+      }
+      currentGoogleUser = null;
+      sessionStorage.removeItem(PASSCODE_UNLOCK_SESSION_KEY);
+      evaluateVisitorAccessGate();
+      showToast('Signed out', 'info');
+    }
+
+    function copyGateEmail() {
+      const email = currentGoogleUser?.email || '';
+      if (!email) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(email).then(() => showToast('Email copied!', 'info')).catch(() => fallbackCopyText(email));
+      } else {
+        fallbackCopyText(email);
+      }
+    }
+
+    function unlockWithBypassPasscode() {
+      const input = document.getElementById('gate-bypass-passcode');
+      const errEl = document.getElementById('gate-error-msg');
+      const val = (input?.value || '').trim();
+      const creds = getAdminCredentials();
+      if (val && val === creds.password) {
+        sessionStorage.setItem(PASSCODE_UNLOCK_SESSION_KEY, 'true');
+        if (input) input.value = '';
+        errEl?.classList.add('hidden');
+        evaluateVisitorAccessGate();
+        showToast('Unlocked tune-S', 'info');
+      } else if (errEl) {
+        errEl.textContent = 'Incorrect password. Enter your Admin Password.';
+        errEl.classList.remove('hidden');
+      }
+    }
+
+    function evaluateVisitorAccessGate() {
+      const gate = document.getElementById('google-auth-gate');
+      const signinBox = document.getElementById('gate-signin-box');
+      const deniedBox = document.getElementById('gate-denied-box');
+      const userBadge = document.getElementById('google-user-badge');
+      const userBadgeEmail = document.getElementById('google-user-badge-email');
+
+      if (!gate) return;
+
+      const email = (currentGoogleUser?.email || '').trim().toLowerCase();
+      if (email && userBadge && userBadgeEmail) {
+        userBadgeEmail.textContent = email;
+        userBadge.classList.remove('hidden');
+        userBadge.classList.add('flex');
+      } else if (userBadge) {
+        userBadge.classList.add('hidden');
+        userBadge.classList.remove('flex');
+      }
+
+      if (!isGoogleGateRequired || state.isAdmin || sessionStorage.getItem(PASSCODE_UNLOCK_SESSION_KEY) === 'true') {
+        gate.classList.add('hidden');
+        gate.classList.remove('flex');
+        return;
+      }
+
+      if (email && approvedEmailsList.includes(email)) {
+        gate.classList.add('hidden');
+        gate.classList.remove('flex');
+        return;
+      }
+
+      gate.classList.remove('hidden');
+      gate.classList.add('flex');
+
+      if (email) {
+        signinBox?.classList.add('hidden');
+        deniedBox?.classList.remove('hidden');
+        const emailEl = document.getElementById('gate-user-email');
+        const photoEl = document.getElementById('gate-user-photo');
+        if (emailEl) emailEl.textContent = currentGoogleUser.email;
+        if (photoEl) {
+          if (currentGoogleUser.photoURL) {
+            photoEl.src = currentGoogleUser.photoURL;
+            photoEl.classList.remove('hidden');
+          } else {
+            photoEl.classList.add('hidden');
+          }
+        }
+      } else {
+        signinBox?.classList.remove('hidden');
+        deniedBox?.classList.add('hidden');
+      }
+    }
+
+    function renderAllowlistManagerUI() {
+      const container = document.getElementById('allowlist-emails-container');
+      if (!container) return;
+      if (approvedEmailsList.length === 0) {
+        container.innerHTML = `<div class="text-[11px] text-neutral-500 py-2 text-center">No approved emails added yet.</div>`;
+        return;
+      }
+      container.innerHTML = approvedEmailsList.map(email => `
+        <div class="flex items-center justify-between px-3 py-1.5 rounded-lg bg-white/[0.05] text-xs text-neutral-200">
+          <span class="truncate pr-2">${escapeHtml(email)}</span>
+          <button onclick="removeEmailFromAllowlist('${escapeHtml(email).replace(/'/g, "\\'")}')" class="text-neutral-400 hover:text-red-400 text-[11px] font-semibold shrink-0">
+            Remove
+          </button>
+        </div>
+      `).join('');
+    }
+
+    async function addEmailToAllowlist() {
+      const input = document.getElementById('allowlist-email-input');
+      const email = (input?.value || '').trim().toLowerCase();
+      if (!email || !email.includes('@')) {
+        showToast('Enter a valid Gmail / Google email address.', 'error');
+        return;
+      }
+      if (!approvedEmailsList.includes(email)) {
+        approvedEmailsList.push(email);
+        saveAllowedEmailsLocally();
+        renderAllowlistManagerUI();
+        await syncAllowlistWithFirestore(true);
+      }
+      if (input) input.value = '';
+      showToast(`Approved ${email}`, 'info');
+    }
+
+    async function removeEmailFromAllowlist(email) {
+      approvedEmailsList = approvedEmailsList.filter(e => e !== email);
+      saveAllowedEmailsLocally();
+      renderAllowlistManagerUI();
+      await syncAllowlistWithFirestore(true);
+      showToast(`Removed ${email}`, 'info');
+    }
+
+    async function saveAdminAndFirebaseSettings() {
+      const newUser = document.getElementById('admin-new-username')?.value.trim() || 'admin';
+      const newPass = document.getElementById('admin-new-password')?.value.trim() || 'hummingjays';
+      localStorage.setItem(ADMIN_CREDS_KEY, JSON.stringify({ username: newUser, password: newPass }));
 
       const gateToggle = document.getElementById('firebase-gate-enabled-toggle');
       if (gateToggle) {
@@ -1827,16 +1748,22 @@
       const rawCfg = document.getElementById('firebase-config-textarea')?.value.trim();
       if (rawCfg) {
         try {
-          // Support pasting either pure JSON or JS object snippet
-          const jsonCandidate = rawCfg
+          const cleaned = rawCfg
+            .replace(/\/\/.*$/gm, '')
+            .replace(/\/\*[\s\S]*?\*\//g, '')
             .replace(/^[^{]*/, '')
             .replace(/[^}]*$/, '')
-            .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?\s*:/g, '"$2":');
-          const parsedCfg = JSON.parse(jsonCandidate);
+            .replace(/,\s*}/g, '}')
+            .replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":')
+            .replace(/:\s*'([^']*)'/g, ': "$1"');
+          const parsedCfg = JSON.parse(cleaned);
           if (!parsedCfg.apiKey || !parsedCfg.authDomain) {
             throw new Error('Missing apiKey or authDomain');
           }
           localStorage.setItem(FIREBASE_CONFIG_STORAGE_KEY, JSON.stringify(parsedCfg));
+          if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length > 0) {
+            await Promise.all(firebase.apps.map(app => app.delete().catch(() => {})));
+          }
           initFirebaseGoogleAuth();
         } catch (err) {
           showToast('Invalid Firebase config format: ' + err.message, 'error');
@@ -1846,22 +1773,8 @@
 
       await syncAllowlistWithFirestore(true);
       closeAdminSettingsModal();
+      evaluateVisitorAccessGate();
       showToast('Admin & VIP Access settings saved', 'info');
-    }
-
-    function loadHiddenAlbums() {
-      try {
-        const saved = JSON.parse(localStorage.getItem(HIDDEN_ALBUMS_KEY));
-        state.hiddenAlbumIds = Array.isArray(saved) ? saved : [];
-      } catch (e) {
-        state.hiddenAlbumIds = [];
-      }
-    }
-
-    function saveHiddenAlbums() {
-      try {
-        localStorage.setItem(HIDDEN_ALBUMS_KEY, JSON.stringify(state.hiddenAlbumIds));
-      } catch (e) {}
     }
 
     function restoreHiddenAlbums() {
