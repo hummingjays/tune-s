@@ -165,6 +165,26 @@
       backdrop-filter: blur(28px);
       -webkit-backdrop-filter: blur(28px);
     }
+
+    /* Playlist Drag & Hold Reordering States */
+    .playlist-track-row {
+      touch-action: pan-y;
+      transition: transform 0.16s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .playlist-track-row.dragging-active {
+      background: rgba(250, 36, 60, 0.24) !important;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.65), inset 0 0 0 1px rgba(250, 36, 60, 0.65);
+      transform: scale(1.015);
+      z-index: 25;
+      position: relative;
+      border-radius: 0.75rem;
+    }
+    .playlist-track-row.drop-target-above {
+      box-shadow: inset 0 2px 0 0 #FA243C;
+    }
+    .playlist-track-row.drop-target-below {
+      box-shadow: inset 0 -2px 0 0 #FA243C;
+    }
   </style>
 </head>
 <body class="h-[100dvh] w-screen flex flex-col bg-[#0E0E12] text-zinc-100">
@@ -4744,18 +4764,29 @@
     function renderPlaylistTracksTable(playlist) {
       const currentTrack = getCurrentTrack();
       return `
-        <div class="luxury-card rounded-2xl overflow-hidden">
-          <div class="divide-y divide-white/[0.05]">
+        <div class="space-y-2">
+          <div class="flex items-center justify-between px-1 text-[11px] text-neutral-400">
+            <span>Hold &amp; drag any track to reorder</span>
+            <span>${playlist.tracks.length} tracks</span>
+          </div>
+          <div id="playlist-tracks-sortable" data-playlist-id="${playlist.id}" class="luxury-card rounded-2xl overflow-hidden divide-y divide-white/[0.05]">
             ${playlist.tracks.map((track, idx) => {
               const isCurrent = currentTrack && currentTrack.id === track.id;
               return `
-                <div onclick="playPlaylist('${playlist.id}', ${idx}, false)"
-                  class="group grid grid-cols-12 items-center px-4 py-3 cursor-pointer transition ${isCurrent ? 'bg-[#FA243C]/15' : 'hover:bg-white/[0.05]'}">
-                  <div class="col-span-2 sm:col-span-1 flex items-center gap-2 text-xs text-neutral-400">
+                <div data-track-index="${idx}"
+                  onpointerdown="startPlaylistTrackHold(event, '${playlist.id}', ${idx})"
+                  onclick="handlePlaylistRowClick(event, '${playlist.id}', ${idx})"
+                  class="playlist-track-row group grid grid-cols-12 items-center px-3 sm:px-4 py-3 cursor-pointer select-none ${isCurrent ? 'bg-[#FA243C]/15' : 'hover:bg-white/[0.05]'}">
+                  <div class="col-span-3 sm:col-span-2 flex items-center gap-2 text-xs text-neutral-400">
+                    <span title="Hold & Drag to Reorder" class="drag-grip p-1 -ml-1 text-neutral-500 group-hover:text-neutral-200 cursor-grab active:cursor-grabbing shrink-0">
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M7 4a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm9-12a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
+                      </svg>
+                    </span>
                     <span class="w-4 text-center font-medium ${isCurrent ? 'text-[#FA243C]' : ''}">${idx + 1}</span>
-                    <img src="${track.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-8 h-8 rounded object-cover object-top bg-neutral-800" />
+                    <img src="${track.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-8 h-8 rounded object-cover object-top bg-neutral-800 pointer-events-none" />
                   </div>
-                  <div class="col-span-7 sm:col-span-6 pr-3 min-w-0">
+                  <div class="col-span-6 sm:col-span-5 pr-3 min-w-0">
                     <div class="text-xs sm:text-sm font-medium truncate ${isCurrent ? 'text-[#FA243C]' : 'text-white'}">${escapeHtml(track.title)}</div>
                     <div class="text-[11px] text-neutral-400 truncate">${escapeHtml(track.artist)} • ${escapeHtml(track.albumTitle)}</div>
                   </div>
@@ -4773,6 +4804,170 @@
           </div>
         </div>
       `;
+    }
+
+    // ==========================================
+    // Hold & Drag Reordering for Playlist Tracks (Touch + Mouse)
+    // ==========================================
+    let playlistDragState = {
+      holdTimer: null,
+      isDragging: false,
+      justDragged: false,
+      playlistId: null,
+      fromIndex: -1,
+      toIndex: -1,
+      startX: 0,
+      startY: 0,
+      pointerId: null
+    };
+
+    function handlePlaylistRowClick(event, playlistId, idx) {
+      if (playlistDragState.justDragged || playlistDragState.isDragging) {
+        event.stopPropagation();
+        playlistDragState.justDragged = false;
+        return;
+      }
+      playPlaylist(playlistId, idx, false);
+    }
+
+    function startPlaylistTrackHold(event, playlistId, idx) {
+      if (event.target.closest('button')) return;
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+
+      cancelPlaylistHoldTimer();
+      playlistDragState.playlistId = playlistId;
+      playlistDragState.fromIndex = idx;
+      playlistDragState.toIndex = idx;
+      playlistDragState.startX = event.clientX;
+      playlistDragState.startY = event.clientY;
+      playlistDragState.pointerId = event.pointerId;
+      playlistDragState.isDragging = false;
+
+      const isGrip = Boolean(event.target.closest('.drag-grip'));
+      const holdDelay = isGrip ? 90 : 260;
+
+      playlistDragState.holdTimer = setTimeout(() => {
+        activatePlaylistDragMode();
+      }, holdDelay);
+
+      window.addEventListener('pointermove', onPlaylistPointerMove, { passive: false });
+      window.addEventListener('pointerup', onPlaylistPointerUp);
+      window.addEventListener('pointercancel', onPlaylistPointerUp);
+    }
+
+    function cancelPlaylistHoldTimer() {
+      if (playlistDragState.holdTimer) {
+        clearTimeout(playlistDragState.holdTimer);
+        playlistDragState.holdTimer = null;
+      }
+    }
+
+    function activatePlaylistDragMode() {
+      playlistDragState.isDragging = true;
+      playlistDragState.justDragged = true;
+      if (navigator.vibrate) {
+        try { navigator.vibrate(25); } catch (e) {}
+      }
+      const container = document.getElementById('playlist-tracks-sortable');
+      if (!container) return;
+      const rows = container.querySelectorAll('.playlist-track-row');
+      rows.forEach((row, i) => {
+        if (i === playlistDragState.fromIndex) {
+          row.classList.add('dragging-active');
+        }
+      });
+    }
+
+    function onPlaylistPointerMove(event) {
+      if (playlistDragState.pointerId !== null && event.pointerId !== playlistDragState.pointerId) return;
+
+      if (!playlistDragState.isDragging) {
+        const dx = Math.abs(event.clientX - playlistDragState.startX);
+        const dy = Math.abs(event.clientY - playlistDragState.startY);
+        if (dx > 8 || dy > 8) {
+          cancelPlaylistHoldTimer();
+          cleanupPlaylistDragListeners();
+        }
+        return;
+      }
+
+      event.preventDefault();
+      const container = document.getElementById('playlist-tracks-sortable');
+      if (!container) return;
+      const rows = Array.from(container.querySelectorAll('.playlist-track-row'));
+      if (rows.length === 0) return;
+
+      let targetIdx = playlistDragState.fromIndex;
+      for (let i = 0; i < rows.length; i++) {
+        const rect = rows[i].getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        if (event.clientY < midY) {
+          targetIdx = i;
+          break;
+        }
+        targetIdx = i;
+      }
+
+      playlistDragState.toIndex = targetIdx;
+      rows.forEach((row, i) => {
+        row.classList.remove('drop-target-above', 'drop-target-below');
+        if (i === targetIdx && targetIdx !== playlistDragState.fromIndex) {
+          if (targetIdx < playlistDragState.fromIndex) {
+            row.classList.add('drop-target-above');
+          } else {
+            row.classList.add('drop-target-below');
+          }
+        }
+      });
+    }
+
+    function onPlaylistPointerUp(event) {
+      if (playlistDragState.pointerId !== null && event.pointerId !== playlistDragState.pointerId) return;
+      cancelPlaylistHoldTimer();
+      cleanupPlaylistDragListeners();
+
+      if (playlistDragState.isDragging) {
+        const { playlistId, fromIndex, toIndex } = playlistDragState;
+        playlistDragState.isDragging = false;
+        if (playlistId && fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
+          reorderPlaylistTracks(playlistId, fromIndex, toIndex);
+        } else {
+          renderCurrentView();
+        }
+        setTimeout(() => {
+          playlistDragState.justDragged = false;
+        }, 120);
+      }
+      playlistDragState.pointerId = null;
+    }
+
+    function cleanupPlaylistDragListeners() {
+      window.removeEventListener('pointermove', onPlaylistPointerMove);
+      window.removeEventListener('pointerup', onPlaylistPointerUp);
+      window.removeEventListener('pointercancel', onPlaylistPointerUp);
+    }
+
+    function reorderPlaylistTracks(playlistId, fromIndex, toIndex) {
+      const pl = state.playlists.find(p => p.id === playlistId);
+      if (!pl || !Array.isArray(pl.tracks)) return;
+      if (fromIndex < 0 || fromIndex >= pl.tracks.length || toIndex < 0 || toIndex >= pl.tracks.length) return;
+
+      const currentTrackId = getCurrentTrack()?.id;
+      const [movedTrack] = pl.tracks.splice(fromIndex, 1);
+      pl.tracks.splice(toIndex, 0, movedTrack);
+
+      if (state.currentPlayingPlaylist === playlistId && !state.isShuffle) {
+        state.queue = [...pl.tracks];
+        if (currentTrackId) {
+          const newCurrentIdx = state.queue.findIndex(t => t.id === currentTrackId);
+          if (newCurrentIdx !== -1) state.currentIndex = newCurrentIdx;
+        }
+        if (state.queueOpen) renderQueueDrawer();
+      }
+
+      savePlaylistsToStorage();
+      renderCurrentView();
+      showToast(`Moved "${movedTrack.title}" to #${toIndex + 1}`, 'info');
     }
 
     // ==========================================
