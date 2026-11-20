@@ -46,12 +46,23 @@
       background-color: #0E0E12;
       background-image:
         radial-gradient(circle at 18% 8%, rgba(250, 36, 60, 0.14), transparent 44%),
+        radial-gradient(circle at 84% 12%, rgba(186, 230, 253, 0.08), transparent 42%),
         radial-gradient(circle at 86% 88%, rgba(168, 85, 247, 0.08), transparent 46%);
       color: #F4F4F5;
       height: 100vh;
       height: 100dvh;
       overflow: hidden;
       user-select: none;
+    }
+
+    /* Holiday Snowfall Canvas Overlay (Non-blocking, purely ambient) */
+    #holiday-snow-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 60;
     }
 
     /* Bottom Navigation & Mini-Player Flush Anchoring for Mobile Browsers */
@@ -158,6 +169,9 @@
 </head>
 <body class="h-[100dvh] w-screen flex flex-col bg-[#0E0E12] text-zinc-100">
 
+  <!-- Ambient Holiday Snowfall Layer -->
+  <canvas id="holiday-snow-canvas" aria-hidden="true"></canvas>
+
   <!-- Single-Device Cryptographic Unlock Gate (Blocks Unapproved Browsers Until Unlocked) -->
   <div id="device-access-gate" class="fixed inset-0 z-[100] hidden items-center justify-center bg-[#09090D]/95 backdrop-blur-2xl p-4 overflow-y-auto">
     <div class="bg-[#181820] border border-white/12 rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl space-y-5 my-auto">
@@ -234,6 +248,7 @@
             </svg>
           </div>
           <span class="text-lg font-bold tracking-tight text-white">tune-S</span>
+          <span class="text-xs opacity-85" title="Holiday Edition">❄️</span>
         </div>
         <button onclick="toggleMobileSidebar(false)" class="lg:hidden p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -347,6 +362,13 @@
         </div>
 
         <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          <!-- Snowfall Toggle Button -->
+          <button id="snow-toggle-btn" onclick="toggleHolidaySnow()" title="Toggle Snowfall"
+            class="px-2.5 py-1.5 rounded-full bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 text-sky-200 text-xs font-semibold flex items-center gap-1 transition">
+            <span>❄️</span>
+            <span class="hidden sm:inline" id="snow-toggle-label">Snow On</span>
+          </button>
+
           <!-- Admin Add Album Button (Visible only when Admin is signed in) -->
           <button id="header-add-album-btn" onclick="openAddAlbumModal()" class="hidden px-3 py-1.5 rounded-full bg-[#FA243C]/15 hover:bg-[#FA243C]/25 border border-[#FA243C]/30 text-xs font-semibold text-[#FA243C] flex items-center gap-1.5 transition">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
@@ -611,7 +633,7 @@
           class="w-full bg-black/40 border border-white/12 focus:border-[#FA243C] rounded-xl px-3.5 py-2 text-xs text-white placeholder-neutral-500 outline-none transition" />
       </div>
 
-      <!-- Primary Share Actions (2-column balanced row without WhatsApp) -->
+      <!-- Primary Share Actions -->
       <div class="grid grid-cols-2 gap-2.5">
         <button onclick="triggerNativeSystemShare()" class="py-2.5 px-3 rounded-xl bg-[#FA243C] hover:bg-[#E01E34] text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-lg shadow-[#FA243C]/25 transition">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
@@ -635,6 +657,31 @@
         </svg>
         <span>Download Share Card (PNG)</span>
       </button>
+    </div>
+  </div>
+
+  <!-- Import Playlist Code Modal (For offline/manual code pasting across browsers) -->
+  <div id="import-playlist-code-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+    <div class="bg-[#1B1B22] border border-white/10 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-bold text-white">Import Shared Playlist</h3>
+        <button onclick="closeImportPlaylistCodeModal()" class="text-neutral-400 hover:text-white p-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <p class="text-xs text-neutral-400 leading-relaxed">
+        Paste a shared playlist link or <code class="text-neutral-200">TUNESPL:...</code> code from another browser to add it to your sidebar.
+      </p>
+      <div>
+        <textarea id="input-import-playlist-code" rows="3" placeholder="Paste playlist link or TUNESPL:... code here"
+          class="w-full bg-black/40 border border-white/15 focus:border-[#FA243C] rounded-xl px-3.5 py-2.5 text-xs font-mono text-white placeholder-neutral-500 outline-none transition"></textarea>
+      </div>
+      <div class="flex items-center justify-end gap-2 pt-1">
+        <button onclick="closeImportPlaylistCodeModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-neutral-300 hover:bg-white/10 transition">Cancel</button>
+        <button onclick="submitImportPlaylistCode()" class="px-5 py-2 rounded-xl text-xs font-bold bg-[#FA243C] hover:bg-[#E01E34] text-white shadow-lg shadow-[#FA243C]/25 transition">
+          Import Playlist
+        </button>
+      </div>
     </div>
   </div>
 
@@ -834,6 +881,85 @@
   </div>
 
   <script>
+    /**
+     * Ambient Holiday Snowfall Engine (Gentle, non-blocking, toggleable)
+     */
+    const SNOW_PREF_KEY = 'tunes_holiday_snow_enabled_v1';
+    let holidaySnowEnabled = localStorage.getItem(SNOW_PREF_KEY) !== 'false';
+    let snowAnimationId = null;
+
+    function initHolidaySnowfall() {
+      const canvas = document.getElementById('holiday-snow-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let width = (canvas.width = window.innerWidth);
+      let height = (canvas.height = window.innerHeight);
+
+      const flakeCount = Math.min(68, Math.max(32, Math.floor(width / 22)));
+      const flakes = Array.from({ length: flakeCount }, () => ({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        r: Math.random() * 2.4 + 1.1,
+        speedY: Math.random() * 0.65 + 0.3,
+        driftX: (Math.random() - 0.5) * 0.35,
+        phase: Math.random() * Math.PI * 2,
+        opacity: Math.random() * 0.48 + 0.22
+      }));
+
+      window.addEventListener('resize', () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      });
+
+      function renderSnowFrame() {
+        ctx.clearRect(0, 0, width, height);
+        if (holidaySnowEnabled) {
+          for (let i = 0; i < flakes.length; i++) {
+            const f = flakes[i];
+            f.phase += 0.014;
+            f.y += f.speedY;
+            f.x += f.driftX + Math.sin(f.phase) * 0.28;
+
+            if (f.y > height + 8) {
+              f.y = -8;
+              f.x = Math.random() * width;
+            }
+            if (f.x > width + 8) f.x = -8;
+            if (f.x < -8) f.x = width + 8;
+
+            ctx.beginPath();
+            ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(240, 248, 255, ${f.opacity})`;
+            ctx.fill();
+          }
+        }
+        snowAnimationId = requestAnimationFrame(renderSnowFrame);
+      }
+
+      updateSnowToggleUI();
+      if (!snowAnimationId) renderSnowFrame();
+    }
+
+    function updateSnowToggleUI() {
+      const btn = document.getElementById('snow-toggle-btn');
+      const label = document.getElementById('snow-toggle-label');
+      const canvas = document.getElementById('holiday-snow-canvas');
+      if (canvas) canvas.style.display = holidaySnowEnabled ? 'block' : 'none';
+      if (label) label.textContent = holidaySnowEnabled ? 'Snow On' : 'Snow Off';
+      if (btn) {
+        btn.className = holidaySnowEnabled
+          ? 'px-2.5 py-1.5 rounded-full bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 text-sky-200 text-xs font-semibold flex items-center gap-1 transition'
+          : 'px-2.5 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-neutral-400 text-xs font-semibold flex items-center gap-1 transition';
+      }
+    }
+
+    function toggleHolidaySnow() {
+      holidaySnowEnabled = !holidaySnowEnabled;
+      try { localStorage.setItem(SNOW_PREF_KEY, String(holidaySnowEnabled)); } catch (e) {}
+      updateSnowToggleUI();
+      showToast(holidaySnowEnabled ? 'Holiday Snowfall On ❄️' : 'Holiday Snowfall Off', 'info');
+    }
+
     /**
      * Global Error Guard so unexpected runtime issues never blank the UI
      */
@@ -1115,6 +1241,9 @@
     const STORAGE_KEY = 'apple_music_arr_albums_v4';
     const LEGACY_STORAGE_KEYS = ['apple_music_arr_albums_v3', 'apple_music_arr_albums_v2', 'apple_music_arr_albums_v1'];
     const PERMANENT_COVERS_KEY = 'tunes_permanent_album_covers_v1';
+    const LEGACY_COVER_KEYS = ['tunes_permanent_album_covers_v0', 'apple_music_arr_artwork_cache_v3', 'apple_music_arr_artwork_cache_v2'];
+    const COVER_VAULT_DB_NAME = 'tuneS_PermanentCoverVaultDB';
+    const COVER_VAULT_STORE_NAME = 'covers';
     const PLAYLISTS_STORAGE_KEY = 'apple_music_arr_playlists_v1';
     const ARTWORK_CACHE_KEY = 'apple_music_arr_artwork_cache_v3';
     const LAST_PLAYED_STORAGE_KEY = 'apple_music_last_played_v1';
@@ -1154,7 +1283,8 @@
       isSeeking: false,
       queueOpen: false,
       collectionLoading: false,
-      pendingTrackForPlaylist: null
+      pendingTrackForPlaylist: null,
+      pendingSharedPlaylistToken: null
     };
 
     let currentSharePayload = null;
@@ -1168,7 +1298,7 @@
     audio.volume = 1.0;
 
     // ==========================================
-    // Permanent Album Cover Protection
+    // Permanent Album Cover Protection (Dual LocalStorage + IndexedDB Vault)
     // ==========================================
     function isValidRealCoverUrl(url) {
       if (!url || typeof url !== 'string') return false;
@@ -1176,114 +1306,277 @@
       if (!trimmed) return false;
       if (trimmed.startsWith('data:image/svg+xml')) return false;
       if (trimmed === FALLBACK_COVER_ART || trimmed === UNIFORM_ARTIST_AVATAR) return false;
-      return trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:image/png') || trimmed.startsWith('data:image/jpeg');
+      return trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:image/png') || trimmed.startsWith('data:image/jpeg') || trimmed.startsWith('data:image/webp');
     }
 
     function normalizeCoverKey(title, artist = '') {
       const cleanT = String(title || '')
         .replace(/\(.*?\)|\[.*?\]/g, '')
         .replace(/\b(19|20)\d{2}\b/g, '')
+        .replace(/\b(320kbps|128kbps|mp3|flac|vbr|ost|tamil|hindi|telugu|malayalam|hq|cdrip|deluxe|edition|soundtrack|original|motion|picture)\b/gi, '')
         .replace(/[^a-zA-Z0-9]+/g, ' ')
         .trim()
         .toLowerCase();
+      const compactT = cleanT.replace(/\s+/g, '');
       const cleanA = String(artist || '').replace(/[^a-zA-Z0-9]+/g, ' ').trim().toLowerCase();
       return {
         byId: null,
         byTitleArtist: `${cleanT}::${cleanA}`,
-        byTitleOnly: cleanT
+        byCompactTitleArtist: `${compactT}::${cleanA}`,
+        byTitleOnly: cleanT,
+        byCompactTitleOnly: compactT
       };
     }
 
-    function loadPermanentCoverVault() {
+    function openCoverVaultIDB() {
+      return new Promise((resolve) => {
+        try {
+          if (!window.indexedDB) return resolve(null);
+          const req = indexedDB.open(COVER_VAULT_DB_NAME, 1);
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(COVER_VAULT_STORE_NAME)) {
+              db.createObjectStore(COVER_VAULT_STORE_NAME);
+            }
+          };
+          req.onsuccess = (e) => resolve(e.target.result);
+          req.onerror = () => resolve(null);
+        } catch (e) {
+          resolve(null);
+        }
+      });
+    }
+
+    async function syncCoverVaultWithIndexedDB() {
+      try {
+        const db = await openCoverVaultIDB();
+        if (!db) return;
+        const tx = db.transaction(COVER_VAULT_STORE_NAME, 'readwrite');
+        const store = tx.objectStore(COVER_VAULT_STORE_NAME);
+        const getReq = store.get('vault_map');
+        getReq.onsuccess = () => {
+          const idbVault = getReq.result && typeof getReq.result === 'object' ? getReq.result : {};
+          let mergedChanged = false;
+          Object.entries(idbVault).forEach(([k, v]) => {
+            if (isValidRealCoverUrl(v) && !isValidRealCoverUrl(permanentCoverVault[k])) {
+              permanentCoverVault[k] = v;
+              mergedChanged = true;
+            }
+          });
+          Object.entries(permanentCoverVault).forEach(([k, v]) => {
+            if (isValidRealCoverUrl(v) && idbVault[k] !== v) {
+              idbVault[k] = v;
+              mergedChanged = true;
+            }
+          });
+          if (mergedChanged) {
+            store.put(idbVault, 'vault_map');
+            try { localStorage.setItem(PERMANENT_COVERS_KEY, JSON.stringify(permanentCoverVault)); } catch (e) {}
+            reapplyLockedCoversToAllAlbums();
+          }
+        };
+      } catch (e) {}
+    }
+
+    function reapplyLockedCoversToAllAlbums() {
+      if (!Array.isArray(state.albums) || state.albums.length === 0) return;
+      let anyUpdated = false;
+      state.albums.forEach(alb => {
+        const locked = resolveLockedAlbumCover(alb.id, alb.title, alb.artist, alb.cover);
+        if (isValidRealCoverUrl(locked) && alb.cover !== locked) {
+          alb.cover = locked;
+          alb.needsExternalArt = false;
+          (alb.tracks || []).forEach(t => { t.cover = locked; });
+          anyUpdated = true;
+        }
+      });
+      if (anyUpdated) {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.albums)); } catch (e) {}
+        renderSidebarAlbums();
+        renderCurrentView();
+      }
+    }
+
+    var loadPermanentCoverVault = window.loadPermanentCoverVault = function loadPermanentCoverVault() {
       try {
         const raw = localStorage.getItem(PERMANENT_COVERS_KEY);
         if (raw) permanentCoverVault = JSON.parse(raw) || {};
       } catch (e) {
         permanentCoverVault = {};
       }
-    }
+      // Harvest and preserve any valid covers stored in legacy cache keys across updates
+      LEGACY_COVER_KEYS.forEach(legacyKey => {
+        try {
+          const rawLegacy = localStorage.getItem(legacyKey);
+          if (!rawLegacy) return;
+          const parsed = JSON.parse(rawLegacy);
+          if (parsed && typeof parsed === 'object') {
+            Object.entries(parsed).forEach(([k, v]) => {
+              if (isValidRealCoverUrl(v) && !isValidRealCoverUrl(permanentCoverVault[k])) {
+                permanentCoverVault[k] = v;
+              }
+            });
+          }
+        } catch (e) {}
+      });
+      syncCoverVaultWithIndexedDB();
+    };
 
-    function savePermanentCoverVault() {
+    var savePermanentCoverVault = window.savePermanentCoverVault = function savePermanentCoverVault() {
       try {
         localStorage.setItem(PERMANENT_COVERS_KEY, JSON.stringify(permanentCoverVault));
       } catch (e) {}
-    }
+      openCoverVaultIDB().then(db => {
+        if (!db) return;
+        try {
+          const tx = db.transaction(COVER_VAULT_STORE_NAME, 'readwrite');
+          tx.objectStore(COVER_VAULT_STORE_NAME).put(permanentCoverVault, 'vault_map');
+        } catch (e) {}
+      });
+    };
 
-    function lockPermanentAlbumCover(albumId, title, artist, coverUrl) {
+    var lockPermanentAlbumCover = window.lockPermanentAlbumCover = function lockPermanentAlbumCover(albumId, title, artist, coverUrl) {
       if (!isValidRealCoverUrl(coverUrl)) return;
       const keys = normalizeCoverKey(title, artist);
       let changed = false;
-      if (albumId && permanentCoverVault[`id::${albumId}`] !== coverUrl) {
-        permanentCoverVault[`id::${albumId}`] = coverUrl;
-        changed = true;
-      }
-      if (keys.byTitleArtist && permanentCoverVault[`ta::${keys.byTitleArtist}`] !== coverUrl) {
-        permanentCoverVault[`ta::${keys.byTitleArtist}`] = coverUrl;
-        changed = true;
-      }
-      if (keys.byTitleOnly && permanentCoverVault[`t::${keys.byTitleOnly}`] !== coverUrl) {
-        permanentCoverVault[`t::${keys.byTitleOnly}`] = coverUrl;
-        changed = true;
-      }
-      if (changed) savePermanentCoverVault();
-    }
+      const entries = [
+        albumId ? `id::${albumId}` : null,
+        keys.byTitleArtist ? `ta::${keys.byTitleArtist}` : null,
+        keys.byCompactTitleArtist ? `cta::${keys.byCompactTitleArtist}` : null,
+        keys.byTitleOnly ? `t::${keys.byTitleOnly}` : null,
+        keys.byCompactTitleOnly ? `ct::${keys.byCompactTitleOnly}` : null
+      ].filter(Boolean);
 
-    function resolveLockedAlbumCover(albumId, title, artist, candidateCover = null) {
-      if (isValidRealCoverUrl(candidateCover)) {
-        lockPermanentAlbumCover(albumId, title, artist, candidateCover);
-        return candidateCover;
-      }
+      entries.forEach(entryKey => {
+        if (permanentCoverVault[entryKey] !== coverUrl) {
+          permanentCoverVault[entryKey] = coverUrl;
+          changed = true;
+        }
+      });
+      if (changed) savePermanentCoverVault();
+    };
+
+    var resolveLockedAlbumCover = window.resolveLockedAlbumCover = function resolveLockedAlbumCover(albumId, title, artist, candidateCover = null) {
+      // 1. Always check existing locked vault first so a valid saved cover is never overwritten
       if (albumId && isValidRealCoverUrl(permanentCoverVault[`id::${albumId}`])) {
         return permanentCoverVault[`id::${albumId}`];
       }
       const keys = normalizeCoverKey(title, artist);
       if (keys.byTitleArtist && isValidRealCoverUrl(permanentCoverVault[`ta::${keys.byTitleArtist}`])) {
+        if (albumId) lockPermanentAlbumCover(albumId, title, artist, permanentCoverVault[`ta::${keys.byTitleArtist}`]);
         return permanentCoverVault[`ta::${keys.byTitleArtist}`];
       }
+      if (keys.byCompactTitleArtist && isValidRealCoverUrl(permanentCoverVault[`cta::${keys.byCompactTitleArtist}`])) {
+        if (albumId) lockPermanentAlbumCover(albumId, title, artist, permanentCoverVault[`cta::${keys.byCompactTitleArtist}`]);
+        return permanentCoverVault[`cta::${keys.byCompactTitleArtist}`];
+      }
       if (keys.byTitleOnly && isValidRealCoverUrl(permanentCoverVault[`t::${keys.byTitleOnly}`])) {
+        if (albumId) lockPermanentAlbumCover(albumId, title, artist, permanentCoverVault[`t::${keys.byTitleOnly}`]);
         return permanentCoverVault[`t::${keys.byTitleOnly}`];
+      }
+      if (keys.byCompactTitleOnly && isValidRealCoverUrl(permanentCoverVault[`ct::${keys.byCompactTitleOnly}`])) {
+        if (albumId) lockPermanentAlbumCover(albumId, title, artist, permanentCoverVault[`ct::${keys.byCompactTitleOnly}`]);
+        return permanentCoverVault[`ct::${keys.byCompactTitleOnly}`];
       }
       const cacheKey = `${keys.byTitleOnly}::${String(artist || '').toLowerCase()}`;
       if (isValidRealCoverUrl(artworkCache[cacheKey])) {
         lockPermanentAlbumCover(albumId, title, artist, artworkCache[cacheKey]);
         return artworkCache[cacheKey];
       }
+      // 2. If not yet locked, accept and permanently lock a valid candidate cover
+      if (isValidRealCoverUrl(candidateCover)) {
+        lockPermanentAlbumCover(albumId, title, artist, candidateCover);
+        return candidateCover;
+      }
       return null;
-    }
+    };
+
+    // Global image self-healing listener: if a network cover temporarily fails to render, fall back cleanly without deleting the locked URL
+    document.addEventListener('error', (e) => {
+      const target = e.target;
+      if (target && target.tagName === 'IMG' && target.src !== FALLBACK_COVER_ART) {
+        target.src = FALLBACK_COVER_ART;
+      }
+    }, true);
 
     // ==========================================
-    // Background Audio Keep-Alive & Car Head-Unit Support
+    // Background Audio Session, Watchdog & MediaSession
     // ==========================================
-    let keepAliveCtx = null;
-    let keepAliveOsc = null;
-    let keepAliveGain = null;
+    let userPausedManually = false;
+    let backgroundAudioCtx = null;
+    let playbackWatchdogTimer = null;
+    let playbackWakeLock = null;
 
     function ensureBackgroundAudioSession() {
       try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        if (!keepAliveCtx) {
-          keepAliveCtx = new AudioCtx();
-          keepAliveOsc = keepAliveCtx.createOscillator();
-          keepAliveGain = keepAliveCtx.createGain();
-          keepAliveOsc.type = 'sine';
-          keepAliveOsc.frequency.setValueAtTime(1, keepAliveCtx.currentTime);
-          keepAliveGain.gain.setValueAtTime(0.00001, keepAliveCtx.currentTime);
-          keepAliveOsc.connect(keepAliveGain);
-          keepAliveGain.connect(keepAliveCtx.destination);
-          keepAliveOsc.start();
+        if (AudioCtx) {
+          if (!backgroundAudioCtx) {
+            backgroundAudioCtx = new AudioCtx();
+            const buffer = backgroundAudioCtx.createBuffer(1, 1, 22050);
+            const source = backgroundAudioCtx.createBufferSource();
+            source.buffer = buffer;
+            source.loop = true;
+            const gain = backgroundAudioCtx.createGain();
+            gain.gain.value = 0.0001;
+            source.connect(gain);
+            gain.connect(backgroundAudioCtx.destination);
+            source.start(0);
+          }
+          if (backgroundAudioCtx.state === 'suspended') {
+            backgroundAudioCtx.resume().catch(() => {});
+          }
         }
-        if (keepAliveCtx.state === 'suspended') {
-          keepAliveCtx.resume().catch(() => {});
+      } catch (e) {}
+
+      try {
+        if ('wakeLock' in navigator && !playbackWakeLock && document.visibilityState === 'visible') {
+          navigator.wakeLock.request('screen').then(lock => {
+            playbackWakeLock = lock;
+            lock.addEventListener('release', () => { playbackWakeLock = null; });
+          }).catch(() => {});
         }
       } catch (e) {}
     }
 
-    async function resolveRasterArtworkUrl(coverUrl) {
-      if (!coverUrl) return FALLBACK_COVER_ART;
-      if (!coverUrl.startsWith('data:image/svg')) return coverUrl;
-      if (rasterArtworkCache.has(coverUrl)) return rasterArtworkCache.get(coverUrl);
+    function releasePlaybackWakeLock() {
+      try {
+        if (playbackWakeLock) {
+          playbackWakeLock.release().catch(() => {});
+          playbackWakeLock = null;
+        }
+      } catch (e) {}
+    }
 
+    function startPlaybackWatchdog() {
+      if (playbackWatchdogTimer) return;
+      playbackWatchdogTimer = setInterval(() => {
+        if (userPausedManually || state.queue.length === 0 || !audio.src) return;
+        const dur = audio.duration || 0;
+        const cur = audio.currentTime || 0;
+        if (audio.ended || (dur > 1 && cur >= dur - 0.35)) {
+          if (state.repeatMode === 'one') {
+            audio.currentTime = 0;
+            audio.play().catch(() => {});
+          } else {
+            nextTrack();
+          }
+          return;
+        }
+        if (audio.paused && state.isPlaying) {
+          ensureBackgroundAudioSession();
+          audio.play().catch(() => {});
+        }
+      }, 1500);
+    }
+
+    function resolveRasterArtworkUrl(url) {
+      if (!url || !url.startsWith('data:image/svg+xml')) {
+        return Promise.resolve(url || FALLBACK_COVER_ART);
+      }
+      if (rasterArtworkCache.has(url)) {
+        return Promise.resolve(rasterArtworkCache.get(url));
+      }
       return new Promise((resolve) => {
         const img = new Image();
         img.onload = () => {
@@ -1293,33 +1586,41 @@
             canvas.height = 512;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, 512, 512);
-            const pngUri = canvas.toDataURL('image/png');
-            rasterArtworkCache.set(coverUrl, pngUri);
-            resolve(pngUri);
+            const pngUrl = canvas.toDataURL('image/png');
+            rasterArtworkCache.set(url, pngUrl);
+            resolve(pngUrl);
           } catch (e) {
-            resolve(coverUrl);
+            resolve(url);
           }
         };
-        img.onerror = () => resolve(coverUrl);
-        img.src = coverUrl;
+        img.onerror = () => resolve(url);
+        img.src = url;
       });
+    }
+
+    function jumpToCurrentTrackAlbum() {
+      const track = getCurrentTrack() || state.lastPlayedTrack;
+      if (track && track.albumId) {
+        switchView('album', track.albumId);
+      }
     }
 
     function bindMediaSessionHandlers() {
       if (!('mediaSession' in navigator)) return;
       const handlers = {
         play: () => {
+          userPausedManually = false;
           ensureBackgroundAudioSession();
-          if (!audio.src && getCurrentTrack()) {
-            loadAndPlayCurrentTrack();
-          } else {
-            audio.play().catch(() => {});
-          }
+          audio.play().catch(() => {});
         },
         pause: () => {
+          userPausedManually = true;
+          releasePlaybackWakeLock();
           audio.pause();
         },
         stop: () => {
+          userPausedManually = true;
+          releasePlaybackWakeLock();
           audio.pause();
           audio.currentTime = 0;
         },
@@ -1401,6 +1702,7 @@
     // ==========================================
     function initializeTuneSApp() {
       try {
+        initHolidaySnowfall();
         loadPermanentCoverVault();
         loadAdminSession();
         evaluateDeviceAccessGate();
@@ -1425,7 +1727,7 @@
           fetchMultiAlbumCollection(col.identifier, col.defaultArtist, col.genre, col.artistId);
         });
 
-        // Handle deep links (?share=album|song, ?action=radio|search)
+        // Handle deep links (?share=album|song, ?playlist=..., ?action=radio|search)
         handleInitialUrlParams();
       } catch (err) {
         console.error('Initialization error:', err);
@@ -1441,6 +1743,18 @@
       const action = params.get('action');
       const shareType = params.get('share');
       const shareId = params.get('id');
+      const playlistToken = params.get('playlist');
+
+      if (playlistToken) {
+        state.pendingSharedPlaylistToken = playlistToken;
+        try {
+          const cleanUrl = new URL(window.location.href);
+          cleanUrl.searchParams.delete('playlist');
+          window.history.replaceState({}, '', cleanUrl.toString());
+        } catch (e) {}
+        setTimeout(() => processPendingSharedPlaylist(), 450);
+        return;
+      }
 
       if (action === 'search') {
         switchView('search');
@@ -1927,6 +2241,9 @@
         if (newlyAdded) {
           saveAlbumsToStorage();
         }
+        if (state.pendingSharedPlaylistToken) {
+          processPendingSharedPlaylist();
+        }
         renderSidebarArtists();
         renderSidebarAlbums();
         renderCurrentView();
@@ -1944,19 +2261,31 @@
       );
       if (albumsNeedingArt.length === 0) return;
 
-      let updatedAny = false;
+      // Prioritize albums belonging to the currently selected artist or viewed album first
+      albumsNeedingArt.sort((a, b) => {
+        const aPriority = (a.id === state.selectedAlbumId ? 2 : 0) + (a.artistId === state.selectedArtistId ? 1 : 0);
+        const bPriority = (b.id === state.selectedAlbumId ? 2 : 0) + (b.artistId === state.selectedArtistId ? 1 : 0);
+        return bPriority - aPriority;
+      });
+
+      let batchCount = 0;
       for (const album of albumsNeedingArt) {
         const fetchedUrl = await fetchOfficialAlbumArt(album.title, album.artist, album.id);
-        album.needsExternalArt = false;
         if (isValidRealCoverUrl(fetchedUrl)) {
           album.cover = fetchedUrl;
+          album.needsExternalArt = false;
           lockPermanentAlbumCover(album.id, album.title, album.artist, fetchedUrl);
           (album.tracks || []).forEach(t => { t.cover = fetchedUrl; });
-          updatedAny = true;
+          batchCount++;
+          if (batchCount % 4 === 0) {
+            saveAlbumsToStorage();
+            renderSidebarAlbums();
+            renderCurrentView();
+          }
         }
-        await new Promise(r => setTimeout(r, 120));
+        await new Promise(r => setTimeout(r, 85));
       }
-      if (updatedAny) {
+      if (batchCount > 0) {
         saveAlbumsToStorage();
         renderSidebarAlbums();
         renderCurrentView();
@@ -2138,6 +2467,7 @@
     function formatDisplayAlbumTitle(rawName) {
       let clean = String(rawName || '')
         .replace(/[_]+/g, ' ')
+        .replace(/\(\s*\)|\[\s*\]/g, '')
         .replace(/\b(320kbps|128kbps|mp3|flac|vbr|ost|Tamil|Hindi|Telugu|HQ|CDRip)\b/gi, '')
         .replace(/^(a\.?\s*r\.?\s*rahman|anirudh\s*ravichander|anirudh|harris\s*jayaraj|santhosh\s*narayanan|yuvan\s*shankar\s*raja|yuvan|nivas\s*k\.?\s*prasanna|sai\s*abhyankkar|sean\s*roldan|deva|vidyasagar|bharadwaj|ilayaraja|ilaiyaraaja|darbuka\s*siva|d\.?\s*imman|dimaan)\s*[-–:|]\s*/i, '')
         .replace(/\s+/g, ' ')
@@ -2185,6 +2515,12 @@
         return;
       }
 
+      const current = getCurrentTrack();
+      if (!shuffle && startIndex === 0 && !state.isRadioMode && !state.currentPlayingPlaylist && current && current.albumId === albumId && state.queue.length > 0) {
+        togglePlayPause();
+        return;
+      }
+
       let trackList = [...album.tracks];
       if (shuffle) {
         state.isShuffle = true;
@@ -2215,6 +2551,11 @@
       const pl = state.playlists.find(p => p.id === playlistId);
       if (!pl || !pl.tracks || pl.tracks.length === 0) {
         showToast('This playlist is empty. Add songs to play!', 'info');
+        return;
+      }
+
+      if (!shuffle && startIndex === 0 && state.currentPlayingPlaylist === playlistId && state.queue.length > 0) {
+        togglePlayPause();
         return;
       }
 
@@ -2278,7 +2619,9 @@
       const track = getCurrentTrack();
       if (!track) return;
 
+      userPausedManually = false;
       ensureBackgroundAudioSession();
+      startPlaybackWatchdog();
       const lockedCover = resolveLockedAlbumCover(track.albumId, track.albumTitle, track.artist, track.cover);
       if (lockedCover) track.cover = lockedCover;
 
@@ -2303,26 +2646,29 @@
       updateMediaSession(track);
       preloadUpcomingTrack();
 
+      // Keep same DOM audio element warm and immediately load next stream
+      audio.pause();
       audio.src = track.url;
       audio.dataset.triedFallback = 'false';
-      audio.play()
-        .then(() => {
-          state.isPlaying = true;
-          updatePlayPauseUI();
-          renderSidebarArtists();
-          renderQueueDrawer();
-          renderCurrentView();
-        })
-        .catch(() => {
-          state.isPlaying = false;
-          updatePlayPauseUI();
-        });
-    }
-
-    function jumpToCurrentTrackAlbum() {
-      const track = getCurrentTrack() || state.lastPlayedTrack;
-      if (track && track.albumId) {
-        switchView('album', track.albumId);
+      audio.load();
+      const playPromise = audio.play();
+      if (playPromise && typeof playPromise.then === 'function') {
+        playPromise
+          .then(() => {
+            state.isPlaying = true;
+            updatePlayPauseUI();
+            renderSidebarArtists();
+            renderSidebarPlaylists();
+            renderSidebarAlbums();
+            renderCurrentView();
+          })
+          .catch(() => {
+            setTimeout(() => {
+              if (!userPausedManually && audio.paused) {
+                audio.play().catch(() => {});
+              }
+            }, 350);
+          });
       }
     }
 
@@ -2350,6 +2696,8 @@
       }
 
       if (audio.paused) {
+        userPausedManually = false;
+        startPlaybackWatchdog();
         audio.play().then(() => {
           state.isPlaying = true;
           updatePlayPauseUI();
@@ -2357,6 +2705,8 @@
           renderCurrentView();
         }).catch(() => {});
       } else {
+        userPausedManually = true;
+        releasePlaybackWakeLock();
         audio.pause();
         state.isPlaying = false;
         updatePlayPauseUI();
@@ -2367,6 +2717,7 @@
 
     function nextTrack() {
       if (state.queue.length === 0) return;
+      userPausedManually = false;
 
       if (state.isShuffle && state.queue.length > 1) {
         let nextIdx = state.currentIndex;
@@ -2381,17 +2732,18 @@
       if (state.currentIndex + 1 < state.queue.length) {
         state.currentIndex += 1;
         loadAndPlayCurrentTrack();
-      } else if (state.repeatMode === 'all') {
+      } else if (state.repeatMode === 'all' || state.isRadioMode) {
         state.currentIndex = 0;
         loadAndPlayCurrentTrack();
       } else {
-        state.isPlaying = false;
-        updatePlayPauseUI();
+        state.currentIndex = 0;
+        loadAndPlayCurrentTrack();
       }
     }
 
     function prevTrack() {
       if (state.queue.length === 0) return;
+      userPausedManually = false;
       if (audio.currentTime > 3) {
         audio.currentTime = 0;
         return;
@@ -2560,6 +2912,7 @@
       });
 
       audio.addEventListener('ended', () => {
+        if (userPausedManually) return;
         if (state.repeatMode === 'one') {
           audio.currentTime = 0;
           audio.play().catch(() => {});
@@ -2570,6 +2923,7 @@
 
       audio.addEventListener('play', () => {
         state.isPlaying = true;
+        userPausedManually = false;
         ensureBackgroundAudioSession();
         bindMediaSessionHandlers();
         updatePlayPauseUI();
@@ -2582,10 +2936,26 @@
       });
 
       audio.addEventListener('pause', () => {
+        // If the OS/browser paused the audio automatically during screen lock or app minimize, resume immediately
+        if (!userPausedManually && !audio.ended && state.queue.length > 0 && audio.src) {
+          ensureBackgroundAudioSession();
+          setTimeout(() => {
+            if (!userPausedManually && audio.paused && !audio.ended) {
+              audio.play().catch(() => {});
+            }
+          }, 180);
+          return;
+        }
         state.isPlaying = false;
         updatePlayPauseUI();
         renderSidebarArtists();
         renderCurrentView();
+      });
+
+      audio.addEventListener('stalled', () => {
+        if (!userPausedManually && state.isPlaying && audio.src) {
+          audio.play().catch(() => {});
+        }
       });
 
       audio.addEventListener('error', () => {
@@ -2601,12 +2971,20 @@
       });
 
       document.addEventListener('visibilitychange', () => {
-        if (state.isPlaying) {
+        if (!userPausedManually && (state.isPlaying || getCurrentTrack())) {
           ensureBackgroundAudioSession();
           bindMediaSessionHandlers();
-          if (audio.paused && audio.src) {
+          if (audio.ended) {
+            nextTrack();
+          } else if (audio.paused && audio.src) {
             audio.play().catch(() => {});
           }
+        }
+      });
+
+      window.addEventListener('pagehide', () => {
+        if (!userPausedManually && state.isPlaying && audio.src) {
+          audio.play().catch(() => {});
         }
       });
     }
@@ -2660,7 +3038,7 @@
     }
 
     // ==========================================
-    // Rich Social Sharing (Albums & Songs, Resolvable Links, No WhatsApp)
+    // Rich Social Sharing (Albums & Songs, Resolvable Links)
     // ==========================================
     function buildResolvableShareUrl(type, id, fallbackArchiveUrl) {
       const loc = window.location;
@@ -2706,6 +3084,207 @@
     function shareCurrentTrack() {
       const track = getCurrentTrack() || state.lastPlayedTrack;
       if (track) shareSong(track);
+    }
+
+    // ==========================================
+    // Cross-Browser Shareable Playlists (URL + Code Encoding)
+    // ==========================================
+    function encodeBase64Url(str) {
+      const bytes = new TextEncoder().encode(str);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    function decodeBase64Url(b64) {
+      let padded = String(b64 || '').replace(/-/g, '+').replace(/_/g, '/');
+      while (padded.length % 4 !== 0) padded += '=';
+      const binary = atob(padded);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return new TextDecoder().decode(bytes);
+    }
+
+    function encodeShareablePlaylistToken(playlist) {
+      const compactTracks = (playlist.tracks || []).map(t => [
+        t.albumId || '',
+        t.filename || t.id || '',
+        t.title || '',
+        t.artist || '',
+        t.albumTitle || ''
+      ]);
+      const json = JSON.stringify({ n: playlist.name, t: compactTracks });
+      return `TUNESPL1_${encodeBase64Url(json)}`;
+    }
+
+    function decodeShareablePlaylistToken(rawInput) {
+      let token = String(rawInput || '').trim();
+      if (!token) return null;
+      if (token.includes('playlist=')) {
+        try {
+          const urlObj = new URL(token);
+          token = urlObj.searchParams.get('playlist') || token;
+        } catch (e) {
+          const m = token.match(/playlist=([^&\s]+)/);
+          if (m && m[1]) token = decodeURIComponent(m[1]);
+        }
+      }
+      token = token.replace(/^TUNESPL1[_:]/i, '');
+      const decodedJson = decodeBase64Url(token);
+      const parsed = JSON.parse(decodedJson);
+      if (!parsed || !parsed.n || !Array.isArray(parsed.t)) return null;
+      return parsed;
+    }
+
+    function buildShareablePlaylistUrl(token) {
+      const loc = window.location;
+      if (loc && (loc.protocol === 'http:' || loc.protocol === 'https:') && loc.hostname && !loc.hostname.includes('usercontent') && !loc.hostname.includes('srcdoc')) {
+        const url = new URL(loc.origin + loc.pathname);
+        url.searchParams.set('playlist', token);
+        return url.toString();
+      }
+      return `https://hummingjays.github.io/tune-s/?playlist=${encodeURIComponent(token)}`;
+    }
+
+    function sharePlaylist(playlistId, e) {
+      if (e) e.stopPropagation();
+      const playlist = state.playlists.find(p => p.id === playlistId);
+      if (!playlist) return;
+      if (!playlist.tracks || playlist.tracks.length === 0) {
+        showToast('Add at least one song before sharing this playlist.', 'error');
+        return;
+      }
+      const token = encodeShareablePlaylistToken(playlist);
+      const shareUrl = buildShareablePlaylistUrl(token);
+      const cover = playlist.tracks[0]?.cover || FALLBACK_COVER_ART;
+
+      openShareModal({
+        type: 'Playlist',
+        title: `${playlist.name} — Playlist on tune-S`,
+        subtitle: `Playlist • ${playlist.tracks.length} Songs • Opens directly in any browser`,
+        cover,
+        url: shareUrl,
+        playlistToken: token
+      });
+    }
+
+    function resolveTracksFromCompactEntries(entries) {
+      const allLibraryTracks = state.albums.flatMap(a => a.tracks || []);
+      const resolved = [];
+
+      entries.forEach(entry => {
+        const [albId, fileOrId, title, artist, albumTitle] = entry;
+        let found = allLibraryTracks.find(t =>
+          (albId && t.albumId === albId && (t.filename === fileOrId || t.id === fileOrId)) ||
+          (t.id === fileOrId) ||
+          (title && t.title.toLowerCase() === String(title).toLowerCase() && (!albumTitle || t.albumTitle.toLowerCase() === String(albumTitle).toLowerCase()))
+        );
+
+        if (!found && albId && fileOrId && albId.includes('::')) {
+          const collectionId = albId.split('::')[0];
+          const cleanFile = String(fileOrId).includes('::') ? String(fileOrId).split('::').slice(1).join('::') : String(fileOrId);
+          const lockedCover = resolveLockedAlbumCover(albId, albumTitle, artist) || FALLBACK_COVER_ART;
+          found = {
+            id: `${albId}::${cleanFile}`,
+            albumId: albId,
+            albumTitle: albumTitle || 'Shared Album',
+            artist: artist || 'tune-S Artist',
+            cover: lockedCover,
+            title: title || cleanTrackTitle(cleanFile),
+            filename: cleanFile,
+            duration: 0,
+            url: `https://archive.org/download/${encodeURIComponent(collectionId)}/${encodeURIComponent(cleanFile).replace(/%2F/g, '/')}`,
+            formatBadge: 'HI-FI'
+          };
+        }
+
+        if (found) {
+          resolved.push({ ...found });
+        }
+      });
+
+      return resolved;
+    }
+
+    function importSharedPlaylistFromInput(rawInput, autoOpen = true) {
+      try {
+        const decoded = decodeShareablePlaylistToken(rawInput);
+        if (!decoded) return false;
+
+        const tracks = resolveTracksFromCompactEntries(decoded.t);
+        if (tracks.length === 0) {
+          if (state.collectionLoading) return false;
+          showToast('Could not match songs from this playlist link.', 'error');
+          return false;
+        }
+
+        const existing = state.playlists.find(p => p.name.toLowerCase() === decoded.n.toLowerCase());
+        let targetPlaylist;
+        if (existing) {
+          existing.tracks = tracks;
+          targetPlaylist = existing;
+        } else {
+          targetPlaylist = {
+            id: 'pl-' + Date.now(),
+            name: decoded.n,
+            tracks
+          };
+          state.playlists.push(targetPlaylist);
+        }
+
+        savePlaylistsToStorage();
+        renderSidebarPlaylists();
+        if (autoOpen) {
+          switchView('playlist', targetPlaylist.id);
+        }
+        showToast(`Imported playlist "${decoded.n}" (${tracks.length} songs)!`, 'info');
+        return true;
+      } catch (err) {
+        console.error('Playlist import error:', err);
+        return false;
+      }
+    }
+
+    function processPendingSharedPlaylist() {
+      if (!state.pendingSharedPlaylistToken) return;
+      const token = state.pendingSharedPlaylistToken;
+      const imported = importSharedPlaylistFromInput(token, true);
+      if (imported || !state.collectionLoading) {
+        state.pendingSharedPlaylistToken = null;
+      }
+    }
+
+    function openImportPlaylistCodeModal() {
+      const modal = document.getElementById('import-playlist-code-modal');
+      const input = document.getElementById('input-import-playlist-code');
+      if (input) input.value = '';
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      setTimeout(() => input?.focus(), 50);
+    }
+
+    function closeImportPlaylistCodeModal() {
+      const modal = document.getElementById('import-playlist-code-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function submitImportPlaylistCode() {
+      const raw = document.getElementById('input-import-playlist-code')?.value || '';
+      if (!raw.trim()) {
+        showToast('Paste a playlist link or code first.', 'error');
+        return;
+      }
+      const ok = importSharedPlaylistFromInput(raw, true);
+      if (ok) {
+        closeImportPlaylistCodeModal();
+      } else {
+        showToast('Invalid playlist link or code.', 'error');
+      }
     }
 
     function openShareModal(payload) {
@@ -3056,6 +3635,15 @@
     function renderSidebarPlaylists() {
       const list = document.getElementById('sidebar-playlist-list');
       if (!list) return;
+      const importBtnHtml = `
+        <button onclick="openImportPlaylistCodeModal()"
+          class="w-full flex items-center gap-2 px-3 py-1.5 mt-1 rounded-lg text-left text-[11px] font-semibold text-neutral-400 hover:text-white hover:bg-white/[0.06] transition">
+          <svg class="w-3.5 h-3.5 text-[#FA243C] shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 3v12m0 0l-4-4m4 4l4-4"/>
+          </svg>
+          <span>Import Shared Playlist</span>
+        </button>
+      `;
       list.innerHTML = state.playlists.map(pl => {
         const isActive = state.currentView === 'playlist' && state.selectedPlaylistId === pl.id;
         return `
@@ -3070,7 +3658,7 @@
             <span class="text-[10px] text-neutral-500 shrink-0">${pl.tracks.length}</span>
           </div>
         `;
-      }).join('');
+      }).join('') + importBtnHtml;
     }
 
     function renderSidebarAlbums() {
@@ -3248,7 +3836,7 @@
               <div>
                 <div class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#FA243C] mb-1">
                   <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
-                  <span>Artist Directory</span>
+                  <span>Artist Directory • Holiday Edition ❄️</span>
                 </div>
                 <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">Featured Artists</h1>
                 <p class="text-xs sm:text-sm text-neutral-400 mt-1">
@@ -3522,6 +4110,7 @@
 
     function renderAlbumDetailView(container, album) {
       const currentTrack = getCurrentTrack();
+      const isAlbumActive = Boolean(currentTrack && currentTrack.albumId === album.id && !state.isRadioMode && !state.currentPlayingPlaylist);
       const totalSeconds = album.tracks.reduce((acc, t) => acc + (t.duration || 0), 0);
       const totalMins = Math.round(totalSeconds / 60);
 
@@ -3561,8 +4150,10 @@
 
               <div class="mt-6 flex flex-wrap items-center justify-center md:justify-start gap-3">
                 <button onclick="playAlbum('${album.id.replace(/'/g, "\\'")}', 0, false)" class="px-7 py-2.5 rounded-full bg-[#FA243C] hover:bg-[#E01E34] active:scale-[0.98] text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-[#FA243C]/25 transition">
-                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                  <span>Play</span>
+                  ${isAlbumActive
+                    ? `${renderEqualizerBars('bg-white')}<span>${state.isPlaying ? 'Playing' : 'Paused'}</span>`
+                    : `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span>Play</span>`
+                  }
                 </button>
 
                 <button onclick="playAlbum('${album.id.replace(/'/g, "\\'")}', 0, true)" class="px-6 py-2.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] active:scale-[0.98] text-white text-xs sm:text-sm font-bold flex items-center gap-2 transition">
@@ -4095,6 +4686,13 @@
     }
 
     function renderPlaylistDetailView(container, playlist) {
+      const currentTrack = getCurrentTrack();
+      const isPlaylistActive = Boolean(
+        currentTrack &&
+        (state.currentPlayingPlaylist === playlist.id || playlist.tracks.some(t => t.id === currentTrack.id)) &&
+        !state.isRadioMode
+      );
+
       container.innerHTML = `
         <div class="max-w-5xl mx-auto space-y-8">
           <div class="flex flex-col md:flex-row items-center md:items-end gap-6 sm:gap-8">
@@ -4112,11 +4710,19 @@
 
               <div class="mt-5 flex flex-wrap items-center justify-center md:justify-start gap-3">
                 <button onclick="playPlaylist('${playlist.id}', 0, false)" class="px-7 py-2.5 rounded-full bg-[#FA243C] hover:bg-[#E01E34] text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-[#FA243C]/25 transition">
-                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                  <span>Play</span>
+                  ${isPlaylistActive
+                    ? `${renderEqualizerBars('bg-white')}<span>${state.isPlaying ? 'Playing' : 'Paused'}</span>`
+                    : `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span>Play</span>`
+                  }
                 </button>
                 <button onclick="playPlaylist('${playlist.id}', 0, true)" class="px-6 py-2.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs sm:text-sm font-bold flex items-center gap-2 transition">
                   <span>Shuffle</span>
+                </button>
+                <button onclick="sharePlaylist('${playlist.id}', event)" class="px-5 py-2.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs sm:text-sm font-bold flex items-center gap-2 transition">
+                  <svg class="w-4 h-4 text-[#FA243C]" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                  </svg>
+                  <span>Share Playlist</span>
                 </button>
                 <button onclick="deletePlaylist('${playlist.id}')" class="px-4 py-2.5 rounded-full bg-white/[0.05] hover:bg-red-500/20 text-neutral-300 hover:text-red-400 text-xs font-semibold transition">
                   Delete Playlist
