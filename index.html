@@ -11,13 +11,13 @@
   <meta name="application-name" content="tune-S" />
   <meta property="og:site_name" content="tune-S Music" />
   <meta property="og:title" content="tune-S Music — Lossless Indian Film & Indie Collection" />
-  <meta property="og:description" content="Stream high-fidelity soundtracks and albums across 14 legendary composers on tune-S." />
+  <meta property="og:description" content="Stream high-fidelity soundtracks and albums across 16 legendary composers on tune-S." />
   <meta property="og:type" content="music.album" />
   <meta name="twitter:card" content="summary_large_image" />
   <link id="pwa-favicon" rel="icon" type="image/png" sizes="192x192" />
   <link id="pwa-apple-icon" rel="apple-touch-icon" sizes="512x512" />
   <link id="pwa-manifest-link" rel="manifest" href="./manifest.json" />
-  <title>tune-S — A.R. Rahman, Anirudh Ravichander, Bharadwaj, D. Imman, Darbuka Siva, Deva, Harris Jayaraj, Ilayaraja, Nivas K. Prasanna, Sai Abhyankkar, Santhosh Narayanan, Sean Roldan, Vidyasagar & Yuvan Shankar Raja Collection</title>
+  <title>tune-S — A.R. Rahman, Anirudh Ravichander, Bharadwaj, D. Imman, Darbuka Siva, Deva, G.V.Prakash, Govind Vasantha, Harris Jayaraj, Ilayaraja, Nivas K. Prasanna, Sai Abhyankkar, Santhosh Narayanan, Sean Roldan, Vidyasagar & Yuvan Shankar Raja Collection</title>
   <script>
     // Global fallback artwork defined early so inline <img> tags never throw ReferenceError
     window.FALLBACK_COVER_ART = "data:image/svg+xml;utf8," + encodeURIComponent(
@@ -1131,6 +1131,8 @@
       { id: 'd-imman', name: 'D. Imman', identifier: 'dimaan', cover: UNIFORM_ARTIST_AVATAR, tagline: 'National Award-Winning Composer & Melody Hitmaker', genre: 'Tamil & Telugu Film Soundtracks • Hi-Fi' },
       { id: 'darbuka-siva', name: 'Darbuka Siva', identifier: 'darbuka-siva', cover: UNIFORM_ARTIST_AVATAR, tagline: 'Percussionist, Singer-Songwriter & Soulful Film Composer', genre: 'Tamil & Indie Film Soundtracks • Hi-Fi' },
       { id: 'deva', name: 'Deva', identifier: 'deva_20261116', cover: UNIFORM_ARTIST_AVATAR, tagline: 'Thenisai Thendral & King of Gaana Classics', genre: 'Tamil Evergreen & Mass Soundtracks • Hi-Fi' },
+      { id: 'gv-prakash', name: 'G.V.Prakash', identifier: 'gvp_20261121', cover: UNIFORM_ARTIST_AVATAR, tagline: 'National Award-Winning Composer, Singer & Actor', genre: 'Tamil & Telugu Film Soundtracks • Hi-Fi' },
+      { id: 'govind-vasantha', name: 'Govind Vasantha', identifier: 'GovindVasantha', cover: UNIFORM_ARTIST_AVATAR, tagline: 'Soulful Violinist, Composer & Thaikkudam Bridge Frontman', genre: 'Tamil & Malayalam Film Soundtracks • Hi-Fi' },
       { id: 'harris-jayaraj', name: 'Harris Jayaraj', identifier: 'harris_202611', cover: UNIFORM_ARTIST_AVATAR, tagline: 'Melodic Maestro of South Indian Cinema', genre: 'Tamil & Telugu Soundtracks • Hi-Fi' },
       { id: 'ilayaraja', name: 'Ilayaraja', identifier: 'ilayaraja_202611', cover: UNIFORM_ARTIST_AVATAR, tagline: 'Isaignani & Legendary Maestro of Indian Film Music', genre: 'Tamil, Telugu & Malayalam Classics • Hi-Fi' },
       { id: 'nivas-k-prasanna', name: 'Nivas K. Prasanna', identifier: 'nivas-k-prasanna', cover: UNIFORM_ARTIST_AVATAR, tagline: 'Soulful Contemporary Composer & Melodic Virtuoso', genre: 'Tamil & Telugu Film Soundtracks • Hi-Fi' },
@@ -1155,7 +1157,9 @@
       { identifier: 'Bharadwaj', artistId: 'bharadwaj', defaultArtist: 'Bharadwaj', genre: 'Tamil & Telugu Soundtracks • Hi-Fi' },
       { identifier: 'ilayaraja_202611', artistId: 'ilayaraja', defaultArtist: 'Ilayaraja', genre: 'Tamil, Telugu & Malayalam Classics • Hi-Fi' },
       { identifier: 'darbuka-siva', artistId: 'darbuka-siva', defaultArtist: 'Darbuka Siva', genre: 'Tamil & Indie Film Soundtracks • Hi-Fi' },
-      { identifier: 'dimaan', artistId: 'd-imman', defaultArtist: 'D. Imman', genre: 'Tamil & Telugu Film Soundtracks • Hi-Fi' }
+      { identifier: 'dimaan', artistId: 'd-imman', defaultArtist: 'D. Imman', genre: 'Tamil & Telugu Film Soundtracks • Hi-Fi' },
+      { identifier: 'gvp_20261121', artistId: 'gv-prakash', defaultArtist: 'G.V.Prakash', genre: 'Tamil & Telugu Film Soundtracks • Hi-Fi' },
+      { identifier: 'GovindVasantha', artistId: 'govind-vasantha', defaultArtist: 'Govind Vasantha', genre: 'Tamil & Malayalam Film Soundtracks • Hi-Fi' }
     ];
 
     const STORAGE_KEY = 'apple_music_arr_albums_v4';
@@ -2388,7 +2392,7 @@
         .replace(/[_]+/g, ' ')
         .replace(/\(\s*\)|\[\s*\]/g, '')
         .replace(/\b(320kbps|128kbps|mp3|flac|vbr|ost|Tamil|Hindi|Telugu|HQ|CDRip)\b/gi, '')
-        .replace(/^(a\.?\s*r\.?\s*rahman|anirudh\s*ravichander|anirudh|harris\s*jayaraj|santhosh\s*narayanan|yuvan\s*shankar\s*raja|yuvan|nivas\s*k\.?\s*prasanna|sai\s*abhyankkar|sean\s*roldan|deva|vidyasagar|bharadwaj|ilayaraja|ilaiyaraaja|darbuka\s*siva|d\.?\s*imman|dimaan)\s*[-–:|]\s*/i, '')
+        .replace(/^(a\.?\s*r\.?\s*rahman|anirudh\s*ravichander|anirudh|harris\s*jayaraj|santhosh\s*narayanan|yuvan\s*shankar\s*raja|yuvan|nivas\s*k\.?\s*prasanna|sai\s*abhyankkar|sean\s*roldan|deva|vidyasagar|bharadwaj|ilayaraja|ilaiyaraaja|darbuka\s*siva|d\.?\s*imman|dimaan|g\.?\s*v\.?\s*prakash|govind\s*vasantha)\s*[-–:|]\s*/i, '')
         .replace(/\s+/g, ' ')
         .trim();
       return clean || rawName;
@@ -4247,56 +4251,52 @@
             </div>
           </div>
 
-          <div class="flex items-center justify-center gap-6 sm:gap-8 pt-1">
-            <button onclick="toggleShuffle()" title="Shuffle" class="p-2 transition ${state.isShuffle ? 'text-[#FA243C]' : 'text-neutral-400 hover:text-white'}">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+          <div class="flex items-center justify-center gap-6 sm:gap-8">
+            <button onclick="toggleShuffle()" title="Shuffle" class="p-2 rounded-full transition ${state.isShuffle ? 'text-[#FA243C]' : 'text-neutral-400 hover:text-white'}">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
               </svg>
             </button>
 
-            <button onclick="prevTrack()" title="Previous" class="p-2 text-white hover:scale-105 active:scale-95 transition">
+            <button onclick="prevTrack()" title="Previous" class="p-2 text-white hover:scale-105 active:scale-90 transition">
               <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
               </svg>
             </button>
 
-            <button onclick="togglePlayPause()" title="Play / Pause" class="w-16 h-16 rounded-full bg-white text-black hover:scale-105 active:scale-95 flex items-center justify-center shadow-2xl transition">
-              ${state.isPlaying ? `
-                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-              ` : `
-                <svg class="w-8 h-8 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-              `}
+            <button onclick="togglePlayPause()" title="Play / Pause" class="w-16 h-16 rounded-full bg-white text-black hover:scale-105 active:scale-95 flex items-center justify-center shadow-2xl shadow-white/20 transition">
+              ${state.isPlaying
+                ? `<svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`
+                : `<svg class="w-7 h-7 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`
+              }
             </button>
 
-            <button onclick="nextTrack()" title="Next" class="p-2 text-white hover:scale-105 active:scale-95 transition">
+            <button onclick="nextTrack()" title="Next" class="p-2 text-white hover:scale-105 active:scale-90 transition">
               <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
               </svg>
             </button>
 
-            <button onclick="toggleRepeat()" title="Repeat" class="p-2 transition relative ${state.repeatMode !== 'off' ? 'text-[#FA243C]' : 'text-neutral-400 hover:text-white'}">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <button onclick="toggleRepeat()" title="Repeat" class="p-2 rounded-full relative transition ${state.repeatMode !== 'off' ? 'text-[#FA243C]' : 'text-neutral-400 hover:text-white'}">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M17 1l4 4-4 4"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 13v2a4 4 0 01-4 4H3"/>
               </svg>
               ${state.repeatMode === 'one' ? `<span class="absolute top-0.5 right-0.5 text-[10px] font-bold text-[#FA243C]">1</span>` : ''}
             </button>
           </div>
 
-          <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
-            <button onclick='shareSong(${JSON.stringify(track).replace(/'/g, "&#39;")}, event)'
-              class="px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.15] text-xs font-semibold text-white inline-flex items-center gap-1.5 transition">
-              <svg class="w-3.5 h-3.5 text-[#FA243C]" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          <div class="flex flex-wrap items-center justify-center gap-2.5 pt-1">
+            <button onclick="shareCurrentTrack()" class="px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-xs font-semibold text-white inline-flex items-center gap-1.5 transition">
+              <svg class="w-3.5 h-3.5 text-[#FA243C]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
               <span>Share Song</span>
             </button>
-            <button onclick='openAddToPlaylistModal(${JSON.stringify(track).replace(/'/g, "&#39;")})'
-              class="px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.15] text-xs font-semibold text-white inline-flex items-center gap-1.5 transition">
-              <svg class="w-3.5 h-3.5 text-[#FA243C]" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
+            <button onclick="openAddCurrentTrackToPlaylist()" class="px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-xs font-semibold text-white inline-flex items-center gap-1.5 transition">
+              <svg class="w-3.5 h-3.5 text-[#FA243C]" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
               <span>Add to Playlist</span>
             </button>
-            <button onclick="toggleQueueDrawer(true)"
-              class="px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.15] text-xs font-semibold text-white inline-flex items-center gap-1.5 transition">
+            <button onclick="toggleQueueDrawer(true)" class="px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-xs font-semibold text-white inline-flex items-center gap-1.5 transition">
               <svg class="w-3.5 h-3.5 text-[#FA243C]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h10M4 18h14"/></svg>
-              <span>Up Next (${state.queue.length})</span>
+              <span>Up Next</span>
             </button>
           </div>
         </div>
@@ -4304,330 +4304,323 @@
     }
 
     function renderRadioView(container) {
+      const current = getCurrentTrack();
       const sortedArtists = [...ARTISTS_DIRECTORY].sort((a, b) => a.name.localeCompare(b.name));
       const isAllRadioActive = state.isRadioMode && state.activeRadioArtistId === 'all';
       container.innerHTML = `
-        <div class="max-w-4xl mx-auto text-center py-10 space-y-6">
-          <div class="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-[#FA243C] to-[#FF5E7E] flex items-center justify-center shadow-2xl ${state.isRadioMode && state.isPlaying ? 'animate-pulse' : ''}">
-            <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z"/></svg>
+        <div class="max-w-5xl mx-auto py-4 space-y-8">
+          <div class="text-center space-y-4">
+            <div class="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-[#FA243C] to-[#FF5E7E] flex items-center justify-center shadow-2xl shadow-[#FA243C]/30">
+              <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z"/>
+              </svg>
+            </div>
+            <div>
+              <span class="text-xs font-bold uppercase tracking-widest text-[#FA243C]">Live Shuffle Station</span>
+              <h1 class="text-3xl font-extrabold text-white mt-1">tune-S Radio</h1>
+              <p class="text-sm text-neutral-400 mt-1">
+                Stream a continuous mix across all artists or tune into a dedicated composer station.
+              </p>
+            </div>
+            <button onclick="startRadioShuffle(false)" class="px-8 py-3 rounded-full text-sm font-bold inline-flex items-center gap-2 transition bg-[#FA243C] hover:bg-[#E01E34] text-white shadow-xl shadow-[#FA243C]/30">
+              ${isAllRadioActive
+                ? `${renderEqualizerBars('bg-white')}<span>${state.isPlaying ? 'Playing All Artists Mix' : 'Paused • All Artists Mix'}</span>`
+                : `<span>Shuffle All Artists Mix</span>`
+              }
+            </button>
           </div>
+
+          <!-- Dedicated Composer Radio Stations -->
           <div>
-            <h1 class="text-3xl font-extrabold text-white">Artist Radio</h1>
-            <p class="text-sm text-neutral-400 mt-2">Shuffling ${state.albums.reduce((acc, a) => acc + (a.tracks?.length || 0), 0)} songs across all ${ARTISTS_DIRECTORY.length} composers.</p>
-          </div>
-          <div class="flex flex-wrap items-center justify-center gap-3">
-            <button onclick="startRadioShuffle(false)" class="px-7 py-3 rounded-full font-bold text-sm inline-flex items-center gap-2 transition bg-[#FA243C] hover:bg-[#E01E34] text-white shadow-xl shadow-[#FA243C]/30">
-              ${isAllRadioActive ? renderEqualizerBars('bg-white') : ''}
-              <span>${isAllRadioActive ? (state.isPlaying ? 'Playing All Artists Radio' : 'Paused • All Artists Radio') : 'Shuffle All Artists'}</span>
-            </button>
-            ${sortedArtists.map(ar => {
-              const isStationActive = state.isRadioMode && state.activeRadioArtistId === ar.id;
-              return `
-                <button onclick="startRadioShuffle(false, '${ar.id}')" class="px-6 py-3 rounded-full font-semibold text-sm inline-flex items-center gap-2 transition ${isStationActive ? 'bg-[#FA243C] hover:bg-[#E01E34] text-white shadow-lg shadow-[#FA243C]/35' : 'bg-white/10 hover:bg-white/20 text-white'}">
-                  ${isStationActive ? renderEqualizerBars('bg-white') : ''}
-                  <span>${escapeHtml(ar.name)} Radio</span>
-                </button>
-              `;
-            }).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    function handleSearchInput(val) {
-      state.searchQuery = String(val || '');
-      const clearBtn = document.getElementById('search-clear-btn');
-      if (clearBtn) clearBtn.classList.toggle('hidden', state.searchQuery.length === 0);
-      renderSearchResultsOnly();
-    }
-
-    function clearSearchInput() {
-      state.searchQuery = '';
-      const input = document.getElementById('dedicated-search-input');
-      if (input) {
-        input.value = '';
-        input.focus();
-      }
-      document.getElementById('search-clear-btn')?.classList.add('hidden');
-      renderSearchResultsOnly();
-    }
-
-    function setSearchTab(tab) {
-      state.searchTab = tab;
-      const tabLib = document.getElementById('search-tab-library');
-      const tabSongs = document.getElementById('search-tab-songs');
-      if (tabLib && tabSongs) {
-        tabLib.className = `flex-1 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition ${
-          tab === 'library' ? 'border-[#FA243C] text-[#FA243C]' : 'border-transparent text-neutral-400 hover:text-white'
-        }`;
-        tabSongs.className = `flex-1 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition ${
-          tab === 'songs' ? 'border-[#FA243C] text-[#FA243C]' : 'border-transparent text-neutral-400 hover:text-white'
-        }`;
-      }
-      renderSearchResultsOnly();
-    }
-
-    function renderSearchView(container) {
-      container.innerHTML = `
-        <div class="max-w-2xl mx-auto space-y-4">
-          <div class="flex items-center gap-2.5 bg-[#1C1C24] border border-white/15 focus-within:border-[#FA243C] rounded-2xl px-3.5 py-2.5 shadow-lg transition">
-            <button onclick="switchView('home')" title="Back" class="p-1 text-neutral-300 hover:text-white transition shrink-0">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
-              </svg>
-            </button>
-            <input
-              id="dedicated-search-input"
-              type="text"
-              autocomplete="off"
-              placeholder="Search albums, artists, songs..."
-              value="${escapeHtml(state.searchQuery)}"
-              oninput="handleSearchInput(this.value)"
-              class="flex-1 bg-transparent text-sm sm:text-base text-white placeholder-neutral-400 outline-none min-w-0"
-            />
-            <button
-              id="search-clear-btn"
-              onclick="clearSearchInput()"
-              title="Clear Search"
-              class="p-1 text-neutral-400 hover:text-white transition shrink-0 ${state.searchQuery ? '' : 'hidden'}">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-            </button>
-          </div>
-
-          <div class="flex border-b border-white/10">
-            <button id="search-tab-library" onclick="setSearchTab('library')"
-              class="flex-1 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition ${state.searchTab === 'library' ? 'border-[#FA243C] text-[#FA243C]' : 'border-transparent text-neutral-400 hover:text-white'}">
-              Albums & Artists
-            </button>
-            <button id="search-tab-songs" onclick="setSearchTab('songs')"
-              class="flex-1 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition ${state.searchTab === 'songs' ? 'border-[#FA243C] text-[#FA243C]' : 'border-transparent text-neutral-400 hover:text-white'}">
-              Songs
-            </button>
-          </div>
-
-          <div id="search-results-container" class="divide-y divide-white/[0.06]"></div>
-        </div>
-      `;
-      renderSearchResultsOnly();
-      setTimeout(() => document.getElementById('dedicated-search-input')?.focus(), 50);
-    }
-
-    function renderSearchResultsOnly() {
-      const resultsEl = document.getElementById('search-results-container');
-      if (!resultsEl) return;
-
-      const q = (state.searchQuery || '').toLowerCase().trim();
-      const sortedArtists = [...ARTISTS_DIRECTORY].sort((a, b) => a.name.localeCompare(b.name));
-
-      if (!q) {
-        resultsEl.innerHTML = `
-          <div class="py-3 space-y-3">
-            <div class="text-xs font-bold uppercase tracking-wider text-neutral-400 px-1">Browse Artists</div>
-            <div class="divide-y divide-white/[0.06]">
+            <h2 class="text-lg font-bold text-white mb-4">Composer Radio Stations</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               ${sortedArtists.map(ar => {
-                const count = state.albums.filter(a => a.artistId === ar.id || a.artist.toLowerCase() === ar.name.toLowerCase()).length;
+                const isRadioActive = state.isRadioMode && state.activeRadioArtistId === ar.id;
                 return `
-                  <div onclick="switchView('artist', '${ar.id}')"
-                    class="flex items-center gap-3.5 py-2.5 px-1.5 hover:bg-white/[0.05] rounded-xl cursor-pointer transition">
-                    <img src="${ar.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-12 h-12 rounded-full object-cover border border-white/10 shrink-0" />
+                  <div onclick="startRadioShuffle(false, '${ar.id}')"
+                    class="luxury-card group flex items-center gap-3.5 p-3.5 rounded-2xl ${isRadioActive ? 'border-[#FA243C]/70' : ''} cursor-pointer transition">
+                    <img src="${ar.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-14 h-14 rounded-full object-cover object-top shrink-0 border ${isRadioActive ? 'border-[#FA243C]' : 'border-white/15'}" />
                     <div class="min-w-0 flex-1">
-                      <div class="text-sm font-semibold text-white truncate">${escapeHtml(ar.name)}</div>
-                      <div class="text-xs text-neutral-400 truncate">Artist • ${count} Albums</div>
+                      <div class="text-sm font-bold text-white truncate group-hover:text-[#FA243C] transition">${escapeHtml(ar.name)} Radio</div>
+                      <div class="text-[11px] text-neutral-400 truncate">${isRadioActive ? (state.isPlaying ? 'Now Playing Live' : 'Paused') : 'Endless Artist Mix'}</div>
+                    </div>
+                    <div class="w-9 h-9 rounded-full bg-[#FA243C] text-white flex items-center justify-center shadow shrink-0">
+                      ${isRadioActive
+                        ? renderEqualizerBars('bg-white')
+                        : `<svg class="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`
+                      }
                     </div>
                   </div>
                 `;
               }).join('')}
             </div>
           </div>
-        `;
-        return;
-      }
 
-      const matchingArtists = sortedArtists.filter(ar => ar.name.toLowerCase().includes(q));
-      const matchingAlbums = state.albums.filter(alb =>
-        alb.title.toLowerCase().includes(q) || alb.artist.toLowerCase().includes(q)
-      );
-      const matchingSongs = [];
-      for (const alb of state.albums) {
-        for (const t of (alb.tracks || [])) {
-          if (t.title.toLowerCase().includes(q) || t.albumTitle.toLowerCase().includes(q)) {
-            matchingSongs.push(t);
-          }
-        }
-      }
-
-      if (state.searchTab === 'songs') {
-        if (matchingSongs.length === 0) {
-          resultsEl.innerHTML = `<div class="py-12 text-center text-sm text-neutral-400">No songs found for "${escapeHtml(state.searchQuery)}"</div>`;
-          return;
-        }
-        resultsEl.innerHTML = matchingSongs.slice(0, 60).map((track, idx) => `
-          <div onclick='playTrackFromList(${JSON.stringify(matchingSongs.slice(0, 60)).replace(/'/g, "&#39;")}, ${idx})'
-            class="flex items-center gap-3.5 py-2.5 px-1.5 hover:bg-white/[0.06] rounded-xl cursor-pointer transition">
-            <img src="${track.cover || FALLBACK_COVER_ART}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-12 h-12 rounded-lg object-cover object-top bg-neutral-900 border border-white/10 shrink-0" />
-            <div class="min-w-0 flex-1">
-              <div class="text-sm font-semibold text-white truncate">${escapeHtml(track.title)}</div>
-              <div class="text-xs text-neutral-400 truncate">${escapeHtml(track.artist)} • ${escapeHtml(track.albumTitle)}</div>
+          ${current ? `
+            <div class="max-w-lg mx-auto rounded-2xl bg-white/[0.04] border border-white/10 p-4 flex items-center gap-4 text-left">
+              <img src="${current.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-16 h-16 rounded-xl object-cover object-top" />
+              <div class="min-w-0 flex-1">
+                <div class="text-[10px] font-bold uppercase tracking-wider text-[#FA243C]">Now Playing</div>
+                <div class="text-base font-bold text-white truncate">${escapeHtml(current.title)}</div>
+                <div class="text-xs text-neutral-400 truncate">${escapeHtml(current.artist)} • ${escapeHtml(current.albumTitle)}</div>
+              </div>
+              <button onclick="nextTrack()" class="px-3.5 py-2 rounded-full bg-white/10 hover:bg-white/20 text-xs font-semibold text-white">Next</button>
             </div>
-            <button onclick='shareSong(${JSON.stringify(track).replace(/'/g, "&#39;")}, event)'
-              title="Share Song" class="p-2 text-neutral-400 hover:text-[#FA243C] shrink-0">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-            </button>
-          </div>
-        `).join('');
-        return;
-      }
-
-      if (matchingArtists.length === 0 && matchingAlbums.length === 0 && matchingSongs.length === 0) {
-        resultsEl.innerHTML = `<div class="py-12 text-center text-sm text-neutral-400">No results found for "${escapeHtml(state.searchQuery)}"</div>`;
-        return;
-      }
-
-      let html = '';
-      matchingArtists.forEach(ar => {
-        html += `
-          <div onclick="switchView('artist', '${ar.id}')"
-            class="flex items-center gap-3.5 py-2.5 px-1.5 hover:bg-white/[0.06] cursor-pointer transition">
-            <img src="${ar.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-12 h-12 rounded-full object-cover border border-white/10 shrink-0" />
-            <div class="min-w-0 flex-1">
-              <div class="text-sm font-semibold text-white truncate">${escapeHtml(ar.name)}</div>
-              <div class="text-xs text-neutral-400 truncate">Artist</div>
-            </div>
-          </div>
-        `;
-      });
-      matchingAlbums.forEach(alb => {
-        html += `
-          <div onclick="switchView('album', '${alb.id.replace(/'/g, "\\'")}')"
-            class="flex items-center gap-3.5 py-2.5 px-1.5 hover:bg-white/[0.06] cursor-pointer transition group">
-            <img src="${alb.cover || FALLBACK_COVER_ART}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-12 h-12 rounded-lg object-cover object-top bg-neutral-900 border border-white/10 shrink-0" />
-            <div class="min-w-0 flex-1">
-              <div class="text-sm font-semibold text-white truncate group-hover:text-[#FA243C] transition">${escapeHtml(alb.title)}</div>
-              <div class="text-xs text-neutral-400 truncate">Album • ${escapeHtml(alb.artist)}</div>
-            </div>
-          </div>
-        `;
-      });
-      resultsEl.innerHTML = html;
-    }
-
-    function handleAlbumFilterInput(val) {
-      state.albumFilterQuery = val;
-      const grid = document.getElementById('all-albums-grid');
-      if (grid) {
-        const filtered = getFilteredAlbums();
-        grid.innerHTML = renderAlbumGridCards(filtered);
-        const countEl = document.getElementById('all-albums-count');
-        if (countEl) countEl.textContent = `${filtered.length} albums`;
-      }
-    }
-
-    function setArtistFilter(artistId) {
-      state.selectedArtistFilter = artistId;
-      renderCurrentView();
-    }
-
-    function getFilteredAlbums() {
-      const q = (state.albumFilterQuery || '').toLowerCase().trim();
-      return state.albums.filter(a => {
-        const matchesArtist = state.selectedArtistFilter === 'all' || a.artistId === state.selectedArtistFilter || a.artist.toLowerCase().includes(state.selectedArtistFilter.replace(/-/g, ' '));
-        const matchesQuery = !q || a.title.toLowerCase().includes(q) || a.artist.toLowerCase().includes(q) || String(a.year || '').includes(q);
-        return matchesArtist && matchesQuery;
-      });
+          ` : ''}
+        </div>
+      `;
     }
 
     function renderAllAlbumsView(container) {
-      const filtered = getFilteredAlbums();
+      const q = (state.albumFilterQuery || '').trim().toLowerCase();
+      const artistFilter = state.selectedArtistFilter || 'all';
       const sortedArtists = [...ARTISTS_DIRECTORY].sort((a, b) => a.name.localeCompare(b.name));
+
+      const filteredAlbums = state.albums.filter(a => {
+        const matchesArtist = artistFilter === 'all' || a.artistId === artistFilter || a.artist.toLowerCase().includes(artistFilter.replace(/-/g, ' '));
+        const matchesQuery = !q || a.title.toLowerCase().includes(q) || a.artist.toLowerCase().includes(q);
+        return matchesArtist && matchesQuery;
+      });
+
       container.innerHTML = `
         <div class="max-w-6xl mx-auto space-y-6">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 class="text-3xl font-extrabold text-white">Albums</h1>
-              <p id="all-albums-count" class="text-xs text-neutral-400 mt-1">${filtered.length} albums</p>
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white">Albums (${filteredAlbums.length})</h1>
+              <p class="text-xs text-neutral-400 mt-1">Browse albums across all artists</p>
             </div>
-            <div class="flex items-center gap-2.5">
-              <input
-                type="text"
-                value="${escapeHtml(state.albumFilterQuery)}"
-                oninput="handleAlbumFilterInput(this.value)"
-                placeholder="Filter albums..."
-                class="bg-white/[0.07] focus:bg-white/[0.12] border border-white/10 focus:border-[#FA243C] rounded-full px-4 py-1.5 text-xs text-white placeholder-neutral-400 outline-none w-48 sm:w-64 transition"
-              />
+            <div class="flex flex-wrap items-center gap-2.5">
+              <div class="relative w-full sm:w-64">
+                <svg class="w-4 h-4 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103.5 10.5a7.5 7.5 0 0013.15 6.15z"/>
+                </svg>
+                <input
+                  id="albums-filter-input"
+                  type="text"
+                  value="${escapeHtml(state.albumFilterQuery)}"
+                  oninput="handleAlbumFilterInput(this.value)"
+                  placeholder="Filter albums..."
+                  class="w-full bg-white/[0.07] border border-white/10 focus:border-[#FA243C] rounded-full pl-9 pr-4 py-2 text-xs text-white placeholder-neutral-400 outline-none transition"
+                />
+              </div>
+              ${state.isAdmin ? `
+                <button onclick="openAddAlbumModal()" class="px-4 py-2 rounded-full bg-[#FA243C] hover:bg-[#E01E34] text-white text-xs font-bold shadow">
+                  + Add Album
+                </button>
+              ` : ''}
             </div>
           </div>
 
           <div class="flex items-center gap-2 overflow-x-auto pb-1">
-            <button onclick="setArtistFilter('all')"
-              class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition shrink-0 ${state.selectedArtistFilter === 'all' ? 'bg-[#FA243C] text-white' : 'bg-white/[0.07] text-neutral-300 hover:bg-white/[0.12]'}">
-              All Artists
+            <button onclick="setArtistAlbumFilter('all')"
+              class="px-3.5 py-1.5 rounded-full text-xs font-semibold shrink-0 transition ${artistFilter === 'all' ? 'bg-[#FA243C] text-white' : 'bg-white/[0.07] text-neutral-300 hover:bg-white/[0.14]'}">
+              All Artists (${state.albums.length})
             </button>
-            ${sortedArtists.map(ar => `
-              <button onclick="setArtistFilter('${ar.id}')"
-                class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition shrink-0 ${state.selectedArtistFilter === ar.id ? 'bg-[#FA243C] text-white' : 'bg-white/[0.07] text-neutral-300 hover:bg-white/[0.12]'}">
-                ${escapeHtml(ar.name)}
-              </button>
-            `).join('')}
+            ${sortedArtists.map(ar => {
+              const count = state.albums.filter(a => a.artistId === ar.id || a.artist.toLowerCase() === ar.name.toLowerCase()).length;
+              return `
+                <button onclick="setArtistAlbumFilter('${ar.id}')"
+                  class="px-3.5 py-1.5 rounded-full text-xs font-semibold shrink-0 transition ${artistFilter === ar.id ? 'bg-[#FA243C] text-white' : 'bg-white/[0.07] text-neutral-300 hover:bg-white/[0.14]'}">
+                  ${escapeHtml(ar.name)} (${count})
+                </button>
+              `;
+            }).join('')}
           </div>
 
-          <div id="all-albums-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
-            ${renderAlbumGridCards(filtered)}
+          <div id="all-albums-grid-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+            ${renderAlbumGridCards(filteredAlbums)}
           </div>
         </div>
       `;
+    }
+
+    function setArtistAlbumFilter(artistId) {
+      state.selectedArtistFilter = artistId;
+      renderCurrentView();
+    }
+
+    function handleAlbumFilterInput(val) {
+      state.albumFilterQuery = val;
+      const gridContainer = document.getElementById('all-albums-grid-container');
+      if (!gridContainer) return;
+      const q = val.trim().toLowerCase();
+      const artistFilter = state.selectedArtistFilter || 'all';
+      const filteredAlbums = state.albums.filter(a => {
+        const matchesArtist = artistFilter === 'all' || a.artistId === artistFilter || a.artist.toLowerCase().includes(artistFilter.replace(/-/g, ' '));
+        const matchesQuery = !q || a.title.toLowerCase().includes(q) || a.artist.toLowerCase().includes(q);
+        return matchesArtist && matchesQuery;
+      });
+      gridContainer.innerHTML = renderAlbumGridCards(filteredAlbums);
     }
 
     function renderAllSongsView(container) {
       const allTracks = state.albums.flatMap(a => a.tracks || []);
+      const currentTrack = getCurrentTrack();
       container.innerHTML = `
-        <div class="max-w-6xl mx-auto space-y-6">
-          <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div class="max-w-5xl mx-auto space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 class="text-3xl font-extrabold text-white">Songs</h1>
-              <p class="text-xs text-neutral-400 mt-1">${allTracks.length} songs across ${state.albums.length} albums</p>
+              <h1 class="text-2xl sm:text-3xl font-extrabold text-white">Songs (${allTracks.length})</h1>
+              <p class="text-xs text-neutral-400 mt-1">All tracks across every artist and album</p>
             </div>
-            <div class="flex items-center gap-2.5">
-              <button onclick="playTrackFromList(${JSON.stringify(allTracks.slice(0, 250)).replace(/'/g, "&#39;")}, 0)" class="px-5 py-2 rounded-full bg-[#FA243C] hover:bg-[#E01E34] text-white text-xs font-bold flex items-center gap-1.5 shadow transition">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                <span>Play All</span>
-              </button>
-              <button onclick="startRadioShuffle(false)" class="px-5 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs font-bold flex items-center gap-1.5 transition">
-                <span>Shuffle</span>
-              </button>
-            </div>
+            <button onclick="startRadioShuffle(false)" class="px-5 py-2 rounded-full bg-[#FA243C] hover:bg-[#E01E34] text-white text-xs font-bold shadow self-start">
+              Shuffle All
+            </button>
           </div>
-
-          ${renderTracklistTable(allTracks.slice(0, 250), getCurrentTrack())}
+          ${renderTracklistTable(allTracks.slice(0, 300), currentTrack)}
         </div>
       `;
     }
 
+    // ==========================================
+    // Playlist Drag & Hold Reordering Engine
+    // ==========================================
+    let playlistDragState = {
+      active: false,
+      playlistId: null,
+      fromIndex: -1,
+      toIndex: -1,
+      holdTimer: null,
+      startX: 0,
+      startY: 0,
+      rowEl: null,
+      justDragged: false
+    };
+
+    function reorderPlaylistTrack(playlistId, fromIdx, toIdx) {
+      if (fromIdx === toIdx || fromIdx < 0 || toIdx < 0) return;
+      const pl = state.playlists.find(p => p.id === playlistId);
+      if (!pl || !Array.isArray(pl.tracks)) return;
+      if (fromIdx >= pl.tracks.length || toIdx >= pl.tracks.length) return;
+
+      const [movedTrack] = pl.tracks.splice(fromIdx, 1);
+      pl.tracks.splice(toIdx, 0, movedTrack);
+      savePlaylistsToStorage();
+      renderSidebarPlaylists();
+      renderCurrentView();
+      showToast(`Moved "${movedTrack.title}" to #${toIdx + 1}`, 'info');
+    }
+
+    function clearPlaylistDragHighlights() {
+      document.querySelectorAll('.playlist-track-row').forEach(row => {
+        row.classList.remove('dragging-active', 'drop-target-above', 'drop-target-below');
+      });
+    }
+
+    function beginPlaylistRowDrag(rowEl, playlistId, index) {
+      playlistDragState.active = true;
+      playlistDragState.playlistId = playlistId;
+      playlistDragState.fromIndex = index;
+      playlistDragState.toIndex = index;
+      playlistDragState.rowEl = rowEl;
+      playlistDragState.justDragged = true;
+
+      clearPlaylistDragHighlights();
+      rowEl.classList.add('dragging-active');
+      if (navigator.vibrate) {
+        try { navigator.vibrate(25); } catch (e) {}
+      }
+    }
+
+    function handlePlaylistRowPointerDown(e, playlistId, index, immediate = false) {
+      if (e.button !== undefined && e.button !== 0) return;
+      const rowEl = e.currentTarget.closest('.playlist-track-row');
+      if (!rowEl) return;
+
+      clearTimeout(playlistDragState.holdTimer);
+      playlistDragState.startX = e.clientX;
+      playlistDragState.startY = e.clientY;
+      playlistDragState.justDragged = false;
+
+      if (immediate) {
+        e.preventDefault();
+        e.stopPropagation();
+        beginPlaylistRowDrag(rowEl, playlistId, index);
+      } else {
+        playlistDragState.holdTimer = setTimeout(() => {
+          beginPlaylistRowDrag(rowEl, playlistId, index);
+        }, 260);
+      }
+    }
+
+    window.addEventListener('pointermove', (e) => {
+      if (!playlistDragState.active) {
+        if (playlistDragState.holdTimer) {
+          const dx = Math.abs(e.clientX - playlistDragState.startX);
+          const dy = Math.abs(e.clientY - playlistDragState.startY);
+          if (dx > 8 || dy > 8) {
+            clearTimeout(playlistDragState.holdTimer);
+            playlistDragState.holdTimer = null;
+          }
+        }
+        return;
+      }
+
+      e.preventDefault();
+      const targetEl = document.elementFromPoint(e.clientX, e.clientY);
+      const hoverRow = targetEl?.closest('.playlist-track-row');
+      if (!hoverRow) return;
+
+      const hoverIndex = parseInt(hoverRow.dataset.trackIndex, 10);
+      if (isNaN(hoverIndex)) return;
+
+      playlistDragState.toIndex = hoverIndex;
+      document.querySelectorAll('.playlist-track-row').forEach(r => {
+        r.classList.remove('drop-target-above', 'drop-target-below');
+      });
+
+      if (hoverIndex !== playlistDragState.fromIndex) {
+        if (hoverIndex < playlistDragState.fromIndex) {
+          hoverRow.classList.add('drop-target-above');
+        } else {
+          hoverRow.classList.add('drop-target-below');
+        }
+      }
+    }, { passive: false });
+
+    function finalizePlaylistRowDrag() {
+      clearTimeout(playlistDragState.holdTimer);
+      playlistDragState.holdTimer = null;
+
+      if (playlistDragState.active) {
+        const { playlistId, fromIndex, toIndex } = playlistDragState;
+        playlistDragState.active = false;
+        clearPlaylistDragHighlights();
+        if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
+          reorderPlaylistTrack(playlistId, fromIndex, toIndex);
+        }
+        setTimeout(() => { playlistDragState.justDragged = false; }, 120);
+      }
+    }
+
+    window.addEventListener('pointerup', finalizePlaylistRowDrag);
+    window.addEventListener('pointercancel', finalizePlaylistRowDrag);
+
+    function handlePlaylistTrackClick(playlistId, index) {
+      if (playlistDragState.justDragged || playlistDragState.active) return;
+      playPlaylist(playlistId, index, false);
+    }
+
     function renderPlaylistDetailView(container, playlist) {
       const currentTrack = getCurrentTrack();
-      const isPlaylistActive = Boolean(
-        currentTrack &&
-        (state.currentPlayingPlaylist === playlist.id || playlist.tracks.some(t => t.id === currentTrack.id)) &&
-        !state.isRadioMode
-      );
+      const isPlaylistActive = Boolean(state.currentPlayingPlaylist === playlist.id && state.queue.length > 0 && !state.isRadioMode);
+      const cover = playlist.tracks[0]?.cover || FALLBACK_COVER_ART;
 
       container.innerHTML = `
         <div class="max-w-5xl mx-auto space-y-8">
           <div class="flex flex-col md:flex-row items-center md:items-end gap-6 sm:gap-8">
-            <div class="w-44 h-44 sm:w-52 sm:h-52 rounded-2xl overflow-hidden bg-gradient-to-br from-[#FA243C] to-[#7F1D1D] border border-white/10 shadow-2xl shrink-0 flex items-center justify-center">
-              ${playlist.tracks.length > 0
-                ? `<img src="${playlist.tracks[0].cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-full h-full object-cover object-top" />`
-                : `<svg class="w-16 h-16 text-white/80" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>`
-              }
+            <div class="w-44 h-44 sm:w-56 sm:h-56 rounded-2xl overflow-hidden bg-neutral-900 border border-white/10 shadow-2xl shrink-0">
+              <img src="${cover}" onerror="this.src='${FALLBACK_COVER_ART}'" alt="${escapeHtml(playlist.name)}" class="w-full h-full object-cover object-top" />
             </div>
 
             <div class="flex-1 text-center md:text-left min-w-0">
-              <div class="text-xs font-bold uppercase tracking-wider text-[#FA243C] mb-1">Personal Playlist</div>
-              <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">${escapeHtml(playlist.name)}</h1>
-              <p class="text-xs text-neutral-400 mt-2">${playlist.tracks.length} songs</p>
+              <div class="text-xs font-bold uppercase tracking-wider text-[#FA243C] mb-1">Playlist</div>
+              <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight text-white">${escapeHtml(playlist.name)}</h1>
+              <div class="mt-2 text-xs font-medium text-neutral-400">
+                ${playlist.tracks.length} ${playlist.tracks.length === 1 ? 'Song' : 'Songs'}
+              </div>
 
-              <div class="mt-5 flex flex-wrap items-center justify-center md:justify-start gap-3">
+              <div class="mt-6 flex flex-wrap items-center justify-center md:justify-start gap-3">
                 <button onclick="playPlaylist('${playlist.id}', 0, false)" class="px-7 py-2.5 rounded-full bg-[#FA243C] hover:bg-[#E01E34] text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-[#FA243C]/25 transition">
                   ${isPlaylistActive
                     ? `${renderEqualizerBars('bg-white')}<span>${state.isPlaying ? 'Playing' : 'Paused'}</span>`
@@ -4638,12 +4631,12 @@
                   <span>Shuffle</span>
                 </button>
                 <button onclick="sharePlaylist('${playlist.id}', event)" class="px-5 py-2.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-white text-xs sm:text-sm font-bold flex items-center gap-2 transition">
-                  <svg class="w-4 h-4 text-[#FA243C]" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                  <svg class="w-4 h-4 text-[#FA243C]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                   </svg>
                   <span>Share Playlist</span>
                 </button>
-                <button onclick="deletePlaylist('${playlist.id}')" class="px-4 py-2.5 rounded-full bg-white/[0.05] hover:bg-red-500/20 text-neutral-300 hover:text-red-400 text-xs font-semibold transition">
+                <button onclick="deletePlaylist('${playlist.id}', event)" class="px-4 py-2.5 rounded-full bg-white/[0.05] hover:bg-red-500/20 text-neutral-300 hover:text-red-400 text-xs font-semibold transition">
                   Delete Playlist
                 </button>
               </div>
@@ -4651,229 +4644,225 @@
           </div>
 
           ${playlist.tracks.length === 0 ? `
-            <div class="luxury-card rounded-2xl p-10 text-center space-y-2">
-              <div class="text-sm font-semibold text-white">No songs in this playlist yet</div>
-              <p class="text-xs text-neutral-400">Click the "+" button next to any song in an album to add it here.</p>
+            <div class="rounded-2xl bg-white/[0.03] border border-white/[0.06] p-10 text-center space-y-2">
+              <div class="text-sm font-semibold text-white">This playlist is empty</div>
+              <p class="text-xs text-neutral-400">Click the <span class="text-white font-bold">+</span> icon next to any song in an album or search results to add it here.</p>
             </div>
-          ` : renderPlaylistTracksTable(playlist)}
+          ` : `
+            <div class="flex items-center justify-between px-1 text-[11px] text-neutral-400">
+              <span>Press and hold any song (or drag the grip handle) to reorder</span>
+            </div>
+            <div class="luxury-card rounded-2xl overflow-hidden divide-y divide-white/[0.04]">
+              ${playlist.tracks.map((track, idx) => {
+                const isCurrent = currentTrack && currentTrack.id === track.id;
+                return `
+                  <div
+                    data-track-index="${idx}"
+                    onpointerdown="handlePlaylistRowPointerDown(event, '${playlist.id}', ${idx}, false)"
+                    onclick="handlePlaylistTrackClick('${playlist.id}', ${idx})"
+                    class="playlist-track-row group flex items-center justify-between gap-3 px-4 py-3 cursor-pointer select-none ${isCurrent ? 'bg-[#FA243C]/15' : 'hover:bg-white/[0.05]'}">
+                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                      <button
+                        type="button"
+                        onpointerdown="handlePlaylistRowPointerDown(event, '${playlist.id}', ${idx}, true)"
+                        onclick="event.stopPropagation()"
+                        title="Hold & Drag to Reorder"
+                        class="p-1.5 -ml-1.5 rounded-lg text-neutral-500 hover:text-white cursor-grab active:cursor-grabbing touch-none shrink-0">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M7 4a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm8-12a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
+                        </svg>
+                      </button>
+                      <span class="text-xs font-medium text-neutral-400 w-5 shrink-0">${idx + 1}</span>
+                      <img src="${track.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-10 h-10 rounded-lg object-cover object-top shrink-0 pointer-events-none" />
+                      <div class="min-w-0 flex-1">
+                        <div class="text-xs sm:text-sm font-semibold truncate ${isCurrent ? 'text-[#FA243C]' : 'text-white'}">${escapeHtml(track.title)}</div>
+                        <div class="text-[11px] text-neutral-400 truncate">${escapeHtml(track.artist)} • ${escapeHtml(track.albumTitle)}</div>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                      <button onclick="event.stopPropagation(); removeTrackFromPlaylist('${playlist.id}', '${track.id.replace(/'/g, "\\'")}')"
+                        title="Remove from Playlist" class="p-1.5 rounded-lg text-neutral-400 hover:text-red-400 hover:bg-white/10 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `}
         </div>
       `;
     }
 
-    function renderPlaylistTracksTable(playlist) {
-      const currentTrack = getCurrentTrack();
-      return `
-        <div class="space-y-2">
-          <div class="flex items-center justify-between px-1 text-[11px] text-neutral-400">
-            <span>Hold &amp; drag any track to reorder</span>
-            <span>${playlist.tracks.length} tracks</span>
+    // ==========================================
+    // Search View
+    // ==========================================
+    function renderSearchView(container) {
+      container.innerHTML = `
+        <div class="max-w-5xl mx-auto space-y-6">
+          <div class="space-y-4">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white">Search</h1>
+
+            <div class="relative">
+              <svg class="w-5 h-5 text-neutral-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103.5 10.5a7.5 7.5 0 0013.15 6.15z"/>
+              </svg>
+              <input
+                id="search-input"
+                type="text"
+                value="${escapeHtml(state.searchQuery)}"
+                oninput="handleSearchInput(this.value)"
+                placeholder="Artists, Songs, or Albums..."
+                class="w-full bg-white/[0.08] border border-white/10 focus:border-[#FA243C] rounded-2xl pl-12 pr-10 py-3.5 text-sm text-white placeholder-neutral-400 outline-none transition"
+              />
+              ${state.searchQuery ? `
+                <button onclick="handleSearchInput('')" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              ` : ''}
+            </div>
           </div>
-          <div id="playlist-tracks-sortable" data-playlist-id="${playlist.id}" class="luxury-card rounded-2xl overflow-hidden divide-y divide-white/[0.05]">
-            ${playlist.tracks.map((track, idx) => {
-              const isCurrent = currentTrack && currentTrack.id === track.id;
-              return `
-                <div data-track-index="${idx}"
-                  onpointerdown="startPlaylistTrackHold(event, '${playlist.id}', ${idx})"
-                  onclick="handlePlaylistRowClick(event, '${playlist.id}', ${idx})"
-                  class="playlist-track-row group grid grid-cols-12 items-center px-3 sm:px-4 py-3 cursor-pointer select-none ${isCurrent ? 'bg-[#FA243C]/15' : 'hover:bg-white/[0.05]'}">
-                  <div class="col-span-3 sm:col-span-2 flex items-center gap-2 text-xs text-neutral-400">
-                    <span title="Hold & Drag to Reorder" class="drag-grip p-1 -ml-1 text-neutral-500 group-hover:text-neutral-200 cursor-grab active:cursor-grabbing shrink-0">
-                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M7 4a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm9-12a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
-                      </svg>
-                    </span>
-                    <span class="w-4 text-center font-medium ${isCurrent ? 'text-[#FA243C]' : ''}">${idx + 1}</span>
-                    <img src="${track.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-8 h-8 rounded object-cover object-top bg-neutral-800 pointer-events-none" />
-                  </div>
-                  <div class="col-span-6 sm:col-span-5 pr-3 min-w-0">
-                    <div class="text-xs sm:text-sm font-medium truncate ${isCurrent ? 'text-[#FA243C]' : 'text-white'}">${escapeHtml(track.title)}</div>
-                    <div class="text-[11px] text-neutral-400 truncate">${escapeHtml(track.artist)} • ${escapeHtml(track.albumTitle)}</div>
-                  </div>
-                  <div class="hidden sm:block sm:col-span-3 text-xs text-neutral-400 truncate">${escapeHtml(track.albumTitle)}</div>
-                  <div class="col-span-3 sm:col-span-2 flex items-center justify-end gap-2">
-                    <span class="text-xs text-neutral-400 tabular-nums">${track.duration ? formatTime(track.duration) : '--:--'}</span>
-                    <button onclick="event.stopPropagation(); removeTrackFromPlaylist('${playlist.id}', '${track.id.replace(/'/g, "\\'")}')"
-                      title="Remove from Playlist" class="p-1.5 rounded-lg text-neutral-400 hover:text-red-400 hover:bg-white/10 transition">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
+
+          <div id="search-results-container"></div>
+        </div>
+      `;
+
+      renderSearchResults();
+      setTimeout(() => document.getElementById('search-input')?.focus(), 50);
+    }
+
+    function handleSearchInput(val) {
+      state.searchQuery = val;
+      renderSearchResults();
+    }
+
+    function renderSearchResults() {
+      const box = document.getElementById('search-results-container');
+      if (!box) return;
+
+      const q = state.searchQuery.trim().toLowerCase();
+      if (!q) {
+        const sortedArtists = [...ARTISTS_DIRECTORY].sort((a, b) => a.name.localeCompare(b.name));
+        box.innerHTML = `
+          <div class="space-y-4">
+            <div class="text-xs font-semibold uppercase tracking-wider text-neutral-400">Browse by Artist</div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              ${sortedArtists.map(ar => `
+                <div onclick="switchView('artist', '${ar.id}')" class="luxury-card p-4 rounded-2xl flex items-center gap-3 cursor-pointer transition">
+                  <img src="${ar.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-12 h-12 rounded-full object-cover object-top shrink-0" />
+                  <div class="min-w-0">
+                    <div class="text-sm font-bold text-white truncate">${escapeHtml(ar.name)}</div>
+                    <div class="text-[11px] text-neutral-400">Artist</div>
                   </div>
                 </div>
-              `;
-            }).join('')}
+              `).join('')}
+            </div>
           </div>
+        `;
+        return;
+      }
+
+      const matchingArtists = ARTISTS_DIRECTORY.filter(ar =>
+        ar.name.toLowerCase().includes(q) || ar.tagline.toLowerCase().includes(q)
+      );
+
+      const matchingAlbums = state.albums.filter(a =>
+        a.title.toLowerCase().includes(q) || a.artist.toLowerCase().includes(q)
+      );
+
+      const matchingTracks = [];
+      state.albums.forEach(a => {
+        (a.tracks || []).forEach(t => {
+          if (t.title.toLowerCase().includes(q) || t.albumTitle.toLowerCase().includes(q) || t.artist.toLowerCase().includes(q)) {
+            matchingTracks.push(t);
+          }
+        });
+      });
+
+      if (matchingArtists.length === 0 && matchingAlbums.length === 0 && matchingTracks.length === 0) {
+        box.innerHTML = `
+          <div class="rounded-2xl bg-white/[0.03] border border-white/[0.06] p-10 text-center space-y-2">
+            <div class="text-sm font-semibold text-white">No matches for "${escapeHtml(state.searchQuery)}"</div>
+          </div>
+        `;
+        return;
+      }
+
+      box.innerHTML = `
+        <div class="space-y-8">
+          ${matchingArtists.length > 0 ? `
+            <div>
+              <h3 class="text-sm font-bold uppercase tracking-wider text-neutral-400 mb-3">Artists (${matchingArtists.length})</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                ${matchingArtists.map(ar => `
+                  <div onclick="switchView('artist', '${ar.id}')" class="luxury-card p-3.5 rounded-2xl flex items-center gap-3 cursor-pointer transition">
+                    <img src="${ar.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-12 h-12 rounded-full object-cover object-top shrink-0" />
+                    <div class="min-w-0">
+                      <div class="text-sm font-bold text-white truncate">${escapeHtml(ar.name)}</div>
+                      <div class="text-[11px] text-neutral-400">Artist</div>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+
+          ${matchingAlbums.length > 0 ? `
+            <div>
+              <h3 class="text-sm font-bold uppercase tracking-wider text-neutral-400 mb-3">Albums (${matchingAlbums.length})</h3>
+              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                ${matchingAlbums.slice(0, 15).map(album => `
+                  <div onclick="switchView('album', '${album.id.replace(/'/g, "\\'")}')" class="group cursor-pointer">
+                    <div class="aspect-square rounded-xl overflow-hidden bg-neutral-900 border border-white/10 mb-2">
+                      <img src="${album.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-full h-full object-cover object-top group-hover:scale-105 transition" />
+                    </div>
+                    <div class="text-xs font-semibold text-white truncate">${escapeHtml(album.title)}</div>
+                    <div class="text-[11px] text-neutral-400 truncate">${escapeHtml(album.artist)}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+
+          ${matchingTracks.length > 0 ? `
+            <div>
+              <h3 class="text-sm font-bold uppercase tracking-wider text-neutral-400 mb-3">Songs (${matchingTracks.length})</h3>
+              <div class="luxury-card rounded-2xl overflow-hidden divide-y divide-white/[0.04]">
+                ${matchingTracks.slice(0, 60).map((track, idx) => `
+                  <div onclick='playTrackFromList(${JSON.stringify(matchingTracks.slice(0, 60)).replace(/'/g, "&#39;")}, ${idx})'
+                    class="group flex items-center justify-between gap-3 px-4 py-3 hover:bg-white/[0.06] cursor-pointer transition">
+                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                      <img src="${track.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-10 h-10 rounded-lg object-cover object-top shrink-0" />
+                      <div class="min-w-0 flex-1">
+                        <div class="text-xs sm:text-sm font-semibold text-white truncate">${escapeHtml(track.title)}</div>
+                        <div class="text-[11px] text-neutral-400 truncate">${escapeHtml(track.artist)} • ${escapeHtml(track.albumTitle)}</div>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                      <button onclick='shareSong(${JSON.stringify(track).replace(/'/g, "&#39;")}, event)'
+                        title="Share Song" class="p-1.5 rounded-lg text-neutral-400 hover:text-[#FA243C] hover:bg-white/10 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                      </button>
+                      <button onclick='event.stopPropagation(); openAddToPlaylistModal(${JSON.stringify(track).replace(/'/g, "&#39;")})'
+                        title="Add to Playlist" class="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
+                      </button>
+                      <span class="text-xs text-neutral-400 tabular-nums">${track.duration ? formatTime(track.duration) : '--:--'}</span>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
         </div>
       `;
     }
 
     // ==========================================
-    // Hold & Drag Reordering for Playlist Tracks (Touch + Mouse)
+    // Queue Drawer & Modals
     // ==========================================
-    let playlistDragState = {
-      holdTimer: null,
-      isDragging: false,
-      justDragged: false,
-      playlistId: null,
-      fromIndex: -1,
-      toIndex: -1,
-      startX: 0,
-      startY: 0,
-      pointerId: null
-    };
-
-    function handlePlaylistRowClick(event, playlistId, idx) {
-      if (playlistDragState.justDragged || playlistDragState.isDragging) {
-        event.stopPropagation();
-        playlistDragState.justDragged = false;
-        return;
-      }
-      playPlaylist(playlistId, idx, false);
-    }
-
-    function startPlaylistTrackHold(event, playlistId, idx) {
-      if (event.target.closest('button')) return;
-      if (event.pointerType === 'mouse' && event.button !== 0) return;
-
-      cancelPlaylistHoldTimer();
-      playlistDragState.playlistId = playlistId;
-      playlistDragState.fromIndex = idx;
-      playlistDragState.toIndex = idx;
-      playlistDragState.startX = event.clientX;
-      playlistDragState.startY = event.clientY;
-      playlistDragState.pointerId = event.pointerId;
-      playlistDragState.isDragging = false;
-
-      const isGrip = Boolean(event.target.closest('.drag-grip'));
-      const holdDelay = isGrip ? 90 : 260;
-
-      playlistDragState.holdTimer = setTimeout(() => {
-        activatePlaylistDragMode();
-      }, holdDelay);
-
-      window.addEventListener('pointermove', onPlaylistPointerMove, { passive: false });
-      window.addEventListener('pointerup', onPlaylistPointerUp);
-      window.addEventListener('pointercancel', onPlaylistPointerUp);
-    }
-
-    function cancelPlaylistHoldTimer() {
-      if (playlistDragState.holdTimer) {
-        clearTimeout(playlistDragState.holdTimer);
-        playlistDragState.holdTimer = null;
-      }
-    }
-
-    function activatePlaylistDragMode() {
-      playlistDragState.isDragging = true;
-      playlistDragState.justDragged = true;
-      if (navigator.vibrate) {
-        try { navigator.vibrate(25); } catch (e) {}
-      }
-      const container = document.getElementById('playlist-tracks-sortable');
-      if (!container) return;
-      const rows = container.querySelectorAll('.playlist-track-row');
-      rows.forEach((row, i) => {
-        if (i === playlistDragState.fromIndex) {
-          row.classList.add('dragging-active');
-        }
-      });
-    }
-
-    function onPlaylistPointerMove(event) {
-      if (playlistDragState.pointerId !== null && event.pointerId !== playlistDragState.pointerId) return;
-
-      if (!playlistDragState.isDragging) {
-        const dx = Math.abs(event.clientX - playlistDragState.startX);
-        const dy = Math.abs(event.clientY - playlistDragState.startY);
-        if (dx > 8 || dy > 8) {
-          cancelPlaylistHoldTimer();
-          cleanupPlaylistDragListeners();
-        }
-        return;
-      }
-
-      event.preventDefault();
-      const container = document.getElementById('playlist-tracks-sortable');
-      if (!container) return;
-      const rows = Array.from(container.querySelectorAll('.playlist-track-row'));
-      if (rows.length === 0) return;
-
-      let targetIdx = playlistDragState.fromIndex;
-      for (let i = 0; i < rows.length; i++) {
-        const rect = rows[i].getBoundingClientRect();
-        const midY = rect.top + rect.height / 2;
-        if (event.clientY < midY) {
-          targetIdx = i;
-          break;
-        }
-        targetIdx = i;
-      }
-
-      playlistDragState.toIndex = targetIdx;
-      rows.forEach((row, i) => {
-        row.classList.remove('drop-target-above', 'drop-target-below');
-        if (i === targetIdx && targetIdx !== playlistDragState.fromIndex) {
-          if (targetIdx < playlistDragState.fromIndex) {
-            row.classList.add('drop-target-above');
-          } else {
-            row.classList.add('drop-target-below');
-          }
-        }
-      });
-    }
-
-    function onPlaylistPointerUp(event) {
-      if (playlistDragState.pointerId !== null && event.pointerId !== playlistDragState.pointerId) return;
-      cancelPlaylistHoldTimer();
-      cleanupPlaylistDragListeners();
-
-      if (playlistDragState.isDragging) {
-        const { playlistId, fromIndex, toIndex } = playlistDragState;
-        playlistDragState.isDragging = false;
-        if (playlistId && fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
-          reorderPlaylistTracks(playlistId, fromIndex, toIndex);
-        } else {
-          renderCurrentView();
-        }
-        setTimeout(() => {
-          playlistDragState.justDragged = false;
-        }, 120);
-      }
-      playlistDragState.pointerId = null;
-    }
-
-    function cleanupPlaylistDragListeners() {
-      window.removeEventListener('pointermove', onPlaylistPointerMove);
-      window.removeEventListener('pointerup', onPlaylistPointerUp);
-      window.removeEventListener('pointercancel', onPlaylistPointerUp);
-    }
-
-    function reorderPlaylistTracks(playlistId, fromIndex, toIndex) {
-      const pl = state.playlists.find(p => p.id === playlistId);
-      if (!pl || !Array.isArray(pl.tracks)) return;
-      if (fromIndex < 0 || fromIndex >= pl.tracks.length || toIndex < 0 || toIndex >= pl.tracks.length) return;
-
-      const currentTrackId = getCurrentTrack()?.id;
-      const [movedTrack] = pl.tracks.splice(fromIndex, 1);
-      pl.tracks.splice(toIndex, 0, movedTrack);
-
-      if (state.currentPlayingPlaylist === playlistId && !state.isShuffle) {
-        state.queue = [...pl.tracks];
-        if (currentTrackId) {
-          const newCurrentIdx = state.queue.findIndex(t => t.id === currentTrackId);
-          if (newCurrentIdx !== -1) state.currentIndex = newCurrentIdx;
-        }
-        if (state.queueOpen) renderQueueDrawer();
-      }
-
-      savePlaylistsToStorage();
-      renderCurrentView();
-      showToast(`Moved "${movedTrack.title}" to #${toIndex + 1}`, 'info');
-    }
-
-    // ==========================================
-    // Queue Drawer & Album Modals
-    // ==========================================
-    function toggleQueueDrawer(forceState) {
-      state.queueOpen = typeof forceState === 'boolean' ? forceState : !state.queueOpen;
+    function toggleQueueDrawer(forceState = null) {
+      state.queueOpen = forceState !== null ? forceState : !state.queueOpen;
       const drawer = document.getElementById('queue-drawer');
       const btn = document.getElementById('queue-toggle-btn');
 
@@ -4894,22 +4883,22 @@
 
       if (state.queue.length === 0) {
         subtitle.textContent = 'Queue is empty';
-        list.innerHTML = `<div class="text-xs text-neutral-500 text-center py-10">Play an album or Radio to populate Up Next.</div>`;
+        list.innerHTML = `<div class="text-xs text-neutral-500 text-center py-10">Play an album or song to populate Up Next.</div>`;
         return;
       }
 
-      subtitle.textContent = `${state.queue.length} songs in queue`;
-      list.innerHTML = state.queue.slice(0, 120).map((track, idx) => {
+      subtitle.textContent = `${state.queue.length} tracks in queue`;
+      list.innerHTML = state.queue.slice(0, 100).map((t, idx) => {
         const isCurrent = idx === state.currentIndex;
         return `
-          <div onclick="state.currentIndex = ${idx}; loadAndPlayCurrentTrack();"
-            class="flex items-center gap-2.5 p-2 rounded-lg cursor-pointer transition ${isCurrent ? 'bg-[#FA243C]/20 border border-[#FA243C]/30' : 'hover:bg-white/[0.06]'}">
-            <img src="${track.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-9 h-9 rounded object-cover object-top shrink-0 bg-neutral-800" />
+          <div onclick="state.currentIndex = ${idx}; loadAndPlayCurrentTrack(); renderQueueDrawer();"
+            class="flex items-center gap-2.5 p-2 rounded-xl cursor-pointer transition ${isCurrent ? 'bg-[#FA243C]/20 border border-[#FA243C]/30' : 'hover:bg-white/[0.06]'}">
+            <img src="${t.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-9 h-9 rounded-lg object-cover object-top shrink-0" />
             <div class="min-w-0 flex-1">
-              <div class="text-xs font-semibold truncate ${isCurrent ? 'text-[#FA243C]' : 'text-white'}">${escapeHtml(track.title)}</div>
-              <div class="text-[10px] text-neutral-400 truncate">${escapeHtml(track.albumTitle)}</div>
+              <div class="text-xs font-semibold truncate ${isCurrent ? 'text-[#FA243C]' : 'text-white'}">${escapeHtml(t.title)}</div>
+              <div class="text-[10px] text-neutral-400 truncate">${escapeHtml(t.artist)} • ${escapeHtml(t.albumTitle)}</div>
             </div>
-            <span class="text-[10px] text-neutral-500 tabular-nums">${track.duration ? formatTime(track.duration) : ''}</span>
+            ${isCurrent ? `<span class="text-[10px] font-bold text-[#FA243C]">Playing</span>` : ''}
           </div>
         `;
       }).join('');
@@ -4923,6 +4912,8 @@
       const modal = document.getElementById('add-album-modal');
       modal.classList.remove('hidden');
       modal.classList.add('flex');
+      document.getElementById('input-archive-id').value = '';
+      document.getElementById('input-album-title').value = '';
       document.getElementById('input-archive-id').focus();
     }
 
@@ -4932,27 +4923,21 @@
       modal.classList.remove('flex');
     }
 
-    function extractArchiveIdentifier(input) {
-      const trimmed = input.trim();
-      const match = trimmed.match(/archive\.org\/(?:details|download)\/([^/?#]+)/i);
-      if (match && match[1]) return decodeURIComponent(match[1]);
-      return trimmed.replace(/^\/+|\/+$/g, '');
-    }
-
     function submitNewAlbum() {
-      if (!state.isAdmin) {
-        showToast('Admin sign-in required to add albums.', 'error');
+      if (!state.isAdmin) return;
+      const rawInput = document.getElementById('input-archive-id').value.trim();
+      const customTitle = document.getElementById('input-album-title').value.trim();
+      const artist = document.getElementById('input-album-artist').value.trim() || 'A.R. Rahman';
+
+      if (!rawInput) {
+        showToast('Please enter an Archive.org URL or identifier.', 'error');
         return;
       }
 
-      const rawInput = document.getElementById('input-archive-id').value;
-      const customTitle = document.getElementById('input-album-title').value.trim();
-      const artistInput = document.getElementById('input-album-artist').value.trim() || 'A.R. Rahman';
-
-      const identifier = extractArchiveIdentifier(rawInput);
-      if (!identifier) {
-        showToast('Please enter a valid Archive.org URL or identifier.', 'error');
-        return;
+      let identifier = rawInput;
+      const match = rawInput.match(/archive\.org\/(?:details|download)\/([^/?#]+)/i);
+      if (match && match[1]) {
+        identifier = match[1];
       }
 
       const existing = state.albums.find(a => a.identifier.toLowerCase() === identifier.toLowerCase());
@@ -4963,19 +4948,19 @@
         return;
       }
 
-      const newId = 'album-' + Date.now();
-      const displayTitle = customTitle || formatDisplayAlbumTitle(identifier);
-      const matchedDirArtist = ARTISTS_DIRECTORY.find(ar => ar.name.toLowerCase() === artistInput.toLowerCase());
+      const matchedArtist = ARTISTS_DIRECTORY.find(ar => ar.name.toLowerCase() === artist.toLowerCase());
+      const newId = 'custom-' + Date.now();
+      const initialTitle = customTitle || formatDisplayAlbumTitle(identifier);
       const newAlbum = {
         id: newId,
         identifier,
-        title: displayTitle,
+        artistId: matchedArtist ? matchedArtist.id : artist.toLowerCase().replace(/\s+/g, '-'),
+        title: initialTitle,
         customTitle: Boolean(customTitle),
-        artistId: matchedDirArtist ? matchedDirArtist.id : artistInput.toLowerCase().replace(/\s+/g, '-'),
-        artist: artistInput,
-        cover: generateTypographicCover(displayTitle, artistInput),
-        year: '2026',
-        genre: 'Soundtrack • Lossless',
+        artist,
+        cover: generateTypographicCover(initialTitle, artist),
+        year: String(new Date().getFullYear()),
+        genre: 'Soundtrack',
         tracks: [],
         loading: true,
         error: null
@@ -4983,47 +4968,40 @@
 
       state.albums.unshift(newAlbum);
       saveAlbumsToStorage();
-
-      document.getElementById('input-archive-id').value = '';
-      document.getElementById('input-album-title').value = '';
       closeAddAlbumModal();
-
       switchView('album', newId);
       fetchArchiveTracks(newId);
-      showToast(`Added "${displayTitle}"`, 'info');
+      showToast(`Added "${identifier}"`, 'info');
     }
 
-    function removeAlbum(albumId, e) {
-      if (e) e.stopPropagation();
+    function removeAlbum(albumId, event) {
+      if (event) event.stopPropagation();
       if (!state.isAdmin) {
         showToast('Admin sign-in required to delete albums.', 'error');
         return;
       }
 
-      const removedAlbum = state.albums.find(a => a.id === albumId);
       state.albums = state.albums.filter(a => a.id !== albumId);
       if (!state.hiddenAlbumIds.includes(albumId)) {
         state.hiddenAlbumIds.push(albumId);
         saveHiddenAlbums();
       }
       saveAlbumsToStorage();
-      renderSidebarAlbums();
 
-      if (state.currentView === 'album' && state.selectedAlbumId === albumId) {
-        switchView('home');
-      } else {
-        renderCurrentView();
+      if (state.selectedAlbumId === albumId) {
+        state.selectedAlbumId = null;
+        state.currentView = 'home';
       }
-      showToast(`Deleted "${removedAlbum?.title || 'Album'}"`, 'info');
+      renderSidebarAlbums();
+      renderCurrentView();
+      showToast('Album deleted from library.', 'info');
     }
 
-    function toggleMobileSidebar(force) {
+    function toggleMobileSidebar(open) {
       const sidebar = document.getElementById('sidebar');
       const backdrop = document.getElementById('mobile-backdrop');
-      const isOpen = !sidebar.classList.contains('-translate-x-full');
-      const next = typeof force === 'boolean' ? force : !isOpen;
-
-      if (next) {
+      if (!sidebar || !backdrop) return;
+      if (open) {
         sidebar.classList.remove('-translate-x-full');
         backdrop.classList.remove('hidden');
       } else {
@@ -5032,23 +5010,9 @@
       }
     }
 
-    let toastTimer = null;
-    function showToast(msg, type = 'info') {
-      const toast = document.getElementById('toast');
-      const inner = document.getElementById('toast-inner');
-      inner.textContent = msg;
-      inner.className = `px-4 py-2 rounded-full border text-xs font-semibold shadow-2xl backdrop-blur-md ${
-        type === 'error'
-          ? 'bg-red-950/90 border-red-500/40 text-red-200'
-          : 'bg-neutral-900/95 border-white/15 text-white'
-      }`;
-      toast.classList.remove('opacity-0');
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => {
-        toast.classList.add('opacity-0');
-      }, 2400);
-    }
-
+    // ==========================================
+    // Utilities
+    // ==========================================
     function shuffleArray(arr) {
       const copy = [...arr];
       for (let i = copy.length - 1; i > 0; i--) {
@@ -5059,12 +5023,137 @@
     }
 
     function escapeHtml(str) {
-      return String(str || '').replace(/[&<>"']/g, c => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-      }[c]));
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
     }
 
-    // Boot immediately once DOM is parsed
+    let toastTimer = null;
+    function showToast(msg, type = 'info') {
+      const toast = document.getElementById('toast');
+      const inner = document.getElementById('toast-inner');
+      if (!toast || !inner) return;
+      inner.textContent = msg;
+      inner.className = `px-4 py-2 rounded-full border text-xs font-medium shadow-xl backdrop-blur-md ${
+        type === 'error'
+          ? 'bg-red-950/90 border-red-500/40 text-red-200'
+          : 'bg-neutral-900/95 border-white/15 text-white'
+      }`;
+      toast.classList.remove('opacity-0');
+      toast.classList.add('opacity-100');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('opacity-100');
+        toast.classList.add('opacity-0');
+      }, 2800);
+    }
+
+    // ==========================================
+    // PWA App Icons & Web App Manifest Bootstrap
+    // ==========================================
+    function generateTuneSPngIcon(size) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      const radius = Math.round(size * 0.225);
+      const grad = ctx.createLinearGradient(0, 0, size, size);
+      grad.addColorStop(0, '#FA243C');
+      grad.addColorStop(0.55, '#E11D48');
+      grad.addColorStop(1, '#FF5E7E');
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(radius, 0);
+      ctx.lineTo(size - radius, 0);
+      ctx.quadraticCurveTo(size, 0, size, radius);
+      ctx.lineTo(size, size - radius);
+      ctx.quadraticCurveTo(size, size, size - radius, size);
+      ctx.lineTo(radius, size);
+      ctx.quadraticCurveTo(0, size, 0, size - radius);
+      ctx.lineTo(0, radius);
+      ctx.quadraticCurveTo(0, 0, radius, 0);
+      ctx.closePath();
+      ctx.fill();
+
+      const gloss = ctx.createRadialGradient(size * 0.28, size * 0.2, size * 0.05, size * 0.35, size * 0.35, size * 0.85);
+      gloss.addColorStop(0, 'rgba(255,255,255,0.28)');
+      gloss.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = gloss;
+      ctx.fill();
+
+      ctx.fillStyle = '#FFFFFF';
+      const noteScale = size / 24;
+      ctx.save();
+      ctx.translate(size * 0.14, size * 0.14);
+      ctx.scale(noteScale * 0.72, noteScale * 0.72);
+      const p = new Path2D('M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z');
+      ctx.fill(p);
+      ctx.restore();
+
+      return canvas.toDataURL('image/png');
+    }
+
+    function setupPwaManifestAndIcons() {
+      try {
+        const icon192 = generateTuneSPngIcon(192);
+        const icon512 = generateTuneSPngIcon(512);
+
+        const faviconEl = document.getElementById('pwa-favicon');
+        const appleIconEl = document.getElementById('pwa-apple-icon');
+        if (faviconEl) faviconEl.href = icon192;
+        if (appleIconEl) appleIconEl.href = icon512;
+
+        const isHttpsHosted = window.location.protocol === 'https:' || window.location.protocol === 'http:';
+        if (!isHttpsHosted) return;
+
+        const startUrl = window.location.origin + window.location.pathname;
+        const manifestObj = {
+          name: 'tune-S Music',
+          short_name: 'tune-S',
+          description: 'Lossless South Indian & Bollywood Film Music Collection on tune-S',
+          start_url: startUrl,
+          scope: window.location.origin + '/',
+          display: 'standalone',
+          orientation: 'portrait',
+          background_color: '#0E0E12',
+          theme_color: '#0E0E12',
+          icons: [
+            { src: icon192, sizes: '192x192', type: 'image/png', purpose: 'any' },
+            { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+          ],
+          shortcuts: [
+            {
+              name: 'Artist Radio',
+              short_name: 'Radio',
+              url: startUrl + '?action=radio',
+              icons: [{ src: icon192, sizes: '192x192', type: 'image/png' }]
+            },
+            {
+              name: 'Search Music',
+              short_name: 'Search',
+              url: startUrl + '?action=search',
+              icons: [{ src: icon192, sizes: '192x192', type: 'image/png' }]
+            }
+          ]
+        };
+
+        const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+        const manifestUrl = URL.createObjectURL(manifestBlob);
+        const manifestLink = document.getElementById('pwa-manifest-link');
+        if (manifestLink) {
+          manifestLink.href = manifestUrl;
+        }
+      } catch (e) {}
+    }
+
+    // Boot Application
+    setupPwaManifestAndIcons();
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', initializeTuneSApp);
     } else {
