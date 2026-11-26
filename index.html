@@ -2,7 +2,7 @@
 <html lang="en" class="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>tune-S — Lossless South Indian &amp; Film Music</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -15,6 +15,8 @@
       margin: 0;
       padding: 0;
       height: 100%;
+      height: 100dvh;
+      min-height: -webkit-fill-available;
       background-color: #0B0B0F;
       color: #F5F5F7;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -78,7 +80,7 @@
     .eq-paused { animation-play-state: paused !important; height: 35% !important; }
   </style>
 </head>
-<body class="h-screen w-screen overflow-hidden flex flex-col bg-[#0B0B0F] text-white select-none">
+<body class="h-[100dvh] w-screen overflow-hidden flex flex-col bg-[#0B0B0F] text-white select-none">
 
   <audio id="bg-audio-engine" crossorigin="anonymous"></audio>
   <audio id="bg-audio-preload" preload="none" crossorigin="anonymous"></audio>
@@ -515,7 +517,7 @@
     </footer>
 
     <!-- Solid Bottom Dock Tray with Centered iOS Floating Pill Navigation -->
-    <nav aria-label="Bottom Navigation" class="w-full h-[76px] sm:h-[80px] bg-gradient-to-r from-[#121118] via-[#1B141E] to-[#121118] border-t border-white/[0.06] flex items-center justify-center px-3 pb-1.5">
+    <nav aria-label="Bottom Navigation" style="padding-bottom: max(12px, env(safe-area-inset-bottom));" class="w-full min-h-[78px] sm:min-h-[82px] bg-gradient-to-r from-[#121118] via-[#1B141E] to-[#121118] border-t border-white/[0.06] flex items-center justify-center px-3 pt-2">
       <div class="w-full max-w-[440px] h-[58px] rounded-full bg-[#1C1B22]/95 backdrop-blur-2xl border border-white/[0.12] shadow-[0_10px_32px_rgba(0,0,0,0.85)] grid grid-cols-5 items-center px-1.5">
         <!-- Home Tab -->
         <button id="bottom-tab-home" onclick="switchView('home')" class="flex flex-col items-center justify-center gap-0.5 py-1 rounded-full transition text-[#FA243C]">
