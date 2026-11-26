@@ -70,6 +70,20 @@
       -webkit-box-reflect: below 8px linear-gradient(to bottom, rgba(0,0,0,0) 68%, rgba(0,0,0,0.22) 100%);
     }
 
+    /* Playlist Hold-and-Drag Reorder Visual States */
+    .playlist-row-dragging {
+      opacity: 0.96;
+      background: rgba(250, 36, 60, 0.24) !important;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.75);
+      transform: scale(1.015);
+      z-index: 20;
+      position: relative;
+    }
+    .playlist-row-drop-target {
+      border-top: 2px solid #FA243C !important;
+      background: rgba(255, 255, 255, 0.09) !important;
+    }
+
     @keyframes eqBounce {
       0%, 100% { height: 25%; }
       50% { height: 100%; }
@@ -2040,7 +2054,7 @@
             <div class="flex items-center gap-2">
               <select onchange="state.selectedArtistFilter=this.value; renderCurrentView();"
                 class="bg-white/[0.08] border border-white/15 rounded-xl px-3 py-2 text-xs text-white outline-none">
-                <option value="all">All Maestros</option>
+                <option value="all">All Artists</option>
                 ${ARTISTS_DIRECTORY.map(ar => `<option value="${ar.id}" ${state.selectedArtistFilter === ar.id ? 'selected' : ''}>${escapeHtml(ar.name)}</option>`).join('')}
               </select>
             </div>
@@ -2379,12 +2393,195 @@
     }
 
     // ==========================================
-    // Playlists Management & Detail View
+    // Playlists Management & Hold-and-Drag Reordering
     // ==========================================
+    let draggedPlaylistTrackIndex = null;
+    const holdDragState = {
+      active: false,
+      timer: null,
+      plId: null,
+      fromIdx: -1,
+      overIdx: -1,
+      startX: 0,
+      startY: 0,
+      suppressNextClick: false
+    };
+
+    function movePlaylistTrack(plId, fromIdx, toIdx) {
+      const pl = state.playlists.find(p => p.id === plId);
+      if (!pl || !Array.isArray(pl.tracks)) return;
+      if (fromIdx < 0 || fromIdx >= pl.tracks.length || toIdx < 0 || toIdx >= pl.tracks.length || fromIdx === toIdx) return;
+
+      const activeTrack = getCurrentTrack();
+      const [moved] = pl.tracks.splice(fromIdx, 1);
+      pl.tracks.splice(toIdx, 0, moved);
+      savePlaylistsToStorage();
+
+      // Keep active queue order synchronized if this playlist is currently playing
+      if (state.currentPlayingPlaylist === plId && activeTrack) {
+        state.queue = [...pl.tracks];
+        const newIdx = state.queue.findIndex(t => (t.id && activeTrack.id && t.id === activeTrack.id) || (t.url && activeTrack.url && t.url === activeTrack.url));
+        if (newIdx !== -1) state.currentIndex = newIdx;
+      }
+
+      renderCurrentView();
+    }
+
+    function handlePlaylistDragStart(idx, event) {
+      draggedPlaylistTrackIndex = idx;
+      if (event && event.dataTransfer) {
+        event.dataTransfer.effectAllowed = 'move';
+        try { event.dataTransfer.setData('text/plain', String(idx)); } catch (e) {}
+      }
+    }
+
+    function handlePlaylistDragOver(event) {
+      if (event) {
+        event.preventDefault();
+        if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+      }
+    }
+
+    function handlePlaylistDrop(plId, targetIdx, event) {
+      if (event) event.preventDefault();
+      if (draggedPlaylistTrackIndex !== null && draggedPlaylistTrackIndex !== targetIdx) {
+        movePlaylistTrack(plId, draggedPlaylistTrackIndex, targetIdx);
+      }
+      draggedPlaylistTrackIndex = null;
+    }
+
+    // Touch & Pointer Press-and-Hold Drag Reordering for Mobile & Desktop
+    function beginPlaylistHoldTimer(plId, idx, clientX, clientY, immediate = false) {
+      cancelPlaylistHoldDrag(false);
+      holdDragState.plId = plId;
+      holdDragState.fromIdx = idx;
+      holdDragState.overIdx = idx;
+      holdDragState.startX = clientX;
+      holdDragState.startY = clientY;
+
+      const activate = () => {
+        holdDragState.active = true;
+        holdDragState.suppressNextClick = true;
+        if (navigator.vibrate) {
+          try { navigator.vibrate(25); } catch (e) {}
+        }
+        highlightHoldDragRows();
+      };
+
+      if (immediate) {
+        activate();
+      } else {
+        holdDragState.timer = setTimeout(activate, 260);
+      }
+    }
+
+    function handlePlaylistTouchStart(plId, idx, event) {
+      if (!event.touches || !event.touches[0]) return;
+      const t = event.touches[0];
+      const onGrip = !!event.target?.closest('[data-drag-grip="true"]');
+      beginPlaylistHoldTimer(plId, idx, t.clientX, t.clientY, onGrip);
+    }
+
+    function handlePlaylistTouchMove(event) {
+      if (!event.touches || !event.touches[0]) return;
+      const t = event.touches[0];
+
+      if (!holdDragState.active) {
+        if (holdDragState.timer) {
+          const movedDist = Math.hypot(t.clientX - holdDragState.startX, t.clientY - holdDragState.startY);
+          if (movedDist > 10) {
+            clearTimeout(holdDragState.timer);
+            holdDragState.timer = null;
+          }
+        }
+        return;
+      }
+
+      event.preventDefault();
+      updateHoldDragTargetFromPoint(t.clientX, t.clientY);
+    }
+
+    function handlePlaylistTouchEnd() {
+      finishPlaylistHoldDrag();
+    }
+
+    function handlePlaylistMouseDownGrip(plId, idx, event) {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      event.stopPropagation();
+      beginPlaylistHoldTimer(plId, idx, event.clientX, event.clientY, true);
+
+      const onMouseMove = (moveEv) => {
+        if (!holdDragState.active) return;
+        moveEv.preventDefault();
+        updateHoldDragTargetFromPoint(moveEv.clientX, moveEv.clientY);
+      };
+      const onMouseUp = () => {
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+        finishPlaylistHoldDrag();
+      };
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    }
+
+    function updateHoldDragTargetFromPoint(clientX, clientY) {
+      const el = document.elementFromPoint(clientX, clientY);
+      const row = el?.closest('[data-pl-track-idx]');
+      if (!row) return;
+      const targetIdx = parseInt(row.dataset.plTrackIdx, 10);
+      if (!isNaN(targetIdx) && targetIdx !== holdDragState.overIdx) {
+        holdDragState.overIdx = targetIdx;
+        highlightHoldDragRows();
+      }
+    }
+
+    function highlightHoldDragRows() {
+      document.querySelectorAll('[data-pl-track-idx]').forEach((row) => {
+        const rIdx = parseInt(row.dataset.plTrackIdx, 10);
+        row.classList.toggle('playlist-row-dragging', holdDragState.active && rIdx === holdDragState.fromIdx);
+        row.classList.toggle('playlist-row-drop-target', holdDragState.active && rIdx === holdDragState.overIdx && rIdx !== holdDragState.fromIdx);
+      });
+    }
+
+    function finishPlaylistHoldDrag() {
+      clearTimeout(holdDragState.timer);
+      holdDragState.timer = null;
+      if (holdDragState.active) {
+        const { plId, fromIdx, overIdx } = holdDragState;
+        holdDragState.active = false;
+        highlightHoldDragRows();
+        if (plId && fromIdx !== -1 && overIdx !== -1 && fromIdx !== overIdx) {
+          movePlaylistTrack(plId, fromIdx, overIdx);
+        }
+        setTimeout(() => { holdDragState.suppressNextClick = false; }, 120);
+      }
+      holdDragState.plId = null;
+      holdDragState.fromIdx = -1;
+      holdDragState.overIdx = -1;
+    }
+
+    function cancelPlaylistHoldDrag(resetSuppress = true) {
+      clearTimeout(holdDragState.timer);
+      holdDragState.timer = null;
+      holdDragState.active = false;
+      if (resetSuppress) holdDragState.suppressNextClick = false;
+      highlightHoldDragRows();
+    }
+
+    function playPlaylistById(plId, startIdx = 0) {
+      if (holdDragState.suppressNextClick || holdDragState.active) return;
+      const pl = state.playlists.find(p => p.id === plId);
+      if (!pl || !pl.tracks.length) return;
+      state.currentPlayingPlaylist = plId;
+      playTrackFromList(pl.tracks, startIdx);
+    }
+
     function renderPlaylistDetailView(container) {
       const pl = state.playlists.find(p => p.id === state.selectedPlaylistId);
       if (!pl) return switchView('home');
       window.__currentPlaylistTracks = pl.tracks || [];
+      const isPlaylistPlaying = state.isPlaying && pl.tracks.some(t => isTrackCurrentlyActive(t));
 
       container.innerHTML = `
         <div class="max-w-4xl mx-auto space-y-6">
@@ -2392,10 +2589,13 @@
             <div>
               <div class="text-[10px] font-extrabold uppercase tracking-widest text-[#FA243C]">PLAYLIST</div>
               <h1 class="text-2xl sm:text-3xl font-black text-white mt-0.5">${escapeHtml(pl.name)}</h1>
-              <p class="text-xs text-neutral-400 mt-0.5">${pl.tracks.length} Songs</p>
+              <p class="text-xs text-neutral-400 mt-0.5">${pl.tracks.length} Songs ${pl.tracks.length > 1 ? '• Hold & drag or use arrows to reorder' : ''}</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
-              <button onclick="playTrackFromList(window.__currentPlaylistTracks, 0)" class="px-5 py-2.5 rounded-full bg-[#FA243C] text-white text-xs font-bold">▶ Play</button>
+              <button onclick="${isPlaylistPlaying ? 'togglePlayPause()' : `playPlaylistById('${pl.id}', 0)`}"
+                class="px-5 py-2.5 rounded-full bg-[#FA243C] hover:bg-[#E01E34] text-white text-xs font-extrabold shadow-lg transition">
+                ${isPlaylistPlaying ? '❚❚ Pause' : '▶ Play'}
+              </button>
               <button onclick="sharePlaylist('${pl.id}', event)" class="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/15 text-white text-xs font-bold">Share</button>
               <button onclick="openRenamePlaylistModal('${pl.id}')" class="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/15 text-white text-xs font-bold">Rename</button>
             </div>
@@ -2405,17 +2605,51 @@
             <div class="luxury-card rounded-2xl overflow-hidden divide-y divide-white/[0.06]">
               ${pl.tracks.map((tr, idx) => {
                 const active = isTrackCurrentlyActive(tr);
+                const isFirst = idx === 0;
+                const isLast = idx === pl.tracks.length - 1;
                 return `
-                  <div onclick="playTrackFromList(window.__currentPlaylistTracks, ${idx})"
-                    class="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer ${active ? 'bg-[#FA243C]/15' : 'hover:bg-white/[0.06]'}">
-                    <div class="flex items-center gap-3 min-w-0">
-                      <img src="${tr.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-10 h-10 rounded-lg object-cover shrink-0" />
-                      <div class="min-w-0">
+                  <div data-pl-track-idx="${idx}"
+                    draggable="true"
+                    ondragstart="handlePlaylistDragStart(${idx}, event)"
+                    ondragover="handlePlaylistDragOver(event)"
+                    ondrop="handlePlaylistDrop('${pl.id}', ${idx}, event)"
+                    ontouchstart="handlePlaylistTouchStart('${pl.id}', ${idx}, event)"
+                    ontouchmove="handlePlaylistTouchMove(event)"
+                    ontouchend="handlePlaylistTouchEnd()"
+                    ontouchcancel="cancelPlaylistHoldDrag(true)"
+                    onclick="playPlaylistById('${pl.id}', ${idx})"
+                    class="flex items-center justify-between gap-2 px-3 sm:px-4 py-3 cursor-pointer transition select-none ${active ? 'bg-[#FA243C]/15' : 'hover:bg-white/[0.06]'}">
+                    <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                      <!-- Press-and-Hold Drag Grip -->
+                      <div data-drag-grip="true"
+                        onmousedown="handlePlaylistMouseDownGrip('${pl.id}', ${idx}, event)"
+                        onclick="event.stopPropagation()"
+                        title="Hold & Drag to Reorder"
+                        class="p-1.5 -ml-1 text-neutral-500 hover:text-neutral-200 cursor-grab active:cursor-grabbing touch-none shrink-0">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 7.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 7.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm8-15a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 7.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 7.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3z"/>
+                        </svg>
+                      </div>
+                      <div class="w-5 text-center shrink-0 flex items-center justify-center">
+                        ${active ? renderEqualizerBars('bg-[#FA243C]') : `<span class="text-xs font-bold text-neutral-500">${idx + 1}</span>`}
+                      </div>
+                      <img src="${tr.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" draggable="false" class="w-10 h-10 rounded-lg object-cover shrink-0 pointer-events-none" />
+                      <div class="min-w-0 flex-1">
                         <div class="text-xs sm:text-sm font-bold truncate ${active ? 'text-[#FA243C]' : 'text-white'}">${escapeHtml(tr.title)}</div>
                         <div class="text-[11px] text-neutral-400 truncate">${escapeHtml(tr.artist)} • ${escapeHtml(tr.albumTitle || '')}</div>
                       </div>
                     </div>
-                    <button onclick="event.stopPropagation(); removeTrackFromPlaylist('${pl.id}', ${idx})" class="text-xs text-neutral-400 hover:text-red-400 px-2 py-1">Remove</button>
+                    <div class="flex items-center gap-0.5 sm:gap-1.5 shrink-0" onclick="event.stopPropagation()">
+                      <button onclick="movePlaylistTrack('${pl.id}', ${idx}, ${idx - 1})" ${isFirst ? 'disabled' : ''} title="Move Up" aria-label="Move Up"
+                        class="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 disabled:opacity-25 disabled:pointer-events-none transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
+                      </button>
+                      <button onclick="movePlaylistTrack('${pl.id}', ${idx}, ${idx + 1})" ${isLast ? 'disabled' : ''} title="Move Down" aria-label="Move Down"
+                        class="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 disabled:opacity-25 disabled:pointer-events-none transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                      </button>
+                      <button onclick="removeTrackFromPlaylist('${pl.id}', ${idx})" class="text-xs font-medium text-neutral-400 hover:text-red-400 px-2 py-1 rounded-lg hover:bg-white/[0.06] transition">Remove</button>
+                    </div>
                   </div>
                 `;
               }).join('')}
