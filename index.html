@@ -53,18 +53,9 @@
       background: #FFFFFF;
       box-shadow: 0 1px 4px rgba(0,0,0,0.65);
     }
-    .apple-bottom-nav { bottom: 6px; }
-    @media (min-width: 640px) { .apple-bottom-nav { bottom: 8px; } }
-    .apple-player-dock {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 68px;
-    }
-    @media (min-width: 1024px) {
-      .apple-player-dock { left: 16rem; }
-    }
-    #main-scroll-area { padding-bottom: 165px; }
+    .apple-bottom-nav { bottom: 8px; }
+    @media (min-width: 640px) { .apple-bottom-nav { bottom: 10px; } }
+    #main-scroll-area { padding-bottom: 185px; }
 
     @keyframes eqBounce {
       0%, 100% { height: 25%; }
@@ -249,7 +240,7 @@
 
       <!-- Listen Together Bottom Messaging Window (Watch Party Chat Drawer) -->
       <section id="listen-together-chat-dock" aria-label="Listen Together Live Chat"
-        class="hidden fixed bottom-[152px] sm:bottom-[158px] right-3 sm:right-6 lg:right-8 z-40 w-[calc(100vw-1.5rem)] sm:w-[370px] rounded-2xl glass-panel border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden flex-col transition-all duration-200">
+        class="hidden fixed bottom-[168px] sm:bottom-[178px] right-3 sm:right-6 lg:right-8 z-40 w-[calc(100vw-1.5rem)] sm:w-[370px] rounded-2xl glass-panel border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden flex-col transition-all duration-200">
         <!-- Header Bar (Always Visible When Room Is Active) -->
         <div onclick="toggleListenTogetherChatCollapse()" class="px-3.5 py-2.5 bg-gradient-to-r from-[#261420] via-[#1B1A24] to-[#171720] border-b border-white/10 flex items-center justify-between gap-2 cursor-pointer select-none">
           <div class="flex items-center gap-2 min-w-0">
@@ -327,54 +318,8 @@
         </div>
       </section>
 
-      <!-- iOS Floating Bottom Tab Bar -->
-      <nav aria-label="Bottom Navigation" class="apple-bottom-nav pointer-events-none fixed left-0 right-0 lg:left-64 z-50 flex justify-center px-3 pb-1">
-        <div class="pointer-events-auto w-full max-w-[440px] h-[58px] rounded-full bg-[#191920]/95 backdrop-blur-2xl border border-white/[0.12] shadow-[0_10px_32px_rgba(0,0,0,0.85)] grid grid-cols-5 items-center px-1.5">
-          <!-- Home Tab -->
-          <button id="bottom-tab-home" onclick="switchView('home')" class="flex flex-col items-center justify-center gap-0.5 py-1 rounded-full transition text-[#FA243C]">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M11.47 3.84a.75.75 0 011.06 0l8.69 8.69a.75.75 0 101.06-1.06l-8.689-8.69a2.25 2.25 0 00-3.182 0l-8.69 8.69a.75.75 0 001.061 1.06l8.69-8.69z"/>
-              <path d="M12 5.432l8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 01-.75-.75v-4.5a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75V21a.75.75 0 01-.75.75H5.625a1.875 1.875 0 01-1.875-1.875v-6.198a2.29 2.29 0 00.091-.086L12 5.43z"/>
-            </svg>
-            <span class="text-[10px] font-semibold tracking-tight">Home</span>
-          </button>
-
-          <!-- Now Playing Tab -->
-          <button id="bottom-tab-now-playing" onclick="switchView('now-playing')" class="flex flex-col items-center justify-center gap-0.5 py-1 rounded-full transition text-neutral-400 hover:text-white">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm14.024-.983a1.125 1.125 0 010 1.966l-5.603 3.113A1.125 1.125 0 019 15.113V8.887c0-.857.921-1.4 1.671-.983l5.603 3.113z" clip-rule="evenodd"/>
-            </svg>
-            <span class="text-[10px] font-semibold tracking-tight">Now Playing</span>
-          </button>
-
-          <!-- Radio Tab -->
-          <button id="bottom-tab-radio" onclick="startRadioShuffle(true)" class="flex flex-col items-center justify-center gap-0.5 py-1 rounded-full transition text-neutral-400 hover:text-white">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z"/>
-            </svg>
-            <span class="text-[10px] font-semibold tracking-tight">Radio</span>
-          </button>
-
-          <!-- Library Tab -->
-          <button id="bottom-tab-library" onclick="switchView('all-albums')" class="flex flex-col items-center justify-center gap-0.5 py-1 rounded-full transition text-neutral-400 hover:text-white">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M5 4.5A1.5 1.5 0 016.5 3h11A1.5 1.5 0 0119 4.5v1A1.5 1.5 0 0117.5 7h-11A1.5 1.5 0 015 5.5v-1zM4 9.5A1.5 1.5 0 015.5 8h13A1.5 1.5 0 0120 9.5v9a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 18.5v-9zm9.5 2.25a.75.75 0 00-1.5 0v3.34a2.25 2.25 0 101.5 2.16V13.5h1.25a.75.75 0 000-1.5h-1.25v-.25z"/>
-            </svg>
-            <span class="text-[10px] font-semibold tracking-tight">Library</span>
-          </button>
-
-          <!-- Search Tab -->
-          <button id="bottom-tab-search" onclick="switchView('search')" class="flex flex-col items-center justify-center gap-0.5 py-1 rounded-full transition text-neutral-400 hover:text-white">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103.5 10.5a7.5 7.5 0 0013.15 6.15z"/>
-            </svg>
-            <span class="text-[10px] font-semibold tracking-tight">Search</span>
-          </button>
-        </div>
-      </nav>
-
       <!-- Up Next Queue Drawer -->
-      <aside id="queue-drawer" class="fixed top-14 bottom-[144px] right-0 w-80 max-w-[90vw] glass-panel border-l border-white/[0.08] z-30 transform translate-x-full transition-transform duration-200 flex flex-col shadow-2xl">
+      <aside id="queue-drawer" class="fixed top-14 bottom-[154px] sm:bottom-[164px] right-0 w-80 max-w-[90vw] glass-panel border-l border-white/[0.08] z-30 transform translate-x-full transition-transform duration-200 flex flex-col shadow-2xl">
         <div class="p-4 border-b border-white/[0.08] flex items-center justify-between">
           <div>
             <h3 class="text-sm font-bold text-white">Up Next</h3>
@@ -390,127 +335,177 @@
     </main>
   </div>
 
-  <!-- Persistent Now-Playing Dock -->
-  <footer class="apple-player-dock h-[76px] sm:h-[82px] glass-panel border-t border-white/[0.08] px-3 sm:px-6 flex items-center justify-between gap-3 z-40 shrink-0">
+  <!-- Solid Full-Width Bottom Chrome: Now-Playing Dock + Centered Floating Navigation Pill -->
+  <div class="relative z-40 shrink-0 w-full bg-gradient-to-b from-[#141319] via-[#121118] to-[#0E0D13] border-t border-white/[0.08] shadow-[0_-12px_36px_rgba(0,0,0,0.85)]">
 
-    <!-- Left: Artwork & Track Metadata -->
-    <div class="flex items-center gap-3 w-[30%] min-w-[130px] sm:min-w-[200px]">
-      <div onclick="switchView('now-playing')" class="relative w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-neutral-900 border border-white/15 shrink-0 shadow-lg cursor-pointer group">
-        <img id="player-art" src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20400%22%3E%3Crect%20width%3D%22400%22%20height%3D%22400%22%20fill%3D%22%2318181F%22%2F%3E%3Ccircle%20cx%3D%22200%22%20cy%3D%22200%22%20r%3D%2280%22%20fill%3D%22none%22%20stroke%3D%22%23FA243C%22%20stroke-width%3D%225%22%2F%3E%3Ccircle%20cx%3D%22200%22%20cy%3D%22200%22%20r%3D%2222%22%20fill%3D%22%23FA243C%22%2F%3E%3C%2Fsvg%3E" alt="Album Art" class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform" />
+    <!-- Full-Width Now-Playing Player Row -->
+    <footer class="apple-player-dock h-[76px] sm:h-[82px] px-3 sm:px-6 flex items-center justify-between gap-3">
+
+      <!-- Left: Artwork & Track Metadata -->
+      <div class="flex items-center gap-3 w-[30%] min-w-[130px] sm:min-w-[200px]">
+        <div onclick="switchView('now-playing')" class="relative w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-neutral-900 border border-white/15 shrink-0 shadow-lg cursor-pointer group">
+          <img id="player-art" src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20400%22%3E%3Crect%20width%3D%22400%22%20height%3D%22400%22%20fill%3D%22%2318181F%22%2F%3E%3Ccircle%20cx%3D%22200%22%20cy%3D%22200%22%20r%3D%2280%22%20fill%3D%22none%22%20stroke%3D%22%23FA243C%22%20stroke-width%3D%225%22%2F%3E%3Ccircle%20cx%3D%22200%22%20cy%3D%22200%22%20r%3D%2222%22%20fill%3D%22%23FA243C%22%2F%3E%3C%2Fsvg%3E" alt="Album Art" class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform" />
+        </div>
+        <div class="min-w-0 flex-1">
+          <div onclick="switchView('now-playing')" id="player-title" class="text-xs sm:text-sm font-semibold text-white truncate cursor-pointer hover:text-[#FA243C] transition" title="Open Now Playing">Select a song to play</div>
+          <div id="player-artist" class="text-[11px] sm:text-xs text-neutral-400 truncate mt-0.5">tune-S Collection</div>
+          <div id="player-source-links" class="hidden sm:flex items-center gap-2 mt-1">
+            <button onclick="jumpToCurrentTrackAlbum()" id="player-album-link" class="hidden text-[10px] font-medium text-[#FA243C] hover:underline truncate max-w-[140px]">
+              Go to Album
+            </button>
+          </div>
+        </div>
       </div>
-      <div class="min-w-0 flex-1">
-        <div onclick="switchView('now-playing')" id="player-title" class="text-xs sm:text-sm font-semibold text-white truncate cursor-pointer hover:text-[#FA243C] transition" title="Open Now Playing">Select a song to play</div>
-        <div id="player-artist" class="text-[11px] sm:text-xs text-neutral-400 truncate mt-0.5">tune-S Collection</div>
-        <div id="player-source-links" class="hidden sm:flex items-center gap-2 mt-1">
-          <button onclick="jumpToCurrentTrackAlbum()" id="player-album-link" class="hidden text-[10px] font-medium text-[#FA243C] hover:underline truncate max-w-[140px]">
-            Go to Album
+
+      <!-- Center: Transport Controls & Scrubber -->
+      <div class="flex-1 max-w-xl flex flex-col items-center justify-center gap-1.5">
+        <div class="flex items-center gap-4 sm:gap-6">
+          <!-- Shuffle -->
+          <button id="btn-shuffle" onclick="toggleShuffle()" title="Shuffle" class="text-neutral-400 hover:text-white transition p-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
+            </svg>
+          </button>
+
+          <!-- Previous -->
+          <button onclick="prevTrack()" title="Previous" class="text-neutral-200 hover:text-white transition p-1 active:scale-90">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+            </svg>
+          </button>
+
+          <!-- Play / Pause -->
+          <button id="btn-play-pause" onclick="togglePlayPause()" title="Play / Pause" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white text-black hover:scale-105 active:scale-95 flex items-center justify-center shadow-md shadow-white/10 transition">
+            <svg id="icon-play" class="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+            <svg id="icon-pause" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+            </svg>
+          </button>
+
+          <!-- Next -->
+          <button onclick="nextTrack()" title="Next" class="text-neutral-200 hover:text-white transition p-1 active:scale-90">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+            </svg>
+          </button>
+
+          <!-- Repeat -->
+          <button id="btn-repeat" onclick="toggleRepeat()" title="Repeat" class="text-neutral-400 hover:text-white transition p-1 relative">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 1l4 4-4 4"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 13v2a4 4 0 01-4 4H3"/>
+            </svg>
+            <span id="repeat-one-badge" class="hidden absolute -top-0.5 -right-1 text-[9px] font-bold text-[#FA243C]">1</span>
           </button>
         </div>
-      </div>
-    </div>
 
-    <!-- Center: Transport Controls & Scrubber -->
-    <div class="flex-1 max-w-xl flex flex-col items-center justify-center gap-1.5">
-      <div class="flex items-center gap-4 sm:gap-6">
-        <!-- Shuffle -->
-        <button id="btn-shuffle" onclick="toggleShuffle()" title="Shuffle" class="text-neutral-400 hover:text-white transition p-1">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
-          </svg>
-        </button>
-
-        <!-- Previous -->
-        <button onclick="prevTrack()" title="Previous" class="text-neutral-200 hover:text-white transition p-1 active:scale-90">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
-          </svg>
-        </button>
-
-        <!-- Play / Pause -->
-        <button id="btn-play-pause" onclick="togglePlayPause()" title="Play / Pause" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white text-black hover:scale-105 active:scale-95 flex items-center justify-center shadow-md shadow-white/10 transition">
-          <svg id="icon-play" class="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M8 5v14l11-7z"/>
-          </svg>
-          <svg id="icon-pause" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
-          </svg>
-        </button>
-
-        <!-- Next -->
-        <button onclick="nextTrack()" title="Next" class="text-neutral-200 hover:text-white transition p-1 active:scale-90">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
-          </svg>
-        </button>
-
-        <!-- Repeat -->
-        <button id="btn-repeat" onclick="toggleRepeat()" title="Repeat" class="text-neutral-400 hover:text-white transition p-1 relative">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M17 1l4 4-4 4"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 13v2a4 4 0 01-4 4H3"/>
-          </svg>
-          <span id="repeat-one-badge" class="hidden absolute -top-0.5 -right-1 text-[9px] font-bold text-[#FA243C]">1</span>
-        </button>
-      </div>
-
-      <!-- Progress Bar -->
-      <div class="w-full flex items-center gap-2.5">
-        <span id="time-current" class="text-[10px] font-medium text-neutral-400 w-9 text-right tabular-nums">0:00</span>
-        <div class="relative flex-1 flex items-center">
-          <input
-            id="progress-slider"
-            type="range"
-            min="0"
-            max="100"
-            value="0"
-            step="0.1"
-            oninput="handleSeekInput(this.value)"
-            onchange="handleSeekCommit(this.value)"
-            class="apple-slider w-full h-1"
-          />
+        <!-- Progress Bar -->
+        <div class="w-full flex items-center gap-2.5">
+          <span id="time-current" class="text-[10px] font-medium text-neutral-400 w-9 text-right tabular-nums">0:00</span>
+          <div class="relative flex-1 flex items-center">
+            <input
+              id="progress-slider"
+              type="range"
+              min="0"
+              max="100"
+              value="0"
+              step="0.1"
+              oninput="handleSeekInput(this.value)"
+              onchange="handleSeekCommit(this.value)"
+              class="apple-slider w-full h-1"
+            />
+          </div>
+          <span id="time-duration" class="text-[10px] font-medium text-neutral-400 w-9 tabular-nums">0:00</span>
         </div>
-        <span id="time-duration" class="text-[10px] font-medium text-neutral-400 w-9 tabular-nums">0:00</span>
       </div>
-    </div>
 
-    <!-- Right: Lossless Badge, Share, Add to Playlist, Volume -->
-    <div class="hidden md:flex items-center justify-end gap-2.5 w-[30%]">
-      <span id="player-format-badge" class="hidden lg:inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/[0.08] text-[10px] font-bold tracking-wider text-neutral-300 border border-white/10">
-        LOSSLESS
-      </span>
+      <!-- Right: Lossless Badge, Share, Add to Playlist, Volume -->
+      <div class="hidden md:flex items-center justify-end gap-2.5 w-[30%]">
+        <span id="player-format-badge" class="hidden lg:inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/[0.08] text-[10px] font-bold tracking-wider text-neutral-300 border border-white/10">
+          LOSSLESS
+        </span>
 
-      <button id="player-share-btn" onclick="shareCurrentTrack()" title="Share Current Song" class="hidden p-1.5 rounded-lg text-neutral-400 hover:text-[#FA243C] hover:bg-white/10 transition">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-        </svg>
-      </button>
+        <button id="player-share-btn" onclick="shareCurrentTrack()" title="Share Current Song" class="hidden p-1.5 rounded-lg text-neutral-400 hover:text-[#FA243C] hover:bg-white/10 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+        </button>
 
-      <button id="player-add-playlist-btn" onclick="openAddCurrentTrackToPlaylist()" title="Add Current Song to Playlist" class="hidden p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" d="M12 5v14M5 12h14"/>
-        </svg>
-      </button>
+        <button id="player-add-playlist-btn" onclick="openAddCurrentTrackToPlaylist()" title="Add Current Song to Playlist" class="hidden p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" d="M12 5v14M5 12h14"/>
+          </svg>
+        </button>
 
-      <button onclick="toggleMute()" class="text-neutral-400 hover:text-white transition">
-        <svg id="icon-vol-high" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-        </svg>
-        <svg id="icon-vol-mute" class="w-4 h-4 hidden text-[#FA243C]" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
-        </svg>
-      </button>
-      <input
-        id="volume-slider"
-        type="range"
-        min="0"
-        max="1"
-        step="0.01"
-        value="1"
-        style="--range-pct: 100%"
-        oninput="handleVolumeChange(this.value)"
-        class="apple-slider w-24 h-1"
-      />
-    </div>
-  </footer>
+        <button onclick="toggleMute()" class="text-neutral-400 hover:text-white transition">
+          <svg id="icon-vol-high" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+          </svg>
+          <svg id="icon-vol-mute" class="w-4 h-4 hidden text-[#FA243C]" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+          </svg>
+        </button>
+        <input
+          id="volume-slider"
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          value="1"
+          style="--range-pct: 100%"
+          oninput="handleVolumeChange(this.value)"
+          class="apple-slider w-24 h-1"
+        />
+      </div>
+    </footer>
+
+    <!-- Solid Bottom Dock Tray with Centered iOS Floating Pill Navigation -->
+    <nav aria-label="Bottom Navigation" class="w-full h-[76px] sm:h-[80px] bg-gradient-to-r from-[#121118] via-[#1B141E] to-[#121118] border-t border-white/[0.06] flex items-center justify-center px-3 pb-1.5">
+      <div class="w-full max-w-[440px] h-[58px] rounded-full bg-[#1C1B22]/95 backdrop-blur-2xl border border-white/[0.12] shadow-[0_10px_32px_rgba(0,0,0,0.85)] grid grid-cols-5 items-center px-1.5">
+        <!-- Home Tab -->
+        <button id="bottom-tab-home" onclick="switchView('home')" class="flex flex-col items-center justify-center gap-0.5 py-1 rounded-full transition text-[#FA243C]">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M11.47 3.84a.75.75 0 011.06 0l8.69 8.69a.75.75 0 101.06-1.06l-8.689-8.69a2.25 2.25 0 00-3.182 0l-8.69 8.69a.75.75 0 001.061 1.06l8.69-8.69z"/>
+            <path d="M12 5.432l8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 01-.75-.75v-4.5a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75V21a.75.75 0 01-.75.75H5.625a1.875 1.875 0 01-1.875-1.875v-6.198a2.29 2.29 0 00.091-.086L12 5.43z"/>
+          </svg>
+          <span class="text-[10px] font-semibold tracking-tight">Home</span>
+        </button>
+
+        <!-- Now Playing Tab -->
+        <button id="bottom-tab-now-playing" onclick="switchView('now-playing')" class="flex flex-col items-center justify-center gap-0.5 py-1 rounded-full transition text-neutral-400 hover:text-white">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm14.024-.983a1.125 1.125 0 010 1.966l-5.603 3.113A1.125 1.125 0 019 15.113V8.887c0-.857.921-1.4 1.671-.983l5.603 3.113z" clip-rule="evenodd"/>
+          </svg>
+          <span class="text-[10px] font-semibold tracking-tight">Now Playing</span>
+        </button>
+
+        <!-- Radio Tab -->
+        <button id="bottom-tab-radio" onclick="startRadioShuffle(true)" class="flex flex-col items-center justify-center gap-0.5 py-1 rounded-full transition text-neutral-400 hover:text-white">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z"/>
+          </svg>
+          <span class="text-[10px] font-semibold tracking-tight">Radio</span>
+        </button>
+
+        <!-- Library Tab -->
+        <button id="bottom-tab-library" onclick="switchView('all-albums')" class="flex flex-col items-center justify-center gap-0.5 py-1 rounded-full transition text-neutral-400 hover:text-white">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M5 4.5A1.5 1.5 0 016.5 3h11A1.5 1.5 0 0119 4.5v1A1.5 1.5 0 0117.5 7h-11A1.5 1.5 0 015 5.5v-1zM4 9.5A1.5 1.5 0 015.5 8h13A1.5 1.5 0 0120 9.5v9a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 18.5v-9zm9.5 2.25a.75.75 0 00-1.5 0v3.34a2.25 2.25 0 101.5 2.16V13.5h1.25a.75.75 0 000-1.5h-1.25v-.25z"/>
+          </svg>
+          <span class="text-[10px] font-semibold tracking-tight">Library</span>
+        </button>
+
+        <!-- Search Tab -->
+        <button id="bottom-tab-search" onclick="switchView('search')" class="flex flex-col items-center justify-center gap-0.5 py-1 rounded-full transition text-neutral-400 hover:text-white">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103.5 10.5a7.5 7.5 0 0013.15 6.15z"/>
+          </svg>
+          <span class="text-[10px] font-semibold tracking-tight">Search</span>
+        </button>
+      </div>
+    </nav>
+  </div>
 
   <!-- Add Song to Playlist Modal -->
   <div id="add-to-playlist-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-sm p-4">
