@@ -57,6 +57,17 @@
     @media (min-width: 640px) { .apple-bottom-nav { bottom: 10px; } }
     #main-scroll-area { padding-bottom: 185px; }
 
+    /* Smooth 3D Cover Flow Stage */
+    .coverflow-stage {
+      perspective: 1200px;
+      transform-style: preserve-3d;
+    }
+    .coverflow-item {
+      transition: transform 0.48s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.42s ease, filter 0.42s ease;
+      will-change: transform, opacity;
+      -webkit-box-reflect: below 8px linear-gradient(to bottom, rgba(0,0,0,0) 68%, rgba(0,0,0,0.22) 100%);
+    }
+
     @keyframes eqBounce {
       0%, 100% { height: 25%; }
       50% { height: 100%; }
@@ -723,12 +734,12 @@
       <div class="space-y-3">
         <div>
           <label class="block text-xs font-semibold text-neutral-300 mb-1.5">Username</label>
-          <input id="admin-username-input" type="text" placeholder="admin" onkeydown="if(event.key==='Enter') submitAdminLogin()"
+          <input id="admin-username-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Enter username" onkeydown="if(event.key==='Enter') submitAdminLogin()"
             class="w-full bg-black/45 border border-white/15 focus:border-[#FA243C] rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 outline-none transition" />
         </div>
         <div>
           <label class="block text-xs font-semibold text-neutral-300 mb-1.5">Password</label>
-          <input id="admin-password-input" type="password" placeholder="••••••••••••" onkeydown="if(event.key==='Enter') submitAdminLogin()"
+          <input id="admin-password-input" type="password" autocomplete="new-password" placeholder="••••••••••••" onkeydown="if(event.key==='Enter') submitAdminLogin()"
             class="w-full bg-black/45 border border-white/15 focus:border-[#FA243C] rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 outline-none transition" />
         </div>
         <p id="admin-login-error" class="hidden text-xs font-medium text-[#FA243C]"></p>
@@ -943,6 +954,7 @@
     const LAST_PLAYED_STORAGE_KEY = 'apple_music_last_played_v1';
     const RECENT_HISTORY_STORAGE_KEY = 'tunes_recent_played_history_v1';
     const ALBUMS_VIEW_MODE_KEY = 'tunes_albums_view_mode_v1';
+    const ARTIST_ALBUMS_VIEW_MODE_KEY = 'tunes_artist_albums_view_mode_v1';
     const ADMIN_CREDS_KEY = 'apple_music_admin_creds_v1';
     const ADMIN_SESSION_KEY = 'apple_music_admin_logged_in_v1';
     const HIDDEN_ALBUMS_KEY = 'apple_music_hidden_albums_v1';
@@ -971,6 +983,7 @@
       currentPlayingPlaylist: null,
       currentView: 'home',
       albumsViewMode: localStorage.getItem(ALBUMS_VIEW_MODE_KEY) || 'grid',
+      artistAlbumsViewMode: localStorage.getItem(ARTIST_ALBUMS_VIEW_MODE_KEY) || 'grid',
       coverFlowIndex: 0,
       artistCoverFlowIndex: 0,
       searchQuery: '',
@@ -1145,10 +1158,10 @@
       const userEl = document.getElementById('admin-username-input');
       const passEl = document.getElementById('admin-password-input');
       const errEl = document.getElementById('admin-login-error');
-      if (userEl && !userEl.value) userEl.value = 'admin';
+      if (userEl) userEl.value = '';
       if (passEl) passEl.value = '';
       errEl?.classList.add('hidden');
-      setTimeout(() => passEl?.focus(), 60);
+      setTimeout(() => userEl?.focus(), 60);
     }
 
     let lastGeneratedUnlockKey = '';
@@ -1190,8 +1203,15 @@
 
     function openAdminLoginModal() {
       const modal = document.getElementById('admin-login-modal');
+      const userEl = document.getElementById('admin-username-input');
+      const passEl = document.getElementById('admin-password-input');
+      const errEl = document.getElementById('admin-login-error');
+      if (userEl) userEl.value = '';
+      if (passEl) passEl.value = '';
+      errEl?.classList.add('hidden');
       modal?.classList.remove('hidden');
       modal?.classList.add('flex');
+      setTimeout(() => userEl?.focus(), 60);
     }
 
     function closeAdminLoginModal() {
@@ -1436,7 +1456,11 @@
           saveAlbumsToStorage();
           renderSidebarArtists();
           renderSidebarAlbums();
-          renderCurrentView();
+          if (state.currentView === 'search') {
+            renderSearchResults();
+          } else {
+            renderCurrentView();
+          }
         }
       } catch (e) {}
     }
@@ -1477,441 +1501,928 @@
     }
 
     // ==========================================
-    // Playback Engine & Transport Controls
+    // Sidebar Renderers & View Navigation
     // ==========================================
-    function getFastStreamCandidate(track) {
-      if (!track || !track.url) return { primaryUrl: '', fallbackUrl: '' };
-      const rawUrl = String(track.url);
-      if (/\.(wav|flac)(\?.*)?$/i.test(rawUrl)) {
-        return { primaryUrl: rawUrl.replace(/\.(wav|flac)(\?.*)?$/i, '.mp3$2'), fallbackUrl: rawUrl };
-      }
-      return { primaryUrl: rawUrl, fallbackUrl: track.altUrl || '' };
-    }
-
-    function getCurrentTrack() {
-      return state.currentIndex >= 0 && state.currentIndex < state.queue.length ? state.queue[state.currentIndex] : null;
-    }
-
-    function isTrackCurrentlyActive(track) {
-      if (!track) return false;
-      const cur = getCurrentTrack();
-      return Boolean(cur && cur.id === track.id);
-    }
-
-    function isTrackActivelyPlaying(track) {
-      return isTrackCurrentlyActive(track) && state.isPlaying;
-    }
-
-    function isAlbumActivelyPlaying(albumId) {
-      if (!albumId || !state.isPlaying) return false;
-      const cur = getCurrentTrack();
-      return Boolean(cur && cur.albumId === albumId);
-    }
-
-    function saveLastPlayedState(track) {
-      if (!track) return;
-      state.lastPlayedTrack = track;
-      try {
-        localStorage.setItem(LAST_PLAYED_STORAGE_KEY, JSON.stringify({
-          track,
-          queue: state.queue.slice(0, 60),
-          currentIndex: state.currentIndex
-        }));
-      } catch (e) {}
-    }
-
-    function restoreLastPlayedState() {
-      try {
-        const parsed = JSON.parse(localStorage.getItem(LAST_PLAYED_STORAGE_KEY));
-        if (parsed?.track) {
-          state.lastPlayedTrack = parsed.track;
-          state.queue = Array.isArray(parsed.queue) && parsed.queue.length ? parsed.queue : [parsed.track];
-          state.currentIndex = typeof parsed.currentIndex === 'number' ? parsed.currentIndex : 0;
-          updatePlayerBarMetadata(parsed.track);
-        }
-      } catch (e) {}
-    }
-
-    function updatePlayerBarMetadata(track) {
-      if (!track) return;
-      document.getElementById('player-title').textContent = track.title;
-      const artistEl = document.getElementById('player-artist');
-      if (artistEl) {
-        artistEl.innerHTML = `
-          <span onclick="openArtistByName('${escapeHtml(track.artist).replace(/'/g, "\\'")}', '${track.artistId || ''}')" class="hover:text-white hover:underline cursor-pointer">${escapeHtml(track.artist)}</span>
-          <span class="mx-1">—</span>
-          <span onclick="switchView('album', '${(track.albumId || '').replace(/'/g, "\\'")}')" class="hover:text-[#FA243C] hover:underline cursor-pointer">${escapeHtml(track.albumTitle)}</span>
+    function renderSidebarArtists() {
+      const box = document.getElementById('sidebar-artist-list');
+      if (!box) return;
+      box.innerHTML = ARTISTS_DIRECTORY.map(ar => {
+        const count = state.albums.filter(a => a.artistId === ar.id).length;
+        const active = state.currentView === 'artist' && state.selectedArtistId === ar.id;
+        return `
+          <button onclick="switchView('artist', '${ar.id}'); toggleMobileSidebar(false);"
+            class="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition ${active ? 'bg-white/10 text-white' : 'text-neutral-400 hover:text-white hover:bg-white/[0.05]'}">
+            <span class="truncate">${escapeHtml(ar.name)}</span>
+            ${count ? `<span class="text-[10px] text-neutral-500">${count}</span>` : ''}
+          </button>
         `;
-      }
-      const artEl = document.getElementById('player-art');
-      if (artEl) artEl.src = track.cover || FALLBACK_COVER_ART;
-      const badge = document.getElementById('player-format-badge');
-      if (badge) { badge.textContent = track.formatBadge || 'LOSSLESS'; badge.classList.remove('hidden'); }
-      const albumLinkBtn = document.getElementById('player-album-link');
-      if (albumLinkBtn && track.albumId) {
-        albumLinkBtn.textContent = track.albumTitle || 'Go to Album';
-        albumLinkBtn.classList.remove('hidden');
-      }
-      document.getElementById('player-add-playlist-btn')?.classList.remove('hidden');
-      document.getElementById('player-share-btn')?.classList.remove('hidden');
+      }).join('');
     }
 
-    function loadAndPlayCurrentTrack() {
-      const track = getCurrentTrack();
-      if (!track) return;
+    function renderSidebarPlaylists() {
+      const box = document.getElementById('sidebar-playlist-list');
+      if (!box) return;
+      box.innerHTML = state.playlists.map(pl => {
+        const active = state.currentView === 'playlist' && state.selectedPlaylistId === pl.id;
+        return `
+          <button onclick="switchView('playlist', '${pl.id}'); toggleMobileSidebar(false);"
+            class="w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition ${active ? 'bg-white/10 text-white' : 'text-neutral-400 hover:text-white hover:bg-white/[0.05]'}">
+            <span class="truncate">${escapeHtml(pl.name)}</span>
+            <span class="text-[10px] text-neutral-500">${pl.tracks.length}</span>
+          </button>
+        `;
+      }).join('');
+    }
 
-      userPausedManually = false;
-      recordTrackPlay(track);
+    function renderSidebarAlbums() {
+      const box = document.getElementById('sidebar-album-list');
+      if (!box) return;
+      box.innerHTML = state.albums.slice(0, 24).map(alb => {
+        const active = state.currentView === 'album' && state.selectedAlbumId === alb.id;
+        return `
+          <button onclick="switchView('album', '${alb.id}'); toggleMobileSidebar(false);"
+            class="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition text-left ${active ? 'bg-white/10 text-white' : 'text-neutral-400 hover:text-white hover:bg-white/[0.05]'}">
+            <img src="${alb.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-5 h-5 rounded object-cover shrink-0" />
+            <span class="truncate">${escapeHtml(alb.title)}</span>
+          </button>
+        `;
+      }).join('');
+    }
 
-      const { primaryUrl, fallbackUrl } = getFastStreamCandidate(track);
-      audio.src = primaryUrl;
-      audio.dataset.fallbackUrl = fallbackUrl || '';
-      audio.dataset.triedFallback = 'false';
+    function updateNavHighlights() {
+      const navMap = {
+        home: 'nav-home',
+        'now-playing': 'nav-now-playing',
+        search: 'nav-search',
+        'all-albums': 'nav-all-albums',
+        'all-songs': 'nav-all-songs'
+      };
+      Object.entries(navMap).forEach(([v, id]) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const active = state.currentView === v;
+        el.classList.toggle('bg-white/10', active);
+        el.classList.toggle('text-white', active);
+        el.classList.toggle('text-neutral-300', !active);
+      });
 
-      saveLastPlayedState(track);
-      updatePlayerBarMetadata(track);
+      const tabMap = {
+        home: 'bottom-tab-home',
+        'now-playing': 'bottom-tab-now-playing',
+        'all-albums': 'bottom-tab-library',
+        search: 'bottom-tab-search'
+      };
+      Object.entries(tabMap).forEach(([v, id]) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const active = state.currentView === v;
+        el.classList.toggle('text-[#FA243C]', active);
+        el.classList.toggle('text-neutral-400', !active);
+      });
 
-      state.isPlaying = true;
-      updatePlayPauseUI();
+      const crumb = document.getElementById('breadcrumb-title');
+      if (!crumb) return;
+      if (state.currentView === 'home') {
+        crumb.innerHTML = `<span class="text-white font-semibold">Home</span>`;
+      } else if (state.currentView === 'now-playing') {
+        crumb.innerHTML = `<button onclick="switchView('home')" class="hover:text-white">Home</button> <span class="mx-1">/</span> <span class="text-white font-semibold">Now Playing</span>`;
+      } else if (state.currentView === 'search') {
+        crumb.innerHTML = `<button onclick="switchView('home')" class="hover:text-white">Home</button> <span class="mx-1">/</span> <span class="text-white font-semibold">Search</span>`;
+      } else if (state.currentView === 'all-albums') {
+        crumb.innerHTML = `<button onclick="switchView('home')" class="hover:text-white">Home</button> <span class="mx-1">/</span> <span class="text-white font-semibold">Albums (${state.albums.length})</span>`;
+      } else if (state.currentView === 'all-songs') {
+        crumb.innerHTML = `<button onclick="switchView('home')" class="hover:text-white">Home</button> <span class="mx-1">/</span> <span class="text-white font-semibold">Songs</span>`;
+      } else if (state.currentView === 'artist') {
+        const ar = ARTISTS_DIRECTORY.find(a => a.id === state.selectedArtistId);
+        crumb.innerHTML = `<button onclick="switchView('home')" class="hover:text-white">Home</button> <span class="mx-1">/</span> <span class="text-white font-semibold">${escapeHtml(ar?.name || 'Maestro')}</span>`;
+      } else if (state.currentView === 'album') {
+        const alb = state.albums.find(a => a.id === state.selectedAlbumId);
+        crumb.innerHTML = `<button onclick="switchView('all-albums')" class="hover:text-white">Albums</button> <span class="mx-1">/</span> <span class="text-white font-semibold">${escapeHtml(alb?.title || 'Album')}</span>`;
+      } else if (state.currentView === 'playlist') {
+        const pl = state.playlists.find(p => p.id === state.selectedPlaylistId);
+        crumb.innerHTML = `<button onclick="switchView('home')" class="hover:text-white">Home</button> <span class="mx-1">/</span> <span class="text-white font-semibold">${escapeHtml(pl?.name || 'Playlist')}</span>`;
+      }
+    }
+
+    function switchView(view, id = null) {
+      state.currentView = view;
+      if (view === 'artist' && id) {
+        state.selectedArtistId = id;
+        state.artistCoverFlowIndex = 0;
+      } else if (view === 'album' && id) {
+        state.selectedAlbumId = id;
+      } else if (view === 'playlist' && id) {
+        state.selectedPlaylistId = id;
+      }
+      renderSidebarArtists();
+      renderSidebarPlaylists();
+      renderSidebarAlbums();
       renderCurrentView();
+      const scrollArea = document.getElementById('main-scroll-area');
+      if (scrollArea) scrollArea.scrollTop = 0;
+    }
 
-      const playPromise = audio.play();
-      if (playPromise && typeof playPromise.then === 'function') {
-        playPromise.then(() => {
-          state.isPlaying = true;
-          updatePlayPauseUI();
-          renderCurrentView();
-          broadcastListenTogetherPlayback('track-change');
-        }).catch(() => {
-          state.isPlaying = !audio.paused;
-          updatePlayPauseUI();
-          renderCurrentView();
-        });
-      } else {
-        broadcastListenTogetherPlayback('track-change');
+    function renderCurrentView() {
+      updateNavHighlights();
+      const container = document.getElementById('main-scroll-area');
+      if (!container) return;
+
+      if (state.currentView === 'home') {
+        renderHomeView(container);
+      } else if (state.currentView === 'now-playing') {
+        renderNowPlayingView(container);
+      } else if (state.currentView === 'search') {
+        renderSearchView(container);
+      } else if (state.currentView === 'all-albums') {
+        renderAllAlbumsView(container);
+      } else if (state.currentView === 'all-songs') {
+        renderAllSongsView(container);
+      } else if (state.currentView === 'artist') {
+        renderArtistView(container);
+      } else if (state.currentView === 'album') {
+        renderAlbumDetailView(container);
+      } else if (state.currentView === 'playlist') {
+        renderPlaylistDetailView(container);
       }
     }
 
-    function playAlbum(albumId, startIndex = 0, shuffle = false) {
-      const album = state.albums.find(a => a.id === albumId);
-      if (!album || !album.tracks || album.tracks.length === 0) {
-        showToast('Loading album tracks...', 'info');
-        return;
-      }
-      let list = [...album.tracks];
-      state.isShuffle = Boolean(shuffle);
-      if (shuffle) {
-        list = shuffleArray(list);
-        startIndex = 0;
-      }
-      updateShuffleRepeatUI();
-      state.isRadioMode = false;
-      state.currentPlayingPlaylist = null;
-      state.queue = list;
-      state.currentIndex = startIndex;
-      loadAndPlayCurrentTrack();
+    // ==========================================
+    // Reusable Track & Album UI Helpers
+    // ==========================================
+    function isTrackCurrentlyActive(track) {
+      const cur = getCurrentTrack();
+      if (!cur || !track) return false;
+      return (cur.id && track.id && cur.id === track.id) || (cur.url && track.url && cur.url === track.url);
     }
 
-    function handleAlbumPrimaryPlayClick(albumId) {
-      if (isAlbumActivelyPlaying(albumId)) {
-        togglePlayPause();
-      } else if (getCurrentTrack()?.albumId === albumId && audio.src) {
-        togglePlayPause();
-      } else {
-        playAlbum(albumId, 0, false);
-      }
+    function renderEqualizerBars(colorClass = 'bg-[#FA243C]') {
+      const paused = state.isPlaying ? '' : 'eq-paused';
+      return `
+        <span class="inline-flex items-end gap-[2px] h-3.5 w-3.5 shrink-0" aria-label="Playing">
+          <span class="w-[2.5px] ${colorClass} rounded-full eq-bar-1 ${paused}"></span>
+          <span class="w-[2.5px] ${colorClass} rounded-full eq-bar-2 ${paused}"></span>
+          <span class="w-[2.5px] ${colorClass} rounded-full eq-bar-3 ${paused}"></span>
+        </span>
+      `;
     }
 
-    function toggleAlbumShuffle(albumId) {
-      const album = state.albums.find(a => a.id === albumId);
-      if (!album || !album.tracks?.length) return;
-      if (state.isShuffle) {
-        state.isShuffle = false;
-        updateShuffleRepeatUI();
-        renderCurrentView();
-        showToast('Shuffle Off', 'info');
-      } else {
-        playAlbum(albumId, 0, true);
-        showToast('Shuffle On', 'info');
-      }
+    function renderAlbumGridCards(albums) {
+      return albums.map(alb => `
+        <div onclick="switchView('album', '${alb.id}')" class="cursor-pointer group transition flex flex-col">
+          <div class="relative aspect-square rounded-2xl overflow-hidden bg-neutral-900 mb-2.5 shadow-lg">
+            <img src="${alb.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" loading="lazy"
+              class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300" />
+            <button onclick="event.stopPropagation(); playAlbumById('${alb.id}')" title="Play Album"
+              class="absolute bottom-2.5 right-2.5 w-9 h-9 rounded-full bg-[#FA243C] text-white flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition">
+              <svg class="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+          </div>
+          <div class="text-xs sm:text-sm font-bold text-white truncate group-hover:text-[#FA243C] transition">${escapeHtml(alb.title)}</div>
+          <div class="text-[11px] text-neutral-400 truncate mt-0.5">${escapeHtml(alb.artist)}</div>
+          <div class="text-[10px] text-neutral-500 mt-0.5">${alb.tracks.length} songs</div>
+        </div>
+      `).join('');
     }
 
-    function playTrackFromList(tracks, index) {
-      if (!tracks || !tracks.length) return;
-      const target = tracks[index];
-      if (target && isTrackCurrentlyActive(target) && audio.src) {
-        togglePlayPause();
-        return;
-      }
-      state.isRadioMode = false;
-      state.currentPlayingPlaylist = null;
-      state.queue = [...tracks];
-      state.currentIndex = index;
-      loadAndPlayCurrentTrack();
+    // ==========================================
+    // Home View (Hero Mosaic, Recently Played, Top 10 Albums, Top 10 Songs, Continue Listening)
+    // ==========================================
+    function getDynamicGreeting() {
+      const h = new Date().getHours();
+      if (h < 12) return 'GOOD MORNING';
+      if (h < 17) return 'GOOD AFTERNOON';
+      if (h < 22) return 'GOOD EVENING';
+      return 'LATE NIGHT SESSIONS';
     }
 
-    function playPlaylist(playlistId, startIndex = 0, shuffle = false) {
-      const pl = state.playlists.find(p => p.id === playlistId);
-      if (!pl || !pl.tracks?.length) return showToast('Playlist is empty.', 'info');
-      let list = [...pl.tracks];
-      state.isShuffle = Boolean(shuffle);
-      if (shuffle) {
-        list = shuffleArray(list);
-        startIndex = 0;
-      }
-      updateShuffleRepeatUI();
-      state.isRadioMode = false;
-      state.currentPlayingPlaylist = playlistId;
-      state.queue = list;
-      state.currentIndex = startIndex;
-      loadAndPlayCurrentTrack();
-    }
+    function renderHomeView(container) {
+      const totalAlbums = state.albums.length;
+      const totalTracks = state.albums.reduce((acc, a) => acc + (a.tracks?.length || 0), 0);
 
-    function togglePlaylistShuffle(playlistId) {
-      if (state.isShuffle) {
-        state.isShuffle = false;
-        updateShuffleRepeatUI();
-        renderCurrentView();
-        showToast('Shuffle Off', 'info');
-      } else {
-        playPlaylist(playlistId, 0, true);
-        showToast('Shuffle On', 'info');
-      }
-    }
+      const withRealArt = state.albums.filter(a => isValidRealCoverUrl(a.cover));
+      const mosaicPool = shuffleArray(withRealArt.length >= 4 ? withRealArt : state.albums);
+      const heroFour = mosaicPool.slice(0, 4);
 
-    function startRadioShuffle(navigateToRadio = false, artistFilterId = null) {
-      const targetId = artistFilterId || 'all';
-      const pool = targetId === 'all'
-        ? state.albums
-        : state.albums.filter(a => a.artistId === targetId);
-      const tracks = pool.flatMap(a => a.tracks || []);
-      if (tracks.length === 0) return showToast('Syncing tracks for Radio...', 'info');
+      const topAlbums = [...state.albums]
+        .sort((a, b) => (playStats.albums[b.id] || 0) - (playStats.albums[a.id] || 0) || (b.tracks?.length || 0) - (a.tracks?.length || 0))
+        .slice(0, 10);
 
-      state.isRadioMode = true;
-      state.activeRadioArtistId = targetId;
-      state.isShuffle = true;
-      state.currentPlayingPlaylist = null;
-      state.queue = shuffleArray(tracks);
-      state.currentIndex = 0;
-      loadAndPlayCurrentTrack();
-      updateShuffleRepeatUI();
-      if (navigateToRadio) switchView('radio');
+      const allTracks = [];
+      state.albums.forEach(a => (a.tracks || []).forEach(t => allTracks.push(t)));
+      homeTop10SongsCache = [...allTracks]
+        .sort((a, b) => (playStats.songs[b.id] || 0) - (playStats.songs[a.id] || 0))
+        .slice(0, 10);
+
+      const resumeTrack = getCurrentTrack() || state.lastPlayedTrack;
+
+      container.innerHTML = `
+        <div class="max-w-6xl mx-auto space-y-10">
+          <!-- Hero Discovery Banner -->
+          <section class="rounded-3xl bg-gradient-to-br from-[#2B121E] via-[#17141E] to-[#111117] border border-white/10 p-6 sm:p-8 text-center relative overflow-hidden shadow-2xl">
+            <div class="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#FA243C]">
+              ${getDynamicGreeting()} • TUNE-S COLLECTION
+            </div>
+            <h1 class="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight mt-2 leading-tight">
+              Every Maestro. Every Soundtrack.
+            </h1>
+            <p class="text-xs sm:text-sm text-neutral-300 max-w-xl mx-auto mt-2.5">
+              Stream high-fidelity soundtracks across ${ARTISTS_DIRECTORY.length} legendary composers • ${totalAlbums} albums &amp; ${totalTracks} tracks.
+            </p>
+
+            <div class="flex flex-wrap items-center justify-center gap-2.5 mt-5">
+              <button onclick="startRadioShuffle(true)"
+                class="px-5 py-2.5 rounded-full bg-[#FA243C] hover:bg-[#E01E34] text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-[#FA243C]/30 transition">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                <span>Play Radio</span>
+              </button>
+              <button onclick="playSurpriseDiscoveryTrack()"
+                class="px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/15 border border-white/10 text-white text-xs sm:text-sm font-bold transition">
+                Surprise Me
+              </button>
+              <button onclick="openListenTogetherModal()"
+                class="px-5 py-2.5 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/35 text-emerald-300 text-xs sm:text-sm font-bold transition">
+                Listen Together
+              </button>
+            </div>
+
+            ${heroFour.length ? `
+              <div class="grid grid-cols-4 gap-2.5 sm:gap-4 max-w-2xl mx-auto mt-6">
+                ${heroFour.map(alb => `
+                  <div onclick="switchView('album', '${alb.id}')" class="aspect-square rounded-2xl overflow-hidden bg-neutral-900 border border-white/15 shadow-xl cursor-pointer group">
+                    <img src="${alb.cover}" onerror="this.src='${FALLBACK_COVER_ART}'"
+                      class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300" />
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+          </section>
+
+          <!-- Recently Played -->
+          ${state.recentTracks.length ? `
+            <section class="space-y-3">
+              <div class="flex items-center justify-between">
+                <h2 class="text-lg sm:text-xl font-extrabold text-white">Recently Played</h2>
+                <button onclick="playTrackFromList(state.recentTracks, 0)" class="text-xs font-bold text-[#FA243C] hover:underline">Play History →</button>
+              </div>
+              <div class="flex items-stretch gap-3 overflow-x-auto pb-2">
+                ${state.recentTracks.slice(0, 10).map((tr, idx) => {
+                  const active = isTrackCurrentlyActive(tr);
+                  return `
+                    <div onclick="playTrackFromList(state.recentTracks, ${idx})"
+                      class="luxury-card shrink-0 w-56 rounded-2xl p-2.5 flex items-center gap-3 cursor-pointer transition ${active ? 'border-[#FA243C]/60 bg-[#FA243C]/10' : ''}">
+                      <img src="${tr.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-11 h-11 rounded-xl object-cover shrink-0" />
+                      <div class="min-w-0 flex-1">
+                        <div class="text-xs font-bold truncate ${active ? 'text-[#FA243C]' : 'text-white'}">${escapeHtml(tr.title)}</div>
+                        <div class="text-[10px] text-neutral-400 truncate mt-0.5">${escapeHtml(tr.artist)}</div>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </section>
+          ` : ''}
+
+          <!-- Maestros Strip -->
+          <section class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h2 class="text-lg sm:text-xl font-extrabold text-white">Artists</h2>
+              <button onclick="startRadioShuffle(true)" class="text-xs font-bold text-[#FA243C] hover:underline">Live Stations →</button>
+            </div>
+            <div class="flex items-stretch gap-4 overflow-x-auto pb-2">
+              ${ARTISTS_DIRECTORY.map(ar => `
+                <button onclick="switchView('artist', '${ar.id}')" class="shrink-0 w-24 sm:w-28 flex flex-col items-center text-center group">
+                  <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border border-white/15 group-hover:border-[#FA243C] transition shadow-lg">
+                    <img src="${ar.cover}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                  </div>
+                  <div class="text-xs font-bold text-white truncate w-full mt-2 group-hover:text-[#FA243C] transition">${escapeHtml(ar.name)}</div>
+                </button>
+              `).join('')}
+            </div>
+          </section>
+
+          <!-- Top 10 Albums Leaderboard -->
+          ${topAlbums.length ? `
+            <section class="space-y-3">
+              <div class="flex items-end justify-between">
+                <div>
+                  <div class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#FA243C]">MOST LISTENED SOUNDTRACKS</div>
+                  <h2 class="text-xl sm:text-2xl font-black text-white mt-0.5">Top 10 Albums</h2>
+                </div>
+                <button onclick="switchView('all-albums')" class="text-xs font-bold text-[#FA243C] hover:underline">All ${totalAlbums} Albums →</button>
+              </div>
+              <div class="flex items-stretch gap-3.5 overflow-x-auto pb-2">
+                ${topAlbums.map((alb, idx) => {
+                  const rank = idx + 1;
+                  const isGold = rank === 1;
+                  return `
+                    <div onclick="switchView('album', '${alb.id}')"
+                      class="shrink-0 w-44 sm:w-52 rounded-2xl p-3 bg-white/[0.04] border ${isGold ? 'border-amber-400/60 shadow-[0_0_25px_rgba(251,191,36,0.12)]' : 'border-white/10'} hover:border-[#FA243C]/50 cursor-pointer transition flex flex-col justify-between">
+                      <div class="relative aspect-square rounded-xl overflow-hidden bg-neutral-900 mb-3">
+                        <img src="${alb.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-full h-full object-cover object-top" />
+                        ${rank <= 3 ? `<span class="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[9px] font-black uppercase ${rank === 1 ? 'bg-amber-400 text-black' : rank === 2 ? 'bg-neutral-200 text-black' : 'bg-amber-700 text-white'}">${rank === 1 ? 'GOLD #1' : rank === 2 ? 'SILVER' : 'BRONZE'}</span>` : ''}
+                      </div>
+                      <div>
+                        <div class="flex items-baseline justify-between">
+                          <span class="text-xl font-black ${isGold ? 'text-amber-400' : 'text-white'}">#${rank}</span>
+                          <span class="text-[10px] text-neutral-400">${alb.tracks.length} songs</span>
+                        </div>
+                        <div class="text-xs sm:text-sm font-bold text-white truncate mt-1">${escapeHtml(alb.title)}</div>
+                        <div class="text-[11px] text-neutral-400 truncate">${escapeHtml(alb.artist)}</div>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </section>
+          ` : ''}
+
+          <!-- Top 10 Songs -->
+          ${homeTop10SongsCache.length ? `
+            <section class="space-y-3">
+              <div class="flex items-end justify-between">
+                <div>
+                  <div class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#FA243C]">ON HEAVY ROTATION</div>
+                  <h2 class="text-xl sm:text-2xl font-black text-white mt-0.5">Top 10 Songs</h2>
+                </div>
+                <div class="flex items-center gap-3">
+                  <button onclick="playTrackFromList(homeTop10SongsCache, 0)" class="text-xs font-bold text-[#FA243C] hover:underline">Play All →</button>
+                  <button onclick="switchView('all-songs')" class="text-xs font-semibold text-neutral-300 hover:text-white">All Songs</button>
+                </div>
+              </div>
+              <div class="space-y-2">
+                ${homeTop10SongsCache.map((tr, idx) => {
+                  const active = isTrackCurrentlyActive(tr);
+                  return `
+                    <div onclick="playTrackFromList(homeTop10SongsCache, ${idx})"
+                      class="luxury-card rounded-2xl px-3.5 py-2.5 flex items-center justify-between gap-3 cursor-pointer transition ${active ? 'border-[#FA243C]/60 bg-[#FA243C]/15' : ''}">
+                      <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-6 text-center shrink-0">
+                          ${active ? renderEqualizerBars('bg-[#FA243C]') : `<span class="text-xs font-extrabold ${idx < 3 ? 'text-[#FA243C]' : 'text-neutral-400'}">${idx + 1}</span>`}
+                        </div>
+                        <img src="${tr.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-10 h-10 rounded-lg object-cover shrink-0" />
+                        <div class="min-w-0">
+                          <div class="text-xs sm:text-sm font-bold truncate ${active ? 'text-[#FA243C]' : 'text-white'}">${escapeHtml(tr.title)}</div>
+                          <div class="text-[11px] text-neutral-400 truncate">${escapeHtml(tr.artist)} • ${escapeHtml(tr.albumTitle)}</div>
+                        </div>
+                      </div>
+                      <span class="text-xs text-neutral-400 tabular-nums shrink-0">${tr.duration ? formatTime(tr.duration) : '--:--'}</span>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </section>
+          ` : ''}
+
+          <!-- Continue Listening Bar -->
+          ${resumeTrack ? `
+            <section class="luxury-card rounded-2xl p-4 flex items-center justify-between gap-4">
+              <div class="flex items-center gap-3.5 min-w-0">
+                <img src="${resumeTrack.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-12 h-12 rounded-xl object-cover shrink-0 shadow" />
+                <div class="min-w-0">
+                  <div class="text-[10px] font-extrabold uppercase tracking-wider text-[#FA243C]">CONTINUE LISTENING</div>
+                  <div class="text-sm font-bold text-white truncate">${escapeHtml(resumeTrack.title)}</div>
+                  <div class="text-xs text-neutral-400 truncate">${escapeHtml(resumeTrack.artist)}</div>
+                </div>
+              </div>
+              <button onclick="resumeOrToggleLastTrack()"
+                class="px-5 py-2.5 rounded-full bg-white text-black hover:bg-neutral-200 text-xs font-extrabold flex items-center gap-1.5 shrink-0 shadow transition">
+                <span>${state.isPlaying && isTrackCurrentlyActive(resumeTrack) ? '❚❚ Pause' : '▶ Resume'}</span>
+              </button>
+            </section>
+          ` : ''}
+        </div>
+      `;
     }
 
     function playSurpriseDiscoveryTrack() {
-      const allTracks = state.albums.flatMap(a => a.tracks || []);
-      if (!allTracks.length) return;
-      state.queue = shuffleArray(allTracks);
-      state.currentIndex = 0;
-      state.isShuffle = true;
-      updateShuffleRepeatUI();
-      loadAndPlayCurrentTrack();
-      showToast(`Surprise Discovery: ${state.queue[0].title}`, 'info');
+      const allTracks = [];
+      state.albums.forEach(a => (a.tracks || []).forEach(t => allTracks.push(t)));
+      if (!allTracks.length) return showToast('Syncing catalog...', 'info');
+      const shuffled = shuffleArray(allTracks);
+      playTrackFromList(shuffled, 0);
     }
 
-    function togglePlayPause() {
-      const current = getCurrentTrack();
-      if (!current) {
-        const first = state.albums.find(a => a.tracks?.length);
-        if (first) playAlbum(first.id, 0, false);
-        return;
+    function resumeOrToggleLastTrack() {
+      const cur = getCurrentTrack();
+      if (cur) {
+        togglePlayPause();
+      } else if (state.lastPlayedTrack) {
+        playTrackFromList([state.lastPlayedTrack], 0);
       }
-      if (!audio.src) {
-        loadAndPlayCurrentTrack();
-        return;
-      }
-      if (audio.paused) {
-        userPausedManually = false;
-        state.isPlaying = true;
-        updatePlayPauseUI();
-        renderCurrentView();
-        audio.play().then(() => {
-          state.isPlaying = true;
-          updatePlayPauseUI();
-          renderCurrentView();
-          broadcastListenTogetherPlayback('play');
-        }).catch(() => {
-          state.isPlaying = false;
-          updatePlayPauseUI();
-          renderCurrentView();
-        });
-      } else {
-        userPausedManually = true;
-        audio.pause();
-        state.isPlaying = false;
-        updatePlayPauseUI();
-        renderCurrentView();
-        broadcastListenTogetherPlayback('pause');
-      }
-    }
-
-    function nextTrack() {
-      if (!state.queue.length) return;
-      if (state.isShuffle && state.queue.length > 1) {
-        state.currentIndex = Math.floor(Math.random() * state.queue.length);
-      } else {
-        state.currentIndex = (state.currentIndex + 1) % state.queue.length;
-      }
-      loadAndPlayCurrentTrack();
-    }
-
-    function prevTrack() {
-      if (!state.queue.length) return;
-      if (audio.currentTime > 3) { audio.currentTime = 0; return; }
-      state.currentIndex = (state.currentIndex - 1 + state.queue.length) % state.queue.length;
-      loadAndPlayCurrentTrack();
-    }
-
-    function toggleShuffle() {
-      state.isShuffle = !state.isShuffle;
-      updateShuffleRepeatUI();
-      if (state.currentView === 'now-playing') renderCurrentView();
-      showToast(state.isShuffle ? 'Shuffle On' : 'Shuffle Off', 'info');
-    }
-
-    function toggleRepeat() {
-      const modes = ['off', 'all', 'one'];
-      state.repeatMode = modes[(modes.indexOf(state.repeatMode) + 1) % modes.length];
-      updateShuffleRepeatUI();
-      if (state.currentView === 'now-playing') renderCurrentView();
-      const labels = { off: 'Repeat Off', all: 'Repeat All', one: 'Repeat One' };
-      showToast(labels[state.repeatMode], 'info');
-    }
-
-    function updateShuffleRepeatUI() {
-      const shuffleBtn = document.getElementById('btn-shuffle');
-      const repeatBtn = document.getElementById('btn-repeat');
-      const repeatOneBadge = document.getElementById('repeat-one-badge');
-      shuffleBtn?.classList.toggle('text-[#FA243C]', state.isShuffle);
-      shuffleBtn?.classList.toggle('text-neutral-400', !state.isShuffle);
-
-      const isRepeatActive = state.repeatMode !== 'off';
-      repeatBtn?.classList.toggle('text-[#FA243C]', isRepeatActive);
-      repeatBtn?.classList.toggle('text-neutral-400', !isRepeatActive);
-      repeatOneBadge?.classList.toggle('hidden', state.repeatMode !== 'one');
-    }
-
-    function updatePlayPauseUI() {
-      const actuallyPlaying = Boolean(state.isPlaying && !audio.paused);
-      state.isPlaying = actuallyPlaying;
-      document.getElementById('icon-play')?.classList.toggle('hidden', actuallyPlaying);
-      document.getElementById('icon-pause')?.classList.toggle('hidden', !actuallyPlaying);
-    }
-
-    function syncSliderVisualFills() {
-      const volSlider = document.getElementById('volume-slider');
-      if (volSlider) volSlider.style.setProperty('--range-pct', `${state.isMuted ? 0 : Math.round(state.volume * 100)}%`);
-    }
-
-    function handleSeekInput(val) {
-      state.isSeeking = true;
-      const pct = Math.max(0, Math.min(100, parseFloat(val) || 0));
-      document.getElementById('progress-slider')?.style.setProperty('--range-pct', `${pct}%`);
-      document.getElementById('np-progress-slider')?.style.setProperty('--range-pct', `${pct}%`);
-    }
-
-    function handleSeekCommit(val) {
-      const duration = audio.duration || getCurrentTrack()?.duration || 0;
-      if (duration > 0) {
-        audio.currentTime = (val / 100) * duration;
-        broadcastListenTogetherPlayback('seek');
-      }
-      state.isSeeking = false;
-    }
-
-    function handleVolumeChange(val) {
-      state.volume = Math.max(0, Math.min(1, parseFloat(val)));
-      audio.volume = state.volume;
-      state.isMuted = state.volume === 0;
-      audio.muted = state.isMuted;
-      syncSliderVisualFills();
-    }
-
-    function toggleMute() {
-      state.isMuted = !state.isMuted;
-      audio.muted = state.isMuted;
-      syncSliderVisualFills();
-    }
-
-    function setupAudioEvents() {
-      audio.addEventListener('play', () => {
-        state.isPlaying = true;
-        updatePlayPauseUI();
-        renderCurrentView();
-      });
-
-      audio.addEventListener('playing', () => {
-        state.isPlaying = true;
-        updatePlayPauseUI();
-        renderCurrentView();
-      });
-
-      audio.addEventListener('pause', () => {
-        state.isPlaying = false;
-        updatePlayPauseUI();
-        renderCurrentView();
-      });
-
-      audio.addEventListener('timeupdate', () => {
-        if (!audio.paused && !state.isPlaying) {
-          state.isPlaying = true;
-          updatePlayPauseUI();
-        }
-        if (state.isSeeking) return;
-        const cur = audio.currentTime || 0;
-        const dur = audio.duration || getCurrentTrack()?.duration || 0;
-        document.getElementById('time-current').textContent = formatTime(cur);
-        document.getElementById('time-duration').textContent = formatTime(dur);
-        const pct = dur > 0 ? (cur / dur) * 100 : 0;
-        const ps = document.getElementById('progress-slider');
-        if (ps) { ps.value = pct; ps.style.setProperty('--range-pct', `${pct}%`); }
-        const nps = document.getElementById('np-progress-slider');
-        if (nps) { nps.value = pct; nps.style.setProperty('--range-pct', `${pct}%`); }
-        const npc = document.getElementById('np-time-current');
-        const npd = document.getElementById('np-time-duration');
-        if (npc) npc.textContent = formatTime(cur);
-        if (npd) npd.textContent = formatTime(dur);
-      });
-
-      audio.addEventListener('ended', () => {
-        state.isPlaying = false;
-        updatePlayPauseUI();
-        if (state.repeatMode === 'one') {
-          audio.currentTime = 0;
-          audio.play().catch(() => {});
-        } else {
-          nextTrack();
-        }
-      });
-
-      audio.addEventListener('error', () => {
-        const fb = audio.dataset.fallbackUrl;
-        if (fb && audio.dataset.triedFallback !== 'true') {
-          audio.dataset.triedFallback = 'true';
-          audio.src = fb;
-          audio.play().catch(() => {});
-        } else {
-          nextTrack();
-        }
-      });
-    }
-
-    function setupKeyboardShortcuts() {
-      window.addEventListener('keydown', (e) => {
-        if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
-        if (e.code === 'Space') { e.preventDefault(); togglePlayPause(); }
-        if (e.code === 'ArrowRight' && (state.currentView === 'all-albums' || state.currentView === 'artist') && state.albumsViewMode === 'coverflow') {
-          stepCoverFlow(1, state.currentView === 'artist');
-        }
-        if (e.code === 'ArrowLeft' && (state.currentView === 'all-albums' || state.currentView === 'artist') && state.albumsViewMode === 'coverflow') {
-          stepCoverFlow(-1, state.currentView === 'artist');
-        }
-      });
     }
 
     // ==========================================
-    // Playlists (Create, Rename, Add/Remove, Delete)
+    // Now Playing Full View
     // ==========================================
+    function renderNowPlayingView(container) {
+      const tr = getCurrentTrack() || state.lastPlayedTrack;
+      if (!tr) {
+        container.innerHTML = `
+          <div class="max-w-md mx-auto text-center py-20 space-y-4">
+            <h2 class="text-xl font-extrabold text-white">Nothing Playing Yet</h2>
+            <p class="text-xs text-neutral-400">Pick any soundtrack or launch Radio to start listening.</p>
+            <button onclick="startRadioShuffle(true)" class="px-5 py-2.5 rounded-full bg-[#FA243C] text-white text-xs font-bold">Play Radio</button>
+          </div>
+        `;
+        return;
+      }
+
+      const pct = audio.duration ? Math.min(100, (audio.currentTime / audio.duration) * 100) : 0;
+      const repeatLabel = state.repeatMode === 'one' ? 'Repeat One' : state.repeatMode === 'all' ? 'Repeat All' : 'Repeat Off';
+
+      container.innerHTML = `
+        <div class="max-w-lg mx-auto flex flex-col items-center text-center space-y-5 py-2">
+          <div class="w-60 h-60 sm:w-72 sm:h-72 rounded-3xl overflow-hidden bg-neutral-900 border border-white/15 shadow-[0_25px_60px_rgba(0,0,0,0.85)]">
+            <img src="${tr.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-full h-full object-cover object-top" />
+          </div>
+
+          <span class="px-3 py-1 rounded-md bg-white/[0.08] border border-white/10 text-[10px] font-bold tracking-widest text-neutral-300">
+            ${escapeHtml(tr.formatBadge || 'LOSSLESS')}
+          </span>
+
+          <div class="space-y-1 w-full px-2">
+            <h1 class="text-xl sm:text-2xl font-black text-white truncate">${escapeHtml(tr.title)}</h1>
+            <div class="flex items-center justify-center gap-1.5 text-xs sm:text-sm font-semibold truncate">
+              <button onclick="navigateToArtistByTrack()" class="text-[#FA243C] hover:underline truncate">${escapeHtml(tr.artist)}</button>
+              <span class="text-neutral-500">•</span>
+              <button onclick="jumpToCurrentTrackAlbum()" class="text-[#FA243C] hover:underline truncate">${escapeHtml(tr.albumTitle || 'Soundtrack')}</button>
+            </div>
+          </div>
+
+          <!-- Scrubber -->
+          <div class="w-full space-y-1.5 px-2">
+            <input id="np-progress-slider" type="range" min="0" max="100" step="0.1" value="${pct}"
+              style="--range-pct: ${pct}%"
+              oninput="handleSeekInput(this.value)"
+              onchange="handleSeekCommit(this.value)"
+              class="apple-slider w-full h-1.5" />
+            <div class="flex justify-between text-[11px] text-neutral-400 tabular-nums">
+              <span id="np-time-current">${formatTime(audio.currentTime)}</span>
+              <span id="np-time-duration">${formatTime(audio.duration || tr.duration)}</span>
+            </div>
+          </div>
+
+          <!-- Main Transport Controls -->
+          <div class="flex items-center justify-center gap-6 sm:gap-8">
+            <button onclick="toggleShuffle()" title="Shuffle" class="p-2 transition ${state.isShuffle ? 'text-[#FA243C]' : 'text-neutral-400 hover:text-white'}">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
+              </svg>
+            </button>
+            <button onclick="prevTrack()" class="p-2 text-white hover:scale-110 transition">
+              <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+            </button>
+            <button onclick="togglePlayPause()" class="w-16 h-16 rounded-full bg-white text-black hover:scale-105 active:scale-95 flex items-center justify-center shadow-xl transition">
+              ${state.isPlaying
+                ? `<svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`
+                : `<svg class="w-7 h-7 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`}
+            </button>
+            <button onclick="nextTrack()" class="p-2 text-white hover:scale-110 transition">
+              <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+            </button>
+            <button onclick="toggleRepeat()" title="${repeatLabel}" class="p-2 relative transition ${state.repeatMode !== 'off' ? 'text-[#FA243C]' : 'text-neutral-400 hover:text-white'}">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 1l4 4-4 4"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 13v2a4 4 0 01-4 4H3"/>
+              </svg>
+              ${state.repeatMode === 'one' ? `<span class="absolute top-0.5 right-0.5 text-[9px] font-black text-[#FA243C]">1</span>` : ''}
+            </button>
+          </div>
+
+          <!-- Quick Action Pills -->
+          <div class="flex flex-wrap items-center justify-center gap-2 pt-2">
+            <button onclick="shareCurrentTrack()" class="px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-xs font-semibold text-white transition">
+              Share Song
+            </button>
+            <button onclick="openAddCurrentTrackToPlaylist()" class="px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-xs font-semibold text-white transition">
+              + Add to Playlist
+            </button>
+            <button onclick="openListenTogetherModal()" class="px-4 py-2 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-xs font-semibold text-emerald-300 transition">
+              Listen Together
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function navigateToArtistByTrack() {
+      const tr = getCurrentTrack() || state.lastPlayedTrack;
+      if (!tr) return;
+      if (tr.artistId) return switchView('artist', tr.artistId);
+      const found = ARTISTS_DIRECTORY.find(a => a.name.toLowerCase() === String(tr.artist || '').toLowerCase());
+      if (found) switchView('artist', found.id);
+    }
+
+    function jumpToCurrentTrackAlbum() {
+      const tr = getCurrentTrack() || state.lastPlayedTrack;
+      if (tr && tr.albumId) switchView('album', tr.albumId);
+    }
+
+    // ==========================================
+    // All Albums, All Songs, Artist (Grid + Smooth Cover Flow), Album & Playlist Views
+    // ==========================================
+    function renderAllAlbumsView(container) {
+      const filtered = state.albums.filter(a => {
+        const matchesArtist = state.selectedArtistFilter === 'all' || a.artistId === state.selectedArtistFilter;
+        const q = state.albumFilterQuery.trim().toLowerCase();
+        const matchesQ = !q || a.title.toLowerCase().includes(q) || a.artist.toLowerCase().includes(q);
+        return matchesArtist && matchesQ;
+      });
+
+      container.innerHTML = `
+        <div class="max-w-6xl mx-auto space-y-6">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h1 class="text-2xl sm:text-3xl font-black text-white">Albums (${filtered.length})</h1>
+              <p class="text-xs text-neutral-400">Browse all soundtracks across ${ARTISTS_DIRECTORY.length} composers</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <select onchange="state.selectedArtistFilter=this.value; renderCurrentView();"
+                class="bg-white/[0.08] border border-white/15 rounded-xl px-3 py-2 text-xs text-white outline-none">
+                <option value="all">All Maestros</option>
+                ${ARTISTS_DIRECTORY.map(ar => `<option value="${ar.id}" ${state.selectedArtistFilter === ar.id ? 'selected' : ''}>${escapeHtml(ar.name)}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-5">
+            ${renderAlbumGridCards(filtered)}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAllSongsView(container) {
+      const allTracks = [];
+      state.albums.forEach(a => (a.tracks || []).forEach(t => allTracks.push(t)));
+      const displayTracks = allTracks.slice(0, 150);
+      window.__allSongsSlice = displayTracks;
+
+      container.innerHTML = `
+        <div class="max-w-5xl mx-auto space-y-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <h1 class="text-2xl sm:text-3xl font-black text-white">All Songs (${allTracks.length})</h1>
+              <p class="text-xs text-neutral-400">Showing top ${displayTracks.length} tracks</p>
+            </div>
+            <button onclick="playTrackFromList(window.__allSongsSlice, 0)" class="px-4 py-2 rounded-full bg-[#FA243C] text-white text-xs font-bold">Play All</button>
+          </div>
+          <div class="luxury-card rounded-2xl overflow-hidden divide-y divide-white/[0.05]">
+            ${displayTracks.map((tr, idx) => {
+              const active = isTrackCurrentlyActive(tr);
+              return `
+                <div onclick="playTrackFromList(window.__allSongsSlice, ${idx})"
+                  class="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer ${active ? 'bg-[#FA243C]/15' : 'hover:bg-white/[0.06]'}">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-5 text-center shrink-0">${active ? renderEqualizerBars() : `<span class="text-xs text-neutral-500">${idx + 1}</span>`}</div>
+                    <img src="${tr.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-9 h-9 rounded-lg object-cover shrink-0" />
+                    <div class="min-w-0">
+                      <div class="text-xs sm:text-sm font-semibold truncate ${active ? 'text-[#FA243C]' : 'text-white'}">${escapeHtml(tr.title)}</div>
+                      <div class="text-[11px] text-neutral-400 truncate">${escapeHtml(tr.artist)} • ${escapeHtml(tr.albumTitle)}</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2.5 shrink-0" onclick="event.stopPropagation()">
+                    <button onclick="openAddTrackToPlaylist(window.__allSongsSlice[${idx}])" title="Add to Playlist"
+                      class="w-7 h-7 rounded-full bg-white/[0.08] hover:bg-[#FA243C] text-neutral-200 hover:text-white flex items-center justify-center transition">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
+                    </button>
+                    <span class="text-xs text-neutral-400 tabular-nums">${tr.duration ? formatTime(tr.duration) : '--:--'}</span>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function setArtistAlbumsViewMode(mode) {
+      state.artistAlbumsViewMode = mode === 'coverflow' ? 'coverflow' : 'grid';
+      try { localStorage.setItem(ARTIST_ALBUMS_VIEW_MODE_KEY, state.artistAlbumsViewMode); } catch (e) {}
+      renderCurrentView();
+    }
+
+    function stepArtistCoverFlow(delta) {
+      const albums = window.__currentArtistAlbums || [];
+      if (!albums.length) return;
+      state.artistCoverFlowIndex = Math.max(0, Math.min(albums.length - 1, state.artistCoverFlowIndex + delta));
+      updateArtistCoverFlowTransforms();
+    }
+
+    function setArtistCoverFlowIndex(idx) {
+      const albums = window.__currentArtistAlbums || [];
+      if (!albums.length) return;
+      state.artistCoverFlowIndex = Math.max(0, Math.min(albums.length - 1, parseInt(idx, 10) || 0));
+      updateArtistCoverFlowTransforms();
+    }
+
+    function updateArtistCoverFlowTransforms() {
+      const albums = window.__currentArtistAlbums || [];
+      if (!albums.length) return;
+      const activeIdx = Math.max(0, Math.min(albums.length - 1, state.artistCoverFlowIndex));
+      state.artistCoverFlowIndex = activeIdx;
+
+      const items = document.querySelectorAll('.artist-cf-card');
+      items.forEach((el) => {
+        const idx = parseInt(el.dataset.cfIndex, 10);
+        const offset = idx - activeIdx;
+        const absOffset = Math.abs(offset);
+
+        if (absOffset > 5) {
+          el.style.opacity = '0';
+          el.style.pointerEvents = 'none';
+          el.style.transform = `translate3d(${offset * 120}px, 0, -450px) rotateY(${offset < 0 ? 55 : -55}deg) scale(0.65)`;
+          el.style.zIndex = '1';
+          return;
+        }
+
+        el.style.pointerEvents = 'auto';
+        if (offset === 0) {
+          el.style.transform = 'translate3d(0px, 0px, 40px) rotateY(0deg) scale(1)';
+          el.style.opacity = '1';
+          el.style.filter = 'brightness(1)';
+          el.style.zIndex = '30';
+        } else {
+          const sign = offset < 0 ? -1 : 1;
+          const tx = sign * (135 + (absOffset - 1) * 68);
+          const tz = -110 - absOffset * 48;
+          const ry = -sign * 48;
+          const sc = Math.max(0.68, 0.86 - (absOffset - 1) * 0.05);
+          el.style.transform = `translate3d(${tx}px, 0px, ${tz}px) rotateY(${ry}deg) scale(${sc})`;
+          el.style.opacity = String(Math.max(0.28, 0.92 - (absOffset - 1) * 0.16));
+          el.style.filter = `brightness(${Math.max(0.5, 0.85 - (absOffset - 1) * 0.1)})`;
+          el.style.zIndex = String(25 - absOffset);
+        }
+      });
+
+      const currentAlb = albums[activeIdx];
+      const titleEl = document.getElementById('artist-cf-title');
+      const metaEl = document.getElementById('artist-cf-meta');
+      const sliderEl = document.getElementById('artist-cf-slider');
+      const openBtn = document.getElementById('artist-cf-open-btn');
+      const playBtn = document.getElementById('artist-cf-play-btn');
+
+      if (currentAlb) {
+        if (titleEl) titleEl.textContent = currentAlb.title;
+        if (metaEl) metaEl.textContent = `${currentAlb.year || '2026'} • ${currentAlb.tracks.length} Songs • ${activeIdx + 1} of ${albums.length}`;
+        if (openBtn) openBtn.onclick = () => switchView('album', currentAlb.id);
+        if (playBtn) playBtn.onclick = () => playAlbumById(currentAlb.id);
+      }
+      if (sliderEl) {
+        sliderEl.value = activeIdx;
+        const pct = albums.length > 1 ? (activeIdx / (albums.length - 1)) * 100 : 100;
+        sliderEl.style.setProperty('--range-pct', `${pct}%`);
+      }
+    }
+
+    function renderArtistCoverFlowSection(artistAlbums) {
+      if (!artistAlbums.length) {
+        return `<div class="text-center py-12 text-xs text-neutral-400">Syncing albums for this composer...</div>`;
+      }
+      const activeIdx = Math.max(0, Math.min(artistAlbums.length - 1, state.artistCoverFlowIndex));
+      state.artistCoverFlowIndex = activeIdx;
+      const activeAlb = artistAlbums[activeIdx];
+      const pct = artistAlbums.length > 1 ? (activeIdx / (artistAlbums.length - 1)) * 100 : 100;
+
+      return `
+        <div class="rounded-3xl bg-gradient-to-b from-white/[0.04] to-transparent border border-white/[0.08] py-6 sm:py-8 px-3 sm:px-6 overflow-hidden select-none">
+          <!-- 3D Cover Flow Stage -->
+          <div id="artist-coverflow-stage"
+            ontouchstart="window.__cfTouchStartX = event.touches[0].clientX"
+            ontouchend="const dx = event.changedTouches[0].clientX - (window.__cfTouchStartX || 0); if (Math.abs(dx) > 35) stepArtistCoverFlow(dx < 0 ? 1 : -1);"
+            onwheel="if (Math.abs(event.deltaX) > 12 || Math.abs(event.deltaY) > 12) { event.preventDefault(); const now = Date.now(); if (now - (window.__cfWheelTs || 0) > 140) { window.__cfWheelTs = now; stepArtistCoverFlow((event.deltaX || event.deltaY) > 0 ? 1 : -1); } }"
+            class="coverflow-stage relative h-[250px] sm:h-[310px] w-full flex items-center justify-center">
+
+            <!-- Left / Right Quick Nav Buttons -->
+            <button onclick="stepArtistCoverFlow(-1)" aria-label="Previous Album"
+              class="absolute left-1 sm:left-3 z-40 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/65 hover:bg-black/90 border border-white/15 text-white flex items-center justify-center shadow-lg transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+
+            <button onclick="stepArtistCoverFlow(1)" aria-label="Next Album"
+              class="absolute right-1 sm:right-3 z-40 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/65 hover:bg-black/90 border border-white/15 text-white flex items-center justify-center shadow-lg transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </button>
+
+            <!-- Cover Cards -->
+            ${artistAlbums.map((alb, idx) => `
+              <div data-cf-index="${idx}"
+                onclick="if (state.artistCoverFlowIndex === ${idx}) { switchView('album', '${alb.id}'); } else { setArtistCoverFlowIndex(${idx}); }"
+                class="coverflow-item artist-cf-card absolute w-44 h-44 sm:w-56 sm:h-56 rounded-2xl overflow-hidden bg-neutral-900 shadow-[0_24px_50px_rgba(0,0,0,0.85)] cursor-pointer">
+                <img src="${alb.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" draggable="false"
+                  class="w-full h-full object-cover object-top pointer-events-none" />
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- Focused Album Details & Controls -->
+          <div class="mt-8 sm:mt-10 text-center max-w-md mx-auto space-y-2.5">
+            <h3 id="artist-cf-title" class="text-base sm:text-xl font-black text-white truncate px-2">
+              ${escapeHtml(activeAlb.title)}
+            </h3>
+            <p id="artist-cf-meta" class="text-xs text-neutral-400">
+              ${escapeHtml(activeAlb.year || '2026')} • ${activeAlb.tracks.length} Songs • ${activeIdx + 1} of ${artistAlbums.length}
+            </p>
+
+            <div class="flex items-center justify-center gap-2.5 pt-1">
+              <button id="artist-cf-play-btn" onclick="playAlbumById('${activeAlb.id}')"
+                class="px-5 py-2 rounded-full bg-[#FA243C] hover:bg-[#E01E34] text-white text-xs font-bold shadow-lg transition">
+                ▶ Play Album
+              </button>
+              <button id="artist-cf-open-btn" onclick="switchView('album', '${activeAlb.id}')"
+                class="px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 text-white text-xs font-bold transition">
+                View Tracks
+              </button>
+            </div>
+
+            ${artistAlbums.length > 1 ? `
+              <div class="pt-3 px-4">
+                <input id="artist-cf-slider" type="range" min="0" max="${artistAlbums.length - 1}" step="1" value="${activeIdx}"
+                  style="--range-pct: ${pct}%"
+                  oninput="setArtistCoverFlowIndex(this.value)"
+                  class="apple-slider w-full h-1.5" />
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderArtistView(container) {
+      const ar = ARTISTS_DIRECTORY.find(a => a.id === state.selectedArtistId) || ARTISTS_DIRECTORY[0];
+      const artistAlbums = state.albums.filter(a => a.artistId === ar.id);
+      const artistTracks = artistAlbums.flatMap(a => a.tracks || []);
+      window.__artistTracks = artistTracks;
+      window.__currentArtistAlbums = artistAlbums;
+      const isCoverFlow = state.artistAlbumsViewMode === 'coverflow';
+
+      container.innerHTML = `
+        <div class="max-w-6xl mx-auto space-y-6">
+          <div class="rounded-3xl bg-gradient-to-br from-[#2B121E] via-[#17141E] to-[#111117] border border-white/10 p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-6">
+            <img src="${ar.cover}" class="w-28 h-28 sm:w-36 sm:h-36 rounded-full object-cover border-2 border-white/15 shadow-2xl shrink-0" />
+            <div class="text-center sm:text-left space-y-2 flex-1">
+              <div class="text-[10px] font-extrabold uppercase tracking-widest text-[#FA243C]">VERIFIED MAESTRO</div>
+              <h1 class="text-2xl sm:text-4xl font-black text-white">${escapeHtml(ar.name)}</h1>
+              <p class="text-xs sm:text-sm text-neutral-300">${escapeHtml(ar.tagline)}</p>
+              <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 pt-2">
+                <button onclick="playTrackFromList(shuffleArray(window.__artistTracks), 0)"
+                  class="px-5 py-2.5 rounded-full bg-[#FA243C] hover:bg-[#E01E34] text-white text-xs font-bold shadow-lg">
+                  ▶ Shuffle ${escapeHtml(ar.name)}
+                </button>
+                <span class="px-3.5 py-2 rounded-full bg-white/10 text-xs font-semibold text-neutral-200">
+                  ${artistAlbums.length} Albums • ${artistTracks.length} Songs
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Albums Section Header with Grid / Cover Flow Toggle -->
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="text-lg sm:text-xl font-extrabold text-white">Discography (${artistAlbums.length})</h2>
+            <div class="inline-flex items-center p-1 rounded-full bg-white/[0.07] border border-white/10">
+              <button onclick="setArtistAlbumsViewMode('grid')"
+                class="px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition ${!isCoverFlow ? 'bg-[#FA243C] text-white shadow' : 'text-neutral-300 hover:text-white'}">
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z"/></svg>
+                <span>Grid</span>
+              </button>
+              <button onclick="setArtistAlbumsViewMode('coverflow')"
+                class="px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition ${isCoverFlow ? 'bg-[#FA243C] text-white shadow' : 'text-neutral-300 hover:text-white'}">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 6v12M17 6v12M11 4h2v16h-2z"/></svg>
+                <span>Cover Flow</span>
+              </button>
+            </div>
+          </div>
+
+          ${isCoverFlow
+            ? renderArtistCoverFlowSection(artistAlbums)
+            : `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-5">
+                ${renderAlbumGridCards(artistAlbums)}
+              </div>`
+          }
+        </div>
+      `;
+
+      if (isCoverFlow && artistAlbums.length) {
+        updateArtistCoverFlowTransforms();
+      }
+    }
+
+    function renderAlbumDetailView(container) {
+      const alb = state.albums.find(a => a.id === state.selectedAlbumId);
+      if (!alb) {
+        container.innerHTML = `<div class="text-center py-16 text-neutral-400">Album not found.</div>`;
+        return;
+      }
+      window.__currentAlbumTracks = alb.tracks || [];
+      const isAlbumPlaying = state.isPlaying && alb.tracks.some(t => isTrackCurrentlyActive(t));
+
+      container.innerHTML = `
+        <div class="max-w-4xl mx-auto space-y-6">
+          <div class="flex flex-col sm:flex-row items-center sm:items-end gap-6 text-center sm:text-left">
+            <img src="${alb.cover}" onerror="this.src='${FALLBACK_COVER_ART}'"
+              class="w-48 h-48 sm:w-56 sm:h-56 rounded-3xl object-cover object-top border border-white/15 shadow-2xl shrink-0" />
+            <div class="space-y-2 flex-1 min-w-0">
+              <div class="text-[10px] font-extrabold uppercase tracking-widest text-[#FA243C]">APPLE DIGITAL MASTER</div>
+              <h1 class="text-2xl sm:text-4xl font-black text-white leading-tight">${escapeHtml(alb.title)}</h1>
+              <button onclick="switchView('artist', '${alb.artistId}')" class="text-base font-bold text-[#FA243C] hover:underline">
+                ${escapeHtml(alb.artist)}
+              </button>
+              <div class="text-xs text-neutral-400">${escapeHtml(alb.year || '2026')} • ${alb.tracks.length} Songs</div>
+              <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 pt-3">
+                <button onclick="${isAlbumPlaying ? 'togglePlayPause()' : 'playTrackFromList(window.__currentAlbumTracks, 0)'}"
+                  class="px-6 py-2.5 rounded-full bg-[#FA243C] hover:bg-[#E01E34] text-white text-xs font-extrabold shadow-lg">
+                  ${isAlbumPlaying ? '❚❚ Pause' : '▶ Play'}
+                </button>
+                <button onclick="playTrackFromList(shuffleArray(window.__currentAlbumTracks), 0)"
+                  class="px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/15 text-white text-xs font-bold">
+                  Shuffle
+                </button>
+                <button onclick="shareAlbum('${alb.id}', event)"
+                  class="px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/15 text-white text-xs font-bold">
+                  Share
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="luxury-card rounded-2xl overflow-hidden divide-y divide-white/[0.06]">
+            ${alb.tracks.map((tr, idx) => {
+              const active = isTrackCurrentlyActive(tr);
+              return `
+                <div onclick="playTrackFromList(window.__currentAlbumTracks, ${idx})"
+                  class="flex items-center justify-between gap-3 px-4 py-3.5 cursor-pointer transition ${active ? 'bg-[#FA243C]/15' : 'hover:bg-white/[0.06]'}">
+                  <div class="flex items-center gap-3.5 min-w-0">
+                    <div class="w-6 text-center shrink-0">
+                      ${active ? renderEqualizerBars() : `<span class="text-xs font-bold text-neutral-500">${idx + 1}</span>`}
+                    </div>
+                    <div class="min-w-0">
+                      <div class="text-xs sm:text-sm font-bold truncate ${active ? 'text-[#FA243C]' : 'text-white'}">${escapeHtml(tr.title)}</div>
+                      <div class="text-[11px] text-neutral-400 truncate">${escapeHtml(tr.artist)}</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-3 shrink-0" onclick="event.stopPropagation()">
+                    <button onclick="openAddTrackToPlaylist(window.__currentAlbumTracks[${idx}])" title="Add to Playlist"
+                      class="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 text-sm font-bold">+</button>
+                    <span class="text-xs text-neutral-400 tabular-nums">${tr.duration ? formatTime(tr.duration) : '--:--'}</span>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function playAlbumById(albumId) {
+      const alb = state.albums.find(a => a.id === albumId);
+      if (alb && alb.tracks.length) playTrackFromList(alb.tracks, 0);
+    }
+
+    // ==========================================
+    // Playlists Management & Detail View
+    // ==========================================
+    function renderPlaylistDetailView(container) {
+      const pl = state.playlists.find(p => p.id === state.selectedPlaylistId);
+      if (!pl) return switchView('home');
+      window.__currentPlaylistTracks = pl.tracks || [];
+
+      container.innerHTML = `
+        <div class="max-w-4xl mx-auto space-y-6">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <div class="text-[10px] font-extrabold uppercase tracking-widest text-[#FA243C]">PLAYLIST</div>
+              <h1 class="text-2xl sm:text-3xl font-black text-white mt-0.5">${escapeHtml(pl.name)}</h1>
+              <p class="text-xs text-neutral-400 mt-0.5">${pl.tracks.length} Songs</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="playTrackFromList(window.__currentPlaylistTracks, 0)" class="px-5 py-2.5 rounded-full bg-[#FA243C] text-white text-xs font-bold">▶ Play</button>
+              <button onclick="sharePlaylist('${pl.id}', event)" class="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/15 text-white text-xs font-bold">Share</button>
+              <button onclick="openRenamePlaylistModal('${pl.id}')" class="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/15 text-white text-xs font-bold">Rename</button>
+            </div>
+          </div>
+
+          ${pl.tracks.length ? `
+            <div class="luxury-card rounded-2xl overflow-hidden divide-y divide-white/[0.06]">
+              ${pl.tracks.map((tr, idx) => {
+                const active = isTrackCurrentlyActive(tr);
+                return `
+                  <div onclick="playTrackFromList(window.__currentPlaylistTracks, ${idx})"
+                    class="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer ${active ? 'bg-[#FA243C]/15' : 'hover:bg-white/[0.06]'}">
+                    <div class="flex items-center gap-3 min-w-0">
+                      <img src="${tr.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-10 h-10 rounded-lg object-cover shrink-0" />
+                      <div class="min-w-0">
+                        <div class="text-xs sm:text-sm font-bold truncate ${active ? 'text-[#FA243C]' : 'text-white'}">${escapeHtml(tr.title)}</div>
+                        <div class="text-[11px] text-neutral-400 truncate">${escapeHtml(tr.artist)} • ${escapeHtml(tr.albumTitle || '')}</div>
+                      </div>
+                    </div>
+                    <button onclick="event.stopPropagation(); removeTrackFromPlaylist('${pl.id}', ${idx})" class="text-xs text-neutral-400 hover:text-red-400 px-2 py-1">Remove</button>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          ` : `<div class="text-center py-12 text-xs text-neutral-400">This playlist is empty. Click "+" on any song to add it here.</div>`}
+        </div>
+      `;
+    }
+
     function openCreatePlaylistModal() {
       const m = document.getElementById('create-playlist-modal');
       m?.classList.remove('hidden');
@@ -1926,86 +2437,70 @@
     }
 
     function submitNewPlaylist() {
-      const name = (document.getElementById('input-playlist-name')?.value || '').trim();
-      if (!name) return showToast('Enter a playlist name.', 'error');
-      const newPl = { id: 'pl-' + Date.now(), name, tracks: [] };
+      const inp = document.getElementById('input-playlist-name');
+      const name = (inp?.value || '').trim();
+      if (!name) return;
+      const newPl = { id: `pl-${Date.now()}`, name, tracks: [] };
+      if (state.pendingTrackForPlaylist) {
+        newPl.tracks.push(state.pendingTrackForPlaylist);
+        state.pendingTrackForPlaylist = null;
+      }
       state.playlists.push(newPl);
       savePlaylistsToStorage();
+      if (inp) inp.value = '';
       closeCreatePlaylistModal();
-      if (state.pendingTrackForPlaylist) {
-        addTrackToPlaylist(newPl.id, state.pendingTrackForPlaylist);
-        state.pendingTrackForPlaylist = null;
-        closeAddToPlaylistModal();
-      } else {
-        renderSidebarPlaylists();
-        switchView('playlist', newPl.id);
-      }
-      showToast(`Created playlist "${name}"`, 'info');
+      renderSidebarPlaylists();
+      switchView('playlist', newPl.id);
+      showToast(newPl.tracks.length ? `Created "${name}" & added song!` : `Created "${name}"`, 'info');
     }
 
-    function openRenamePlaylistModal(playlistId, e) {
-      if (e) e.stopPropagation();
-      const pl = state.playlists.find(p => p.id === playlistId);
-      if (!pl) return;
-      pendingRenamePlaylistId = playlistId;
-      const input = document.getElementById('input-rename-playlist-name');
-      if (input) input.value = pl.name;
+    function openRenamePlaylistModal(plId) {
+      pendingRenamePlaylistId = plId;
+      const pl = state.playlists.find(p => p.id === plId);
+      const inp = document.getElementById('input-rename-playlist-name');
+      if (inp && pl) inp.value = pl.name;
       const m = document.getElementById('rename-playlist-modal');
       m?.classList.remove('hidden');
       m?.classList.add('flex');
-      setTimeout(() => { input?.focus(); input?.select(); }, 50);
     }
 
     function closeRenamePlaylistModal() {
       const m = document.getElementById('rename-playlist-modal');
       m?.classList.add('hidden');
       m?.classList.remove('flex');
-      pendingRenamePlaylistId = null;
     }
 
     function submitRenamePlaylist() {
-      const newName = (document.getElementById('input-rename-playlist-name')?.value || '').trim();
-      if (!newName) return showToast('Playlist name cannot be empty.', 'error');
+      const name = (document.getElementById('input-rename-playlist-name')?.value || '').trim();
       const pl = state.playlists.find(p => p.id === pendingRenamePlaylistId);
-      if (pl) {
-        pl.name = newName;
+      if (pl && name) {
+        pl.name = name;
         savePlaylistsToStorage();
         renderSidebarPlaylists();
         renderCurrentView();
-        showToast(`Renamed playlist to "${newName}"`, 'info');
       }
       closeRenamePlaylistModal();
     }
 
-    function deletePlaylist(playlistId, e) {
-      if (e) e.stopPropagation();
-      state.playlists = state.playlists.filter(p => p.id !== playlistId);
-      savePlaylistsToStorage();
-      renderSidebarPlaylists();
-      if (state.currentView === 'playlist' && state.selectedPlaylistId === playlistId) switchView('home');
-      else renderCurrentView();
-      showToast('Playlist deleted', 'info');
-    }
-
     function openAddCurrentTrackToPlaylist() {
       const t = getCurrentTrack() || state.lastPlayedTrack;
-      if (t) openAddToPlaylistModal(t);
+      if (t) openAddTrackToPlaylist(t);
     }
 
-    function openAddToPlaylistModal(track) {
+    function openAddTrackToPlaylist(track) {
+      if (!track) return;
       state.pendingTrackForPlaylist = track;
-      document.getElementById('add-to-playlist-song-title').textContent = `${track.title} — ${track.albumTitle}`;
+      document.getElementById('add-to-playlist-song-title').textContent = `${track.title} — ${track.artist}`;
       const list = document.getElementById('playlist-picker-list');
-      list.innerHTML = state.playlists.map(pl => {
-        const has = pl.tracks.some(t => t.id === track.id);
-        return `
-          <button onclick="addTrackToPlaylist('${pl.id}')"
-            class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left text-xs font-medium transition ${has ? 'bg-[#FA243C]/15 text-[#FA243C]' : 'bg-white/[0.04] hover:bg-white/[0.09] text-white'}">
-            <span class="truncate pr-2">${escapeHtml(pl.name)}</span>
-            <span class="text-[11px]">${has ? 'Added ✓' : `${pl.tracks.length} songs`}</span>
+      if (list) {
+        list.innerHTML = state.playlists.map(pl => `
+          <button onclick="addPendingTrackToPlaylist('${pl.id}')"
+            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-left text-xs font-bold text-white transition">
+            <span>${escapeHtml(pl.name)}</span>
+            <span class="text-[10px] text-neutral-400">${pl.tracks.length} songs</span>
           </button>
-        `;
-      }).join('');
+        `).join('');
+      }
       const m = document.getElementById('add-to-playlist-modal');
       m?.classList.remove('hidden');
       m?.classList.add('flex');
@@ -2015,879 +2510,378 @@
       const m = document.getElementById('add-to-playlist-modal');
       m?.classList.add('hidden');
       m?.classList.remove('flex');
-      state.pendingTrackForPlaylist = null;
     }
 
-    function createNewPlaylistAndAddTrack() {
-      document.getElementById('add-to-playlist-modal')?.classList.add('hidden');
-      openCreatePlaylistModal();
-    }
-
-    function addTrackToPlaylist(playlistId, explicitTrack = null) {
-      const track = explicitTrack || state.pendingTrackForPlaylist;
-      const pl = state.playlists.find(p => p.id === playlistId);
-      if (!pl || !track) return;
-      if (!pl.tracks.some(t => t.id === track.id)) {
-        pl.tracks.push({ ...track });
+    function addPendingTrackToPlaylist(plId) {
+      const pl = state.playlists.find(p => p.id === plId);
+      const tr = state.pendingTrackForPlaylist;
+      if (!pl || !tr) return;
+      if (!pl.tracks.some(t => t.id === tr.id)) {
+        pl.tracks.push(tr);
         savePlaylistsToStorage();
         renderSidebarPlaylists();
-        showToast(`Added "${track.title}" to ${pl.name}`, 'info');
+        showToast(`Added to "${pl.name}"`, 'info');
+      } else {
+        showToast('Already in playlist', 'info');
       }
+      state.pendingTrackForPlaylist = null;
       closeAddToPlaylistModal();
     }
 
-    function removeTrackFromPlaylist(playlistId, trackId) {
-      const pl = state.playlists.find(p => p.id === playlistId);
+    function createNewPlaylistAndAddTrack() {
+      closeAddToPlaylistModal();
+      openCreatePlaylistModal();
+    }
+
+    function removeTrackFromPlaylist(plId, idx) {
+      const pl = state.playlists.find(p => p.id === plId);
       if (!pl) return;
-      pl.tracks = pl.tracks.filter(t => t.id !== trackId);
+      pl.tracks.splice(idx, 1);
       savePlaylistsToStorage();
       renderSidebarPlaylists();
       renderCurrentView();
     }
 
     // ==========================================
-    // Views, Sidebar & Cover Flow Rendering
+    // Audio Engine, Queue, Transport & Radio
     // ==========================================
-    function switchView(view, targetId = null) {
-      state.currentView = view;
-      if (view === 'artist' && targetId) { state.selectedArtistId = targetId; state.artistCoverFlowIndex = 0; }
-      if (view === 'album' && targetId) state.selectedAlbumId = targetId;
-      if (view === 'playlist' && targetId) state.selectedPlaylistId = targetId;
-      toggleMobileSidebar(false);
-      renderSidebarArtists();
-      renderSidebarPlaylists();
-      renderSidebarAlbums();
-      renderCurrentView();
-      const scroller = document.getElementById('main-scroll-area');
-      if (scroller) scroller.scrollTop = 0;
+    function getCurrentTrack() {
+      return state.queue[state.currentIndex] || null;
     }
 
-    function openArtistByName(name, artistId) {
-      const cleanName = String(name || '').trim().toLowerCase();
-      const found = ARTISTS_DIRECTORY.find(a =>
-        (artistId && a.id === artistId) ||
-        a.name.toLowerCase() === cleanName ||
-        a.name.toLowerCase().includes(cleanName) ||
-        cleanName.includes(a.name.toLowerCase())
-      );
-      switchView('artist', found ? found.id : (artistId || 'ar-rahman'));
+    function getFastStreamCandidate(track) {
+      return {
+        primaryUrl: track?.url || '',
+        fallbackUrl: track?.altUrl || ''
+      };
     }
 
-    function openAlbumByTrack(track) {
+    function playTrackFromList(list, startIndex = 0) {
+      if (!Array.isArray(list) || !list.length) return;
+      state.isRadioMode = false;
+      state.queue = [...list];
+      state.currentIndex = Math.max(0, Math.min(startIndex, list.length - 1));
+      loadAndPlayCurrentTrack();
+    }
+
+    function startRadioShuffle(showMsg = false) {
+      const allTracks = [];
+      state.albums.forEach(a => (a.tracks || []).forEach(t => allTracks.push(t)));
+      if (!allTracks.length) return showToast('Syncing catalog...', 'info');
+      state.isRadioMode = true;
+      state.queue = shuffleArray(allTracks);
+      state.currentIndex = 0;
+      loadAndPlayCurrentTrack();
+      if (showMsg) showToast('Started Maestro Radio Mix', 'info');
+    }
+
+    function loadAndPlayCurrentTrack() {
+      const track = getCurrentTrack();
       if (!track) return;
-      if (track.albumId && state.albums.some(a => a.id === track.albumId)) {
-        switchView('album', track.albumId);
-        return;
-      }
-      const cleanAlbum = String(track.albumTitle || '').trim().toLowerCase();
-      const found = state.albums.find(a =>
-        a.title.toLowerCase() === cleanAlbum ||
-        a.tracks.some(t => t.id === track.id)
-      );
-      if (found) {
-        switchView('album', found.id);
-      } else if (track.albumId) {
-        switchView('album', track.albumId);
-      }
-    }
 
-    function jumpToCurrentTrackAlbum() {
-      const t = getCurrentTrack() || state.lastPlayedTrack;
-      if (t) openAlbumByTrack(t);
-    }
+      const { primaryUrl, fallbackUrl } = getFastStreamCandidate(track);
+      audio.src = primaryUrl;
+      audio.dataset.fallbackUrl = fallbackUrl || '';
+      audio.dataset.triedFallback = 'false';
 
-    function renderEqualizerBars(colorClass = 'bg-[#FA243C]') {
-      const pausedClass = state.isPlaying ? '' : 'eq-paused';
-      return `<span class="inline-flex items-end justify-center gap-[2.5px] h-3.5 w-4 shrink-0" title="${state.isPlaying ? 'Playing' : 'Paused'}"><span class="w-[2.5px] ${colorClass} rounded-full eq-bar-1 ${pausedClass}"></span><span class="w-[2.5px] ${colorClass} rounded-full eq-bar-2 ${pausedClass}"></span><span class="w-[2.5px] ${colorClass} rounded-full eq-bar-3 ${pausedClass}"></span></span>`;
-    }
+      updatePlayerBarMetadata(track);
+      saveLastPlayedState(track);
+      recordTrackPlay(track);
 
-    function renderSidebarArtists() {
-      const list = document.getElementById('sidebar-artist-list');
-      if (!list) return;
-      list.innerHTML = [...ARTISTS_DIRECTORY].sort((a, b) => a.name.localeCompare(b.name)).map(ar => {
-        const active = state.currentView === 'artist' && state.selectedArtistId === ar.id;
-        return `
-          <button onclick="switchView('artist', '${ar.id}')"
-            class="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-left text-xs font-medium transition ${active ? 'bg-[#FA243C]/20 text-[#FA243C] font-semibold' : 'text-neutral-300 hover:bg-white/[0.06]'}">
-            <img src="${ar.cover}" class="w-5 h-5 rounded-full object-cover shrink-0 border border-white/10" />
-            <span class="truncate flex-1">${escapeHtml(ar.name)}</span>
-          </button>
-        `;
-      }).join('');
-    }
-
-    function renderSidebarPlaylists() {
-      const list = document.getElementById('sidebar-playlist-list');
-      if (!list) return;
-      list.innerHTML = state.playlists.map(pl => {
-        const active = state.currentView === 'playlist' && state.selectedPlaylistId === pl.id;
-        return `
-          <div onclick="switchView('playlist', '${pl.id}')"
-            class="group w-full flex items-center justify-between gap-1.5 px-3 py-1.5 rounded-lg text-left text-xs font-medium cursor-pointer transition ${active ? 'bg-[#FA243C]/20 text-[#FA243C] font-semibold' : 'text-neutral-300 hover:bg-white/[0.06]'}">
-            <span class="truncate flex-1">${escapeHtml(pl.name)}</span>
-            <button onclick="openRenamePlaylistModal('${pl.id}', event)" title="Rename Playlist"
-              class="opacity-0 group-hover:opacity-100 p-1 rounded text-neutral-400 hover:text-white hover:bg-white/10 transition">
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-            </button>
-            <span class="text-[10px] text-neutral-500 shrink-0">${pl.tracks.length}</span>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function renderSidebarAlbums() {
-      const list = document.getElementById('sidebar-album-list');
-      if (!list) return;
-      list.innerHTML = state.albums.slice(0, 60).map(alb => {
-        const active = state.currentView === 'album' && state.selectedAlbumId === alb.id;
-        return `
-          <div onclick="switchView('album', '${alb.id.replace(/'/g, "\\'")}')"
-            class="w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-left text-xs font-medium cursor-pointer transition ${active ? 'bg-[#FA243C]/20 text-[#FA243C] font-semibold' : 'text-neutral-300 hover:bg-white/[0.06]'}">
-            <img src="${alb.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-5 h-5 rounded object-cover shrink-0" />
-            <span class="truncate">${escapeHtml(alb.title)}</span>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function updateNavigationHighlights() {
-      ['home', 'now-playing', 'search', 'radio', 'all-albums', 'all-songs'].forEach(id => {
-        const el = document.getElementById(`nav-${id}`);
-        if (!el) return;
-        el.classList.toggle('bg-white/10', state.currentView === id);
-        el.classList.toggle('text-white', state.currentView === id);
-        el.classList.toggle('text-neutral-300', state.currentView !== id);
-      });
-      const tabs = { home: 'bottom-tab-home', 'now-playing': 'bottom-tab-now-playing', radio: 'bottom-tab-radio', 'all-albums': 'bottom-tab-library', search: 'bottom-tab-search' };
-      Object.entries(tabs).forEach(([k, elId]) => {
-        const el = document.getElementById(elId);
-        if (!el) return;
-        el.classList.toggle('text-[#FA243C]', state.currentView === k);
-        el.classList.toggle('text-neutral-400', state.currentView !== k);
-      });
-    }
-
-    function renderCurrentView() {
-      const container = document.getElementById('main-scroll-area');
-      const breadcrumb = document.getElementById('breadcrumb-title');
-      if (!container || !breadcrumb) return;
-      updateNavigationHighlights();
-
-      if (state.currentView === 'home') {
-        breadcrumb.innerHTML = `<span class="text-white font-semibold">Home</span>`;
-        renderHomeView(container);
-      } else if (state.currentView === 'search') {
-        breadcrumb.innerHTML = `<span class="text-white font-semibold">Search</span>`;
-        renderSearchView(container);
-      } else if (state.currentView === 'now-playing') {
-        breadcrumb.innerHTML = `<span class="text-white font-semibold">Now Playing</span>`;
-        renderNowPlayingView(container);
-      } else if (state.currentView === 'artist') {
-        const ar = ARTISTS_DIRECTORY.find(a => a.id === state.selectedArtistId) || ARTISTS_DIRECTORY[0];
-        breadcrumb.innerHTML = `<button onclick="switchView('home')" class="hover:text-white">Artists</button><span class="mx-1.5 text-neutral-600">/</span><span class="text-white font-semibold">${escapeHtml(ar.name)}</span>`;
-        renderArtistDetailView(container, ar);
-      } else if (state.currentView === 'radio') {
-        breadcrumb.innerHTML = `<span class="text-white font-semibold">Radio</span>`;
-        renderRadioView(container);
-      } else if (state.currentView === 'all-albums') {
-        breadcrumb.innerHTML = `<span class="text-white font-semibold">Albums</span>`;
-        renderAllAlbumsView(container);
-      } else if (state.currentView === 'all-songs') {
-        breadcrumb.innerHTML = `<span class="text-white font-semibold">Songs</span>`;
-        renderAllSongsView(container);
-      } else if (state.currentView === 'playlist') {
-        const pl = state.playlists.find(p => p.id === state.selectedPlaylistId);
-        if (!pl) return switchView('home');
-        breadcrumb.innerHTML = `<span class="text-white font-semibold">${escapeHtml(pl.name)}</span>`;
-        renderPlaylistDetailView(container, pl);
-      } else if (state.currentView === 'album') {
-        const alb = state.albums.find(a => a.id === state.selectedAlbumId) || state.albums[0];
-        if (!alb) return switchView('home');
-        breadcrumb.innerHTML = `<button onclick="openArtistByName('${escapeHtml(alb.artist).replace(/'/g, "\\'")}', '${alb.artistId || ''}')" class="hover:text-white">${escapeHtml(alb.artist)}</button><span class="mx-1.5 text-neutral-600">/</span><span class="text-white font-semibold">${escapeHtml(alb.title)}</span>`;
-        renderAlbumDetailView(container, alb);
+      userPausedManually = false;
+      const p = audio.play();
+      if (p && typeof p.then === 'function') {
+        p.then(() => {
+          state.isPlaying = true;
+          updatePlayPauseUI();
+          renderCurrentView();
+          broadcastListenTogetherPlayback('track-change');
+        }).catch(() => {
+          state.isPlaying = false;
+          updatePlayPauseUI();
+        });
       }
     }
 
-    function getTimeGreeting() {
-      const hr = new Date().getHours();
-      if (hr < 12) return 'Good Morning';
-      if (hr < 17) return 'Good Afternoon';
-      if (hr < 22) return 'Good Evening';
-      return 'Late Night Sessions';
+    function updatePlayerBarMetadata(track) {
+      if (!track) return;
+      const art = document.getElementById('player-art');
+      const title = document.getElementById('player-title');
+      const artist = document.getElementById('player-artist');
+      const albumLink = document.getElementById('player-album-link');
+      const badge = document.getElementById('player-format-badge');
+      const shareBtn = document.getElementById('player-share-btn');
+      const addBtn = document.getElementById('player-add-playlist-btn');
+
+      if (art) art.src = track.cover || FALLBACK_COVER_ART;
+      if (title) title.textContent = track.title || 'Unknown Track';
+      if (artist) artist.textContent = track.artist || 'tune-S';
+      if (albumLink) {
+        albumLink.textContent = track.albumTitle || 'Go to Album';
+        albumLink.classList.toggle('hidden', !track.albumId);
+      }
+      if (badge) badge.textContent = track.formatBadge || 'LOSSLESS';
+      shareBtn?.classList.remove('hidden');
+      addBtn?.classList.remove('hidden');
     }
 
-    function renderHomeView(container) {
-      const allTracks = state.albums.flatMap(a => a.tracks || []);
-      const sortedArtists = [...ARTISTS_DIRECTORY].sort((a, b) => a.name.localeCompare(b.name));
-      const mosaicAlbums = state.albums.slice(0, 4);
-      while (mosaicAlbums.length < 4) mosaicAlbums.push({ id: '', title: 'tune-S', cover: FALLBACK_COVER_ART });
-
-      const top10Albums = [...state.albums]
-        .sort((a, b) => ((playStats.albums[b.id] || 0) - (playStats.albums[a.id] || 0)))
-        .slice(0, 10);
-
-      homeTop10SongsCache = [...allTracks]
-        .sort((a, b) => ((playStats.songs[b.id] || 0) - (playStats.songs[a.id] || 0)))
-        .slice(0, 10);
-
-      container.innerHTML = `
-        <div class="max-w-6xl mx-auto space-y-8">
-          <!-- Hero Banner -->
-          <section class="relative rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-br from-[#2B121D] via-[#171620] to-[#0E0E13] p-5 sm:p-7 flex flex-col lg:flex-row items-center justify-between gap-6 shadow-2xl">
-            <div class="space-y-3 text-center lg:text-left flex-1">
-              <div class="text-[11px] font-bold uppercase tracking-widest text-[#FA243C]">${getTimeGreeting()} • TUNE-S COLLECTION</div>
-              <h1 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">Every Maestro. Every Soundtrack.</h1>
-              <p class="text-xs sm:text-sm text-neutral-300 max-w-xl">
-                Stream high-fidelity soundtracks across 19 legendary composers • ${state.albums.length} albums &amp; ${allTracks.length} tracks.
-              </p>
-              <div class="pt-1 flex flex-wrap items-center justify-center lg:justify-start gap-2.5">
-                <button onclick="startRadioShuffle(false)" class="px-5 py-2.5 rounded-full bg-[#FA243C] hover:bg-[#E01E34] text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-lg shadow-[#FA243C]/25 transition">
-                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                  <span>Play Radio</span>
-                </button>
-                <button onclick="playSurpriseDiscoveryTrack()" class="px-4 py-2.5 rounded-full bg-white/[0.09] hover:bg-white/[0.16] text-white text-xs font-semibold transition">
-                  Surprise Me
-                </button>
-                <button onclick="openListenTogetherModal()" class="px-4 py-2.5 rounded-full bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-bold transition">
-                  Listen Together
-                </button>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-4 lg:grid-cols-2 gap-2.5 w-full lg:w-60 shrink-0">
-              ${mosaicAlbums.map(alb => `
-                <div onclick="${alb.id ? `switchView('album', '${alb.id.replace(/'/g, "\\'")}')` : ''}" class="aspect-square rounded-2xl overflow-hidden bg-neutral-900 border border-white/10 shadow-lg cursor-pointer group">
-                  <img src="${alb.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-full h-full object-cover group-hover:scale-105 transition" />
-                </div>
-              `).join('')}
-            </div>
-          </section>
-
-          <!-- Recently Played Strip -->
-          ${state.recentTracks.length > 0 ? `
-            <section>
-              <div class="flex items-center justify-between mb-3">
-                <h2 class="text-lg font-extrabold text-white">Recently Played</h2>
-                <button onclick='playTrackFromList(${JSON.stringify(state.recentTracks).replace(/'/g, "&#39;")}, 0)' class="text-xs font-semibold text-[#FA243C] hover:underline">Play History →</button>
-              </div>
-              <div class="flex items-stretch gap-3.5 overflow-x-auto pb-2">
-                ${state.recentTracks.map((tr, idx) => {
-                  const isCurrent = isTrackCurrentlyActive(tr);
-                  return `
-                    <div onclick='playTrackFromList(${JSON.stringify(state.recentTracks).replace(/'/g, "&#39;")}, ${idx})'
-                      class="luxury-card shrink-0 w-48 rounded-2xl p-2.5 flex items-center gap-2.5 cursor-pointer transition ${isCurrent ? 'border-[#FA243C]/60 bg-[#FA243C]/10' : ''}">
-                      <img src="${tr.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-11 h-11 rounded-xl object-cover shrink-0" />
-                      <div class="min-w-0 flex-1">
-                        <div class="text-xs font-bold truncate ${isCurrent ? 'text-[#FA243C]' : 'text-white'}">${escapeHtml(tr.title)}</div>
-                        <div class="text-[10px] text-neutral-400 truncate">${escapeHtml(tr.artist)}</div>
-                      </div>
-                      ${isCurrent ? renderEqualizerBars('bg-[#FA243C]') : ''}
-                    </div>
-                  `;
-                }).join('')}
-              </div>
-            </section>
-          ` : ''}
-
-          <!-- Artists Carousel -->
-          <section>
-            <div class="flex items-center justify-between mb-3">
-              <h2 class="text-xl font-extrabold text-white">Artists</h2>
-              <button onclick="switchView('radio')" class="text-xs font-semibold text-[#FA243C] hover:underline">Live Stations →</button>
-            </div>
-            <div class="flex items-stretch gap-4 overflow-x-auto pb-2">
-              ${sortedArtists.map(ar => {
-                const count = state.albums.filter(a => a.artistId === ar.id).length;
-                return `
-                  <div onclick="switchView('artist', '${ar.id}')" class="group shrink-0 w-28 text-center cursor-pointer">
-                    <div class="w-24 h-24 mx-auto rounded-full overflow-hidden border-2 border-white/10 group-hover:border-[#FA243C] shadow-lg mb-2 transition">
-                      <img src="${ar.cover}" class="w-full h-full object-cover group-hover:scale-105 transition" />
-                    </div>
-                    <div class="text-xs font-bold text-white truncate group-hover:text-[#FA243C]">${escapeHtml(ar.name)}</div>
-                    <div class="text-[10px] text-neutral-400">${count} Albums</div>
-                  </div>
-                `;
-              }).join('')}
-            </div>
-          </section>
-
-          <!-- Top 10 Albums Leaderboard -->
-          ${top10Albums.length > 0 ? `
-            <section>
-              <div class="flex items-center justify-between mb-3.5">
-                <div>
-                  <span class="text-[10px] font-bold uppercase tracking-widest text-[#FA243C]">Most Listened Soundtracks</span>
-                  <h2 class="text-xl sm:text-2xl font-extrabold text-white">Top 10 Albums</h2>
-                </div>
-                <button onclick="switchView('all-albums')" class="text-xs font-semibold text-[#FA243C] hover:underline">All ${state.albums.length} Albums →</button>
-              </div>
-              <div class="flex items-stretch gap-4 overflow-x-auto pb-3 pt-1">
-                ${top10Albums.map((alb, idx) => {
-                  const rank = idx + 1;
-                  const tierBorder = rank === 1 ? 'border-amber-400/70 shadow-amber-500/20' : (rank <= 5 ? 'border-slate-300/45' : 'border-amber-700/45');
-                  const tierBadge = rank === 1 ? 'bg-amber-400 text-black' : (rank <= 5 ? 'bg-slate-200 text-black' : 'bg-amber-700/80 text-white');
-                  return `
-                    <div onclick="switchView('album', '${alb.id.replace(/'/g, "\\'")}')"
-                      class="group shrink-0 w-44 rounded-2xl bg-[#16161E] border ${tierBorder} p-3 shadow-xl cursor-pointer transition hover:-translate-y-1">
-                      <div class="relative aspect-square rounded-xl overflow-hidden bg-neutral-900 mb-2.5">
-                        <img src="${alb.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-full h-full object-cover group-hover:scale-105 transition" />
-                        <span class="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[10px] font-extrabold ${tierBadge}">
-                          #${rank}
-                        </span>
-                      </div>
-                      <div class="flex items-baseline justify-between gap-2">
-                        <span class="text-lg font-black ${rank === 1 ? 'text-amber-400' : 'text-white'}">#${rank}</span>
-                        <span class="text-[10px] text-neutral-400">${alb.tracks.length} songs</span>
-                      </div>
-                      <div class="text-xs font-bold text-white truncate mt-0.5 group-hover:text-[#FA243C]">${escapeHtml(alb.title)}</div>
-                      <div class="text-[11px] text-neutral-400 truncate">${escapeHtml(alb.artist)}</div>
-                    </div>
-                  `;
-                }).join('')}
-              </div>
-            </section>
-          ` : ''}
-
-          <!-- Top 10 Songs Repeated Chart -->
-          ${homeTop10SongsCache.length > 0 ? `
-            <section>
-              <div class="flex items-center justify-between mb-3.5">
-                <div>
-                  <span class="text-[10px] font-bold uppercase tracking-widest text-[#FA243C]">On Heavy Rotation</span>
-                  <h2 class="text-xl sm:text-2xl font-extrabold text-white">Top 10 Songs</h2>
-                </div>
-                <div class="flex items-center gap-3">
-                  <button onclick="playHomeTop10Song(0)" class="text-xs font-semibold text-[#FA243C] hover:underline">Play All →</button>
-                  <button onclick="switchView('all-songs')" class="text-xs font-semibold text-neutral-400 hover:text-white">All Songs</button>
-                </div>
-              </div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                ${homeTop10SongsCache.map((tr, idx) => {
-                  const rank = idx + 1;
-                  const plays = playStats.songs[tr.id] || 0;
-                  const isCurrent = isTrackCurrentlyActive(tr);
-                  return `
-                    <div onclick="playHomeTop10Song(${idx})"
-                      class="luxury-card rounded-2xl p-3 flex items-center gap-3 cursor-pointer transition ${isCurrent ? 'border-[#FA243C]/60 bg-[#FA243C]/15' : ''}">
-                      <span class="w-6 flex items-center justify-center text-sm font-black ${rank <= 3 ? 'text-[#FA243C]' : 'text-neutral-400'}">
-                        ${isCurrent ? renderEqualizerBars('bg-[#FA243C]') : rank}
-                      </span>
-                      <div class="relative w-12 h-12 rounded-xl overflow-hidden bg-neutral-900 shrink-0">
-                        <img src="${tr.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-full h-full object-cover" />
-                      </div>
-                      <div class="min-w-0 flex-1">
-                        <div class="text-xs sm:text-sm font-bold truncate ${isCurrent ? 'text-[#FA243C]' : 'text-white'}">${escapeHtml(tr.title)}</div>
-                        <div class="text-[11px] text-neutral-400 truncate">${escapeHtml(tr.artist)} • ${escapeHtml(tr.albumTitle)}</div>
-                      </div>
-                      <div class="flex items-center gap-2 shrink-0">
-                        ${plays > 0 ? `<span class="hidden sm:inline-block px-2 py-0.5 rounded-full bg-white/[0.06] text-[10px] font-semibold text-neutral-300">${plays} plays</span>` : ''}
-                        <span class="text-xs text-neutral-400 tabular-nums">${tr.duration ? formatTime(tr.duration) : '--:--'}</span>
-                      </div>
-                    </div>
-                  `;
-                }).join('')}
-              </div>
-            </section>
-          ` : ''}
-
-          <!-- Continue Listening Resume Card -->
-          ${(() => {
-            const resumeTrack = getCurrentTrack() || state.lastPlayedTrack || state.recentTracks[0];
-            if (!resumeTrack) return '';
-            const isResumePlaying = isTrackActivelyPlaying(resumeTrack);
-            return `
-              <section class="pt-1 pb-2">
-                <div onclick="resumeLastPlayedTrack()"
-                  class="luxury-card rounded-2xl p-3.5 sm:p-4 flex items-center justify-between gap-3.5 cursor-pointer transition shadow-xl">
-                  <div class="flex items-center gap-3.5 min-w-0 flex-1">
-                    <img src="${resumeTrack.cover || FALLBACK_COVER_ART}" onerror="this.src='${FALLBACK_COVER_ART}'"
-                      class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover border border-white/10 shrink-0 shadow-md" />
-                    <div class="min-w-0 flex-1">
-                      <div class="text-[10px] font-extrabold uppercase tracking-wider text-[#FA243C]">Continue Listening</div>
-                      <div class="text-sm sm:text-base font-extrabold text-white truncate mt-0.5">${escapeHtml(resumeTrack.title)}</div>
-                      <div class="text-xs text-neutral-400 truncate">${escapeHtml(resumeTrack.artist)}</div>
-                    </div>
-                  </div>
-                  <button type="button" onclick="event.stopPropagation(); resumeLastPlayedTrack();"
-                    class="px-4 sm:px-5 py-2 rounded-full bg-white text-black hover:bg-neutral-200 active:scale-95 text-xs font-extrabold inline-flex items-center gap-1.5 shrink-0 shadow-md transition">
-                    ${isResumePlaying
-                      ? `${renderEqualizerBars('bg-[#FA243C]')} <span>Pause</span>`
-                      : `<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span>Resume</span>`
-                    }
-                  </button>
-                </div>
-                <div class="text-center text-[11px] font-medium text-neutral-500 mt-4">tuneS - A Music App by SenthilKumar</div>
-              </section>
-            `;
-          })()}
-        </div>
-      `;
+    function updatePlayPauseUI() {
+      document.getElementById('icon-play')?.classList.toggle('hidden', state.isPlaying);
+      document.getElementById('icon-pause')?.classList.toggle('hidden', !state.isPlaying);
     }
 
-    function resumeLastPlayedTrack() {
-      const resumeTrack = getCurrentTrack() || state.lastPlayedTrack || state.recentTracks[0];
-      if (!resumeTrack) return;
-      if (getCurrentTrack()?.id === resumeTrack.id && audio.src) {
-        togglePlayPause();
+    function togglePlayPause() {
+      if (!audio.src) {
+        if (state.lastPlayedTrack) return playTrackFromList([state.lastPlayedTrack], 0);
+        return startRadioShuffle(true);
+      }
+      if (audio.paused) {
+        userPausedManually = false;
+        audio.play().then(() => {
+          state.isPlaying = true;
+          updatePlayPauseUI();
+          renderCurrentView();
+          broadcastListenTogetherPlayback('play');
+        }).catch(() => {});
       } else {
-        state.queue = state.queue.length ? state.queue : [resumeTrack];
-        const idx = state.queue.findIndex(t => t.id === resumeTrack.id);
-        state.currentIndex = idx >= 0 ? idx : 0;
-        if (idx < 0) state.queue.unshift(resumeTrack);
-        loadAndPlayCurrentTrack();
+        userPausedManually = true;
+        audio.pause();
+        state.isPlaying = false;
+        updatePlayPauseUI();
+        renderCurrentView();
+        broadcastListenTogetherPlayback('pause');
       }
     }
 
-    function playHomeTop10Song(idx) {
-      if (homeTop10SongsCache[idx]) {
-        playTrackFromList(homeTop10SongsCache, idx);
-      }
-    }
-
-    function setAlbumsViewMode(mode) {
-      state.albumsViewMode = mode;
-      try { localStorage.setItem(ALBUMS_VIEW_MODE_KEY, mode); } catch (e) {}
-      renderCurrentView();
-    }
-
-    function setCoverFlowIndex(idx, isArtist = false) {
-      if (isArtist) state.artistCoverFlowIndex = Math.max(0, idx);
-      else state.coverFlowIndex = Math.max(0, idx);
-      renderCurrentView();
-    }
-
-    function stepCoverFlow(delta, isArtist = false) {
-      const cur = isArtist ? state.artistCoverFlowIndex : state.coverFlowIndex;
-      setCoverFlowIndex(cur + delta, isArtist);
-    }
-
-    function renderCoverFlowCarousel(albumsList, isArtist = false) {
-      if (!albumsList.length) return `<div class="py-12 text-center text-sm text-neutral-400">No albums available.</div>`;
-      const rawIdx = isArtist ? state.artistCoverFlowIndex : state.coverFlowIndex;
-      const activeIdx = Math.max(0, Math.min(albumsList.length - 1, rawIdx));
-      if (isArtist) state.artistCoverFlowIndex = activeIdx;
-      else state.coverFlowIndex = activeIdx;
-      const activeAlbum = albumsList[activeIdx];
-      const isPlayingActive = isAlbumActivelyPlaying(activeAlbum.id);
-
-      return `
-        <div class="rounded-3xl bg-gradient-to-b from-white/[0.04] to-black/40 border border-white/10 p-5 sm:p-8 select-none overflow-hidden">
-          <div class="relative h-64 sm:h-72 flex items-center justify-center" style="perspective: 1450px;">
-            <button onclick="stepCoverFlow(-1, ${isArtist})" class="absolute left-1 sm:left-4 z-30 w-10 h-10 rounded-full bg-black/70 hover:bg-[#FA243C] text-white flex items-center justify-center border border-white/15 shadow-lg transition">
-              ‹
-            </button>
-
-            <div class="relative w-full h-full flex items-center justify-center" style="transform-style: preserve-3d;">
-              ${albumsList.map((alb, idx) => {
-                const offset = idx - activeIdx;
-                if (Math.abs(offset) > 4) return '';
-                const abs = Math.abs(offset);
-                const translateX = offset * 125;
-                const translateZ = offset === 0 ? 70 : -abs * 65;
-                const rotateY = offset === 0 ? 0 : (offset < 0 ? 46 : -46);
-                const scale = offset === 0 ? 1 : Math.max(0.68, 0.86 - abs * 0.06);
-                const opacity = offset === 0 ? 1 : Math.max(0.25, 0.85 - abs * 0.2);
-
-                return `
-                  <div onclick="${offset === 0 ? `switchView('album', '${alb.id.replace(/'/g, "\\'")}')` : `setCoverFlowIndex(${idx}, ${isArtist})`}"
-                    style="transform: translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale}); z-index: ${20 - abs}; opacity: ${opacity}; transition: all 0.55s cubic-bezier(0.16, 1, 0.3, 1);"
-                    class="absolute w-48 h-48 sm:w-56 sm:h-56 rounded-3xl overflow-hidden bg-neutral-900 border ${offset === 0 ? 'border-white/30 shadow-[0_24px_55px_rgba(0,0,0,0.85)]' : 'border-white/10'} cursor-pointer">
-                    <img src="${alb.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-full h-full object-cover" />
-                  </div>
-                `;
-              }).join('')}
-            </div>
-
-            <button onclick="stepCoverFlow(1, ${isArtist})" class="absolute right-1 sm:right-4 z-30 w-10 h-10 rounded-full bg-black/70 hover:bg-[#FA243C] text-white flex items-center justify-center border border-white/15 shadow-lg transition">
-              ›
-            </button>
-          </div>
-
-          <div class="text-center space-y-2 mt-4">
-            <div class="text-[10px] font-bold uppercase tracking-widest text-[#FA243C]">Album ${activeIdx + 1} of ${albumsList.length}</div>
-            <h3 class="text-lg sm:text-xl font-extrabold text-white truncate max-w-md mx-auto">${escapeHtml(activeAlbum.title)}</h3>
-            <p class="text-xs text-neutral-400">
-              <span onclick="openArtistByName('${escapeHtml(activeAlbum.artist).replace(/'/g, "\\'")}', '${activeAlbum.artistId || ''}')" class="hover:text-[#FA243C] hover:underline cursor-pointer">${escapeHtml(activeAlbum.artist)}</span>
-              • ${activeAlbum.year} • ${activeAlbum.tracks.length} Songs
-            </p>
-            <div class="pt-2 flex items-center justify-center gap-2.5">
-              <button onclick="handleAlbumPrimaryPlayClick('${activeAlbum.id.replace(/'/g, "\\'")}')" class="px-5 py-2 rounded-full bg-[#FA243C] hover:bg-[#E01E34] text-white text-xs font-bold shadow inline-flex items-center gap-1.5">
-                ${isPlayingActive ? `${renderEqualizerBars('bg-white')} <span>Pause</span>` : `<span>▶ Play Album</span>`}
-              </button>
-              <button onclick="switchView('album', '${activeAlbum.id.replace(/'/g, "\\'")}')" class="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-semibold">
-                Open Tracklist
-              </button>
-            </div>
-            <div class="pt-3 max-w-xs mx-auto">
-              <input type="range" min="0" max="${Math.max(0, albumsList.length - 1)}" value="${activeIdx}"
-                oninput="setCoverFlowIndex(parseInt(this.value, 10), ${isArtist})"
-                class="apple-slider w-full h-1" />
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function renderAlbumGridCards(albumsList) {
-      if (!albumsList.length) return `<div class="col-span-full py-12 text-center text-sm text-neutral-400">No albums match your filter.</div>`;
-      return albumsList.map(album => {
-        const isPlayingAlb = isAlbumActivelyPlaying(album.id);
-        return `
-          <div onclick="switchView('album', '${album.id.replace(/'/g, "\\'")}')" class="group cursor-pointer">
-            <div class="relative aspect-square rounded-2xl overflow-hidden bg-neutral-900 mb-2.5 shadow-lg">
-              <img src="${album.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-              <button onclick="event.stopPropagation(); handleAlbumPrimaryPlayClick('${album.id.replace(/'/g, "\\'")}')"
-                class="absolute bottom-2.5 right-2.5 w-10 h-10 rounded-full bg-[#FA243C] text-white flex items-center justify-center shadow-xl ${isPlayingAlb ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition">
-                ${isPlayingAlb ? renderEqualizerBars('bg-white') : `<svg class="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`}
-              </button>
-            </div>
-            <div class="text-sm font-semibold truncate transition ${isPlayingAlb ? 'text-[#FA243C]' : 'text-white group-hover:text-[#FA243C]'}">${escapeHtml(album.title)}</div>
-            <div class="text-xs text-neutral-400 truncate">${escapeHtml(album.artist)} • ${album.tracks.length} songs</div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function renderViewSwitcherPill() {
-      const isGrid = state.albumsViewMode !== 'coverflow';
-      return `
-        <div class="inline-flex items-center p-1 rounded-full bg-white/[0.07] border border-white/10">
-          <button onclick="setAlbumsViewMode('grid')" class="px-3 py-1 rounded-full text-xs font-bold transition ${isGrid ? 'bg-[#FA243C] text-white' : 'text-neutral-300 hover:text-white'}">
-            Grid
-          </button>
-          <button onclick="setAlbumsViewMode('coverflow')" class="px-3 py-1 rounded-full text-xs font-bold transition ${!isGrid ? 'bg-[#FA243C] text-white' : 'text-neutral-300 hover:text-white'}">
-            Cover Flow
-          </button>
-        </div>
-      `;
-    }
-
-    function renderAllAlbumsView(container) {
-      const q = (state.albumFilterQuery || '').trim().toLowerCase();
-      const artistFilter = state.selectedArtistFilter || 'all';
-      const filtered = state.albums.filter(a => {
-        const matchAr = artistFilter === 'all' || a.artistId === artistFilter;
-        const matchQ = !q || a.title.toLowerCase().includes(q) || a.artist.toLowerCase().includes(q);
-        return matchAr && matchQ;
-      });
-
-      container.innerHTML = `
-        <div class="max-w-6xl mx-auto space-y-6">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h1 class="text-2xl sm:text-3xl font-extrabold text-white">Albums (${filtered.length})</h1>
-              <p class="text-xs text-neutral-400 mt-1">Switch between classic Grid and 3D iPod Cover Flow</p>
-            </div>
-            <div class="flex flex-wrap items-center gap-2.5">
-              ${renderViewSwitcherPill()}
-              <input type="text" value="${escapeHtml(state.albumFilterQuery)}" oninput="state.albumFilterQuery=this.value; renderCurrentView();"
-                placeholder="Filter albums..." class="bg-white/[0.07] border border-white/10 focus:border-[#FA243C] rounded-full px-4 py-1.5 text-xs text-white outline-none" />
-            </div>
-          </div>
-
-          ${state.albumsViewMode === 'coverflow'
-            ? renderCoverFlowCarousel(filtered, false)
-            : `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">${renderAlbumGridCards(filtered)}</div>`
-          }
-        </div>
-      `;
-    }
-
-    function renderArtistDetailView(container, artist) {
-      const artistAlbums = state.albums.filter(a => a.artistId === artist.id);
-      const totalTracks = artistAlbums.reduce((s, a) => s + (a.tracks?.length || 0), 0);
-
-      container.innerHTML = `
-        <div class="max-w-6xl mx-auto space-y-8">
-          <section class="luxury-card rounded-3xl p-6 flex flex-col sm:flex-row items-center gap-6">
-            <img src="${artist.cover}" class="w-28 h-28 rounded-full object-cover border-2 border-white/15 shadow-xl" />
-            <div class="text-center sm:text-left flex-1">
-              <div class="text-xs font-bold uppercase tracking-wider text-[#FA243C]">Verified Artist</div>
-              <h1 class="text-3xl sm:text-4xl font-extrabold text-white mt-1">${escapeHtml(artist.name)}</h1>
-              <p class="text-xs text-neutral-400 mt-1">${escapeHtml(artist.tagline)} • ${artistAlbums.length} Albums • ${totalTracks} Songs</p>
-              <div class="mt-4 flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
-                <button onclick="startRadioShuffle(false, '${artist.id}')" class="px-5 py-2 rounded-full bg-[#FA243C] text-white text-xs font-bold shadow">
-                  ▶ Play ${escapeHtml(artist.name)} Radio
-                </button>
-              </div>
-            </div>
-          </section>
-
-          <section class="space-y-4">
-            <div class="flex items-center justify-between">
-              <h2 class="text-xl font-bold text-white">Albums (${artistAlbums.length})</h2>
-              ${renderViewSwitcherPill()}
-            </div>
-            ${state.albumsViewMode === 'coverflow'
-              ? renderCoverFlowCarousel(artistAlbums, true)
-              : `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">${renderAlbumGridCards(artistAlbums)}</div>`
-            }
-          </section>
-        </div>
-      `;
-    }
-
-    function renderAlbumDetailView(container, album) {
-      const currentTrack = getCurrentTrack();
-      const isPlayingThisAlbum = isAlbumActivelyPlaying(album.id);
-      container.innerHTML = `
-        <div class="max-w-5xl mx-auto space-y-8">
-          <div class="flex flex-col md:flex-row items-center md:items-end gap-6">
-            <img src="${album.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-48 h-48 sm:w-56 sm:h-56 rounded-2xl object-cover border border-white/10 shadow-2xl" />
-            <div class="flex-1 text-center md:text-left">
-              <div class="text-xs font-bold uppercase tracking-wider text-[#FA243C]">Apple Digital Master</div>
-              <h1 class="text-2xl sm:text-4xl font-extrabold text-white mt-1">${escapeHtml(album.title)}</h1>
-              <button onclick="openArtistByName('${escapeHtml(album.artist).replace(/'/g, "\\'")}', '${album.artistId || ''}')" class="text-lg font-semibold text-[#FA243C] hover:underline mt-1">
-                ${escapeHtml(album.artist)}
-              </button>
-              <div class="text-xs text-neutral-400 mt-1">${escapeHtml(album.year || '2026')} • ${album.tracks.length} Songs</div>
-
-              <div class="mt-5 flex flex-wrap items-center justify-center md:justify-start gap-2.5">
-                <button onclick="handleAlbumPrimaryPlayClick('${album.id.replace(/'/g, "\\'")}')"
-                  class="px-6 py-2.5 rounded-full bg-[#FA243C] hover:bg-[#E01E34] text-white text-xs font-bold shadow inline-flex items-center gap-2">
-                  ${isPlayingThisAlbum
-                    ? `${renderEqualizerBars('bg-white')} <span>Pause</span>`
-                    : `<span>▶ Play</span>`
-                  }
-                </button>
-                <button onclick="toggleAlbumShuffle('${album.id.replace(/'/g, "\\'")}')"
-                  class="px-5 py-2.5 rounded-full text-xs font-bold transition ${state.isShuffle ? 'bg-[#FA243C] text-white shadow' : 'bg-white/[0.08] hover:bg-white/[0.15] text-neutral-200'}">
-                  ${state.isShuffle ? 'Shuffle On' : 'Shuffle Off'}
-                </button>
-                <button onclick="shareAlbum('${album.id.replace(/'/g, "\\'")}', event)" class="px-5 py-2.5 rounded-full bg-white/[0.08] hover:bg-white/[0.15] text-white text-xs font-bold">
-                  Share
-                </button>
-              </div>
-            </div>
-          </div>
-
-          ${renderTracklistTable(album.tracks, currentTrack)}
-        </div>
-      `;
-    }
-
-    function renderTracklistTable(tracks, currentTrack) {
-      if (!tracks || !tracks.length) return `<div class="text-sm text-neutral-400 py-8 text-center">No tracks available.</div>`;
-      return `
-        <div class="luxury-card rounded-2xl overflow-hidden divide-y divide-white/[0.05]">
-          ${tracks.map((track, idx) => {
-            const isCurrent = currentTrack && currentTrack.id === track.id;
-            return `
-              <div onclick='playTrackFromList(${JSON.stringify(tracks).replace(/'/g, "&#39;")}, ${idx})'
-                class="group flex items-center justify-between gap-3 px-4 py-3 cursor-pointer transition ${isCurrent ? 'bg-[#FA243C]/15' : 'hover:bg-white/[0.05]'}">
-                <div class="flex items-center gap-3 min-w-0 flex-1">
-                  <span class="w-5 flex items-center justify-center text-xs font-semibold ${isCurrent ? 'text-[#FA243C]' : 'text-neutral-400'}">
-                    ${isCurrent ? renderEqualizerBars('bg-[#FA243C]') : (idx + 1)}
-                  </span>
-                  <div class="min-w-0 flex-1">
-                    <div class="text-xs sm:text-sm font-semibold truncate ${isCurrent ? 'text-[#FA243C]' : 'text-white'}">${escapeHtml(track.title)}</div>
-                    <div class="text-[11px] text-neutral-400 truncate">${escapeHtml(track.artist)}</div>
-                  </div>
-                </div>
-                <div class="flex items-center gap-1.5 shrink-0">
-                  <button onclick='event.stopPropagation(); shareSpecificTrack(${JSON.stringify(track).replace(/'/g, "&#39;")})' title="Share Song"
-                    class="p-1.5 rounded-lg text-neutral-400 hover:text-[#FA243C] hover:bg-white/10 transition">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                    </svg>
-                  </button>
-                  <button onclick='event.stopPropagation(); openAddToPlaylistModal(${JSON.stringify(track).replace(/'/g, "&#39;")})' title="Add to Playlist"
-                    class="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition">+</button>
-                  <span class="text-xs text-neutral-400 tabular-nums ml-1">${track.duration ? formatTime(track.duration) : '--:--'}</span>
-                </div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      `;
-    }
-
-    function renderPlaylistDetailView(container, playlist) {
-      const currentTrack = getCurrentTrack();
-      const cover = playlist.tracks[0]?.cover || FALLBACK_COVER_ART;
-      const isPlayingPl = state.isPlaying && currentTrack && playlist.tracks.some(t => t.id === currentTrack.id);
-      container.innerHTML = `
-        <div class="max-w-5xl mx-auto space-y-8">
-          <div class="flex flex-col md:flex-row items-center md:items-end gap-6">
-            <img src="${cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-44 h-44 rounded-2xl object-cover border border-white/10 shadow-2xl" />
-            <div class="flex-1 text-center md:text-left">
-              <div class="text-xs font-bold uppercase tracking-wider text-[#FA243C]">Playlist</div>
-              <h1 onclick="openRenamePlaylistModal('${playlist.id}', event)" title="Click to Rename" class="text-2xl sm:text-4xl font-extrabold text-white mt-1 cursor-pointer hover:text-[#FA243C] transition">
-                ${escapeHtml(playlist.name)}
-              </h1>
-              <div class="text-xs text-neutral-400 mt-1">${playlist.tracks.length} Songs</div>
-              <div class="mt-5 flex flex-wrap items-center justify-center md:justify-start gap-2.5">
-                <button onclick="${isPlayingPl ? 'togglePlayPause()' : `playPlaylist('${playlist.id}', 0, false)`}" class="px-6 py-2.5 rounded-full bg-[#FA243C] text-white text-xs font-bold shadow inline-flex items-center gap-2">
-                  ${isPlayingPl ? `${renderEqualizerBars('bg-white')} <span>Pause</span>` : '<span>▶ Play</span>'}
-                </button>
-                <button onclick="togglePlaylistShuffle('${playlist.id}')" class="px-5 py-2.5 rounded-full text-xs font-bold ${state.isShuffle ? 'bg-[#FA243C] text-white' : 'bg-white/[0.08] text-neutral-200'}">
-                  ${state.isShuffle ? 'Shuffle On' : 'Shuffle Off'}
-                </button>
-                <button onclick="sharePlaylist('${playlist.id}', event)" class="px-4 py-2.5 rounded-full bg-white/[0.08] hover:bg-white/[0.15] text-white text-xs font-bold">
-                  Share
-                </button>
-                <button onclick="openRenamePlaylistModal('${playlist.id}', event)" class="px-4 py-2.5 rounded-full bg-white/[0.08] hover:bg-white/[0.15] text-white text-xs font-bold">
-                  Rename
-                </button>
-                <button onclick="deletePlaylist('${playlist.id}', event)" class="px-4 py-2.5 rounded-full bg-white/[0.05] hover:bg-red-500/20 text-neutral-300 hover:text-red-300 text-xs font-semibold">
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-
-          ${playlist.tracks.length === 0
-            ? `<div class="rounded-2xl bg-white/[0.03] border border-white/10 p-10 text-center text-xs text-neutral-400">This playlist is empty. Click + next to any song to add it here.</div>`
-            : `<div class="luxury-card rounded-2xl overflow-hidden divide-y divide-white/[0.05]">
-                ${playlist.tracks.map((tr, idx) => {
-                  const isCurrent = currentTrack?.id === tr.id;
-                  return `
-                    <div onclick="playPlaylist('${playlist.id}', ${idx}, false)" class="flex items-center justify-between gap-3 px-4 py-3 ${isCurrent ? 'bg-[#FA243C]/15' : 'hover:bg-white/[0.05]'} cursor-pointer">
-                      <div class="flex items-center gap-3 min-w-0">
-                        <span class="w-5 flex items-center justify-center text-xs text-neutral-400">
-                          ${isCurrent ? renderEqualizerBars('bg-[#FA243C]') : (idx + 1)}
-                        </span>
-                        <img src="${tr.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-10 h-10 rounded-lg object-cover" />
-                        <div class="min-w-0">
-                          <div class="text-xs sm:text-sm font-semibold truncate ${isCurrent ? 'text-[#FA243C]' : 'text-white'}">${escapeHtml(tr.title)}</div>
-                          <div class="text-[11px] text-neutral-400 truncate">${escapeHtml(tr.artist)}</div>
-                        </div>
-                      </div>
-                      <button onclick="event.stopPropagation(); removeTrackFromPlaylist('${playlist.id}', '${tr.id.replace(/'/g, "\\'")}')" class="p-1.5 text-neutral-400 hover:text-red-400">✕</button>
-                    </div>
-                  `;
-                }).join('')}
-              </div>`
-          }
-        </div>
-      `;
-    }
-
-    function renderNowPlayingView(container) {
-      const track = getCurrentTrack() || state.lastPlayedTrack;
-      const cur = audio.currentTime || 0;
-      const dur = audio.duration || track?.duration || 0;
-      const pct = dur > 0 ? (cur / dur) * 100 : 0;
-
-      if (!track) {
-        container.innerHTML = `<div class="max-w-md mx-auto text-center py-16 space-y-4"><h2 class="text-xl font-bold text-white">Nothing Playing</h2><button onclick="startRadioShuffle(false)" class="px-6 py-2.5 rounded-full bg-[#FA243C] text-white text-xs font-bold">Start Radio</button></div>`;
+    function nextTrack() {
+      if (!state.queue.length) return;
+      if (state.isShuffle && state.queue.length > 1) {
+        let nextIdx = Math.floor(Math.random() * state.queue.length);
+        if (nextIdx === state.currentIndex) nextIdx = (state.currentIndex + 1) % state.queue.length;
+        state.currentIndex = nextIdx;
+      } else if (state.currentIndex + 1 < state.queue.length) {
+        state.currentIndex += 1;
+      } else if (state.repeatMode === 'all' || state.isRadioMode) {
+        state.currentIndex = 0;
+      } else {
         return;
       }
-
-      const safeArtistName = escapeHtml(track.artist || 'A.R. Rahman').replace(/'/g, "\\'");
-      const safeArtistId = escapeHtml(track.artistId || '').replace(/'/g, "\\'");
-      const safeAlbumId = escapeHtml(track.albumId || '').replace(/'/g, "\\'");
-
-      container.innerHTML = `
-        <div class="max-w-xl mx-auto py-4 flex flex-col items-center text-center space-y-6">
-          <img onclick="jumpToCurrentTrackAlbum()" src="${track.cover || FALLBACK_COVER_ART}" onerror="this.src='${FALLBACK_COVER_ART}'"
-            class="w-64 h-64 sm:w-80 sm:h-80 rounded-3xl object-cover border border-white/15 shadow-2xl cursor-pointer hover:scale-[1.01] transition" />
-          <div class="space-y-1.5 px-4 max-w-full">
-            <span class="px-2.5 py-0.5 rounded-full bg-white/[0.08] text-[10px] font-bold text-neutral-300">${escapeHtml(track.formatBadge || 'LOSSLESS')}</span>
-            <h1 class="text-2xl sm:text-3xl font-extrabold text-white pt-1 truncate">${escapeHtml(track.title)}</h1>
-            <div class="flex flex-wrap items-center justify-center gap-1.5 text-sm font-semibold">
-              <button onclick="openArtistByName('${safeArtistName}', '${safeArtistId}')"
-                class="text-[#FA243C] hover:text-[#FF5E7E] hover:underline transition cursor-pointer">
-                ${escapeHtml(track.artist)}
-              </button>
-              <span class="text-neutral-500">•</span>
-              <button onclick="switchView('album', '${safeAlbumId}')"
-                class="text-[#FA243C] hover:text-[#FF5E7E] hover:underline transition cursor-pointer truncate max-w-[240px] sm:max-w-[320px]">
-                ${escapeHtml(track.albumTitle)}
-              </button>
-            </div>
-          </div>
-          <div class="w-full max-w-md space-y-1.5">
-            <input id="np-progress-slider" type="range" min="0" max="100" value="${pct}" step="0.1" style="--range-pct: ${pct}%"
-              oninput="handleSeekInput(this.value)" onchange="handleSeekCommit(this.value)" class="apple-slider w-full h-1.5" />
-            <div class="flex justify-between text-[11px] text-neutral-400 tabular-nums">
-              <span id="np-time-current">${formatTime(cur)}</span>
-              <span id="np-time-duration">${formatTime(dur)}</span>
-            </div>
-          </div>
-          <div class="flex items-center justify-center gap-7">
-            <button onclick="toggleShuffle()" title="Shuffle" class="p-2 rounded-full transition ${state.isShuffle ? 'text-[#FA243C]' : 'text-neutral-400 hover:text-white'}">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
-            </button>
-            <button onclick="prevTrack()" class="p-2 text-white"><svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
-            <button onclick="togglePlayPause()" class="w-16 h-16 rounded-full bg-white text-black flex items-center justify-center shadow-2xl">
-              ${state.isPlaying ? `<svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>` : `<svg class="w-7 h-7 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`}
-            </button>
-            <button onclick="nextTrack()" class="p-2 text-white"><svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
-            <button onclick="toggleRepeat()" title="Repeat" class="p-2 rounded-full relative transition ${state.repeatMode !== 'off' ? 'text-[#FA243C]' : 'text-neutral-400 hover:text-white'}">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 1l4 4-4 4"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 13v2a4 4 0 01-4 4H3"/></svg>
-              ${state.repeatMode === 'one' ? `<span class="absolute top-0.5 right-0.5 text-[10px] font-bold text-[#FA243C]">1</span>` : ''}
-            </button>
-          </div>
-          <div class="flex flex-wrap items-center justify-center gap-2.5">
-            <button onclick="shareCurrentTrack()" class="px-4 py-2 rounded-full bg-white/[0.08] text-xs font-semibold text-white">Share Song</button>
-            <button onclick="openAddCurrentTrackToPlaylist()" class="px-4 py-2 rounded-full bg-white/[0.08] text-xs font-semibold text-white">+ Add to Playlist</button>
-            <button onclick="openListenTogetherModal()" class="px-4 py-2 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-xs font-bold text-emerald-300">Listen Together</button>
-          </div>
-        </div>
-      `;
+      loadAndPlayCurrentTrack();
     }
 
-    function renderRadioView(container) {
-      const sortedArtists = [...ARTISTS_DIRECTORY].sort((a, b) => a.name.localeCompare(b.name));
-      container.innerHTML = `
-        <div class="max-w-5xl mx-auto py-4 space-y-6">
-          <div class="text-center space-y-3">
-            <h1 class="text-3xl font-extrabold text-white">tune-S Radio</h1>
-            <button onclick="startRadioShuffle(false)" class="px-7 py-2.5 rounded-full bg-[#FA243C] text-white text-xs font-bold shadow-lg">Shuffle All Artists Mix</button>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            ${sortedArtists.map(ar => {
-              const isPlayingStation = state.isRadioMode && state.activeRadioArtistId === ar.id && state.isPlaying;
-              return `
-                <div onclick="startRadioShuffle(false, '${ar.id}')" class="luxury-card p-3.5 rounded-2xl flex items-center gap-3 cursor-pointer ${isPlayingStation ? 'border-[#FA243C]/60 bg-[#FA243C]/10' : ''}">
-                  <img src="${ar.cover}" class="w-12 h-12 rounded-full object-cover" />
-                  <div class="min-w-0 flex-1">
-                    <div class="text-sm font-bold truncate ${isPlayingStation ? 'text-[#FA243C]' : 'text-white'}">${escapeHtml(ar.name)} Radio</div>
-                    <div class="text-[11px] text-neutral-400">Endless Mix</div>
-                  </div>
-                  <span class="w-8 h-8 rounded-full bg-[#FA243C] text-white flex items-center justify-center text-xs">
-                    ${isPlayingStation ? renderEqualizerBars('bg-white') : '▶'}
-                  </span>
-                </div>
-              `;
-            }).join('')}
-          </div>
-        </div>
-      `;
+    function prevTrack() {
+      if (!state.queue.length) return;
+      if (audio.currentTime > 4) {
+        audio.currentTime = 0;
+        broadcastListenTogetherPlayback('seek');
+        return;
+      }
+      state.currentIndex = state.currentIndex > 0 ? state.currentIndex - 1 : state.queue.length - 1;
+      loadAndPlayCurrentTrack();
     }
 
-    function renderAllSongsView(container) {
-      const allTracks = state.albums.flatMap(a => a.tracks || []);
-      container.innerHTML = `
-        <div class="max-w-5xl mx-auto space-y-6">
-          <div class="flex items-center justify-between">
-            <h1 class="text-2xl sm:text-3xl font-extrabold text-white">Songs (${allTracks.length})</h1>
-            <button onclick="startRadioShuffle(false)" class="px-5 py-2 rounded-full bg-[#FA243C] text-white text-xs font-bold">Shuffle All</button>
-          </div>
-          ${renderTracklistTable(allTracks.slice(0, 250), getCurrentTrack())}
-        </div>
-      `;
+    function toggleShuffle() {
+      state.isShuffle = !state.isShuffle;
+      updateShuffleRepeatUI();
+      if (state.currentView === 'now-playing') renderCurrentView();
+    }
+
+    function toggleRepeat() {
+      state.repeatMode = state.repeatMode === 'off' ? 'all' : state.repeatMode === 'all' ? 'one' : 'off';
+      updateShuffleRepeatUI();
+      if (state.currentView === 'now-playing') renderCurrentView();
+    }
+
+    function updateShuffleRepeatUI() {
+      const shuf = document.getElementById('btn-shuffle');
+      const rep = document.getElementById('btn-repeat');
+      const badge = document.getElementById('repeat-one-badge');
+      if (shuf) {
+        shuf.classList.toggle('text-[#FA243C]', state.isShuffle);
+        shuf.classList.toggle('text-neutral-400', !state.isShuffle);
+      }
+      if (rep) {
+        rep.classList.toggle('text-[#FA243C]', state.repeatMode !== 'off');
+        rep.classList.toggle('text-neutral-400', state.repeatMode === 'off');
+      }
+      badge?.classList.toggle('hidden', state.repeatMode !== 'one');
+    }
+
+    function handleSeekInput(val) {
+      state.isSeeking = true;
+      const pct = parseFloat(val) || 0;
+      const s1 = document.getElementById('progress-slider');
+      const s2 = document.getElementById('np-progress-slider');
+      if (s1) { s1.value = pct; s1.style.setProperty('--range-pct', `${pct}%`); }
+      if (s2) { s2.value = pct; s2.style.setProperty('--range-pct', `${pct}%`); }
+    }
+
+    function handleSeekCommit(val) {
+      state.isSeeking = false;
+      const pct = parseFloat(val) || 0;
+      if (isFinite(audio.duration) && audio.duration > 0) {
+        audio.currentTime = (pct / 100) * audio.duration;
+        broadcastListenTogetherPlayback('seek');
+      }
+    }
+
+    function handleVolumeChange(val) {
+      const v = Math.max(0, Math.min(1, parseFloat(val) || 0));
+      state.volume = v;
+      state.isMuted = v === 0;
+      audio.volume = v;
+      audio.muted = state.isMuted;
+      const slider = document.getElementById('volume-slider');
+      if (slider) slider.style.setProperty('--range-pct', `${v * 100}%`);
+      document.getElementById('icon-vol-high')?.classList.toggle('hidden', state.isMuted);
+      document.getElementById('icon-vol-mute')?.classList.toggle('hidden', !state.isMuted);
+    }
+
+    function toggleMute() {
+      state.isMuted = !state.isMuted;
+      audio.muted = state.isMuted;
+      document.getElementById('icon-vol-high')?.classList.toggle('hidden', state.isMuted);
+      document.getElementById('icon-vol-mute')?.classList.toggle('hidden', !state.isMuted);
+    }
+
+    function syncSliderVisualFills() {
+      const vol = document.getElementById('volume-slider');
+      if (vol) vol.style.setProperty('--range-pct', `${state.volume * 100}%`);
+    }
+
+    function saveLastPlayedState(track) {
+      if (!track) return;
+      state.lastPlayedTrack = track;
+      try { localStorage.setItem(LAST_PLAYED_STORAGE_KEY, JSON.stringify(track)); } catch (e) {}
+    }
+
+    function restoreLastPlayedState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(LAST_PLAYED_STORAGE_KEY));
+        if (saved && saved.title) {
+          state.lastPlayedTrack = saved;
+          updatePlayerBarMetadata(saved);
+        }
+      } catch (e) {}
+    }
+
+    function setupAudioEvents() {
+      audio.addEventListener('play', () => {
+        state.isPlaying = true;
+        updatePlayPauseUI();
+      });
+      audio.addEventListener('playing', () => {
+        state.isPlaying = true;
+        updatePlayPauseUI();
+        renderCurrentView();
+      });
+      audio.addEventListener('pause', () => {
+        state.isPlaying = false;
+        updatePlayPauseUI();
+        renderCurrentView();
+      });
+      audio.addEventListener('timeupdate', () => {
+        if (state.isSeeking) return;
+        const cur = audio.currentTime || 0;
+        const dur = isFinite(audio.duration) ? audio.duration : 0;
+        const pct = dur > 0 ? Math.min(100, (cur / dur) * 100) : 0;
+
+        const c1 = document.getElementById('time-current');
+        const d1 = document.getElementById('time-duration');
+        const s1 = document.getElementById('progress-slider');
+        if (c1) c1.textContent = formatTime(cur);
+        if (d1) d1.textContent = formatTime(dur);
+        if (s1) { s1.value = pct; s1.style.setProperty('--range-pct', `${pct}%`); }
+
+        const c2 = document.getElementById('np-time-current');
+        const d2 = document.getElementById('np-time-duration');
+        const s2 = document.getElementById('np-progress-slider');
+        if (c2) c2.textContent = formatTime(cur);
+        if (d2) d2.textContent = formatTime(dur);
+        if (s2) { s2.value = pct; s2.style.setProperty('--range-pct', `${pct}%`); }
+      });
+      audio.addEventListener('ended', () => {
+        if (state.repeatMode === 'one') {
+          audio.currentTime = 0;
+          audio.play().catch(() => {});
+        } else {
+          nextTrack();
+        }
+      });
+      audio.addEventListener('error', () => {
+        if (audio.dataset.fallbackUrl && audio.dataset.triedFallback !== 'true') {
+          audio.dataset.triedFallback = 'true';
+          audio.src = audio.dataset.fallbackUrl;
+          audio.play().catch(() => {});
+        }
+      });
+    }
+
+    function setupKeyboardShortcuts() {
+      document.addEventListener('keydown', (e) => {
+        const tag = (e.target?.tagName || '').toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+        if (e.code === 'Space') {
+          e.preventDefault();
+          togglePlayPause();
+        } else if (state.currentView === 'artist' && state.artistAlbumsViewMode === 'coverflow') {
+          if (e.code === 'ArrowLeft') stepArtistCoverFlow(-1);
+          else if (e.code === 'ArrowRight') stepArtistCoverFlow(1);
+        }
+      });
     }
 
     // ==========================================
-    // Search View (Safe Indexed Handlers)
+    // Search View (Safe Indexed Handlers, Add-to-Playlist "+" Button & GitHub Pages Live Sync)
     // ==========================================
+    function normalizeSearchText(str) {
+      return String(str || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function matchesSearchQuery(haystack, queryTokens) {
+      if (!queryTokens.length) return true;
+      const norm = normalizeSearchText(haystack);
+      const compact = norm.replace(/\s+/g, '');
+      return queryTokens.every(tok => norm.includes(tok) || compact.includes(tok));
+    }
+
     function renderSearchView(container) {
       container.innerHTML = `
         <div class="max-w-5xl mx-auto space-y-6">
-          <h1 class="text-2xl sm:text-3xl font-extrabold text-white">Search</h1>
-          <div class="relative">
-            <input id="search-input" type="search" value="${escapeHtml(state.searchQuery)}"
-              oninput="handleSearchInput(this.value)" onkeyup="handleSearchInput(this.value)"
-              placeholder="Search artists, songs, or albums..."
-              class="w-full bg-white/[0.08] border border-white/15 focus:border-[#FA243C] rounded-2xl px-4 py-3 text-sm text-white placeholder-neutral-400 outline-none" />
+          <div class="flex items-center justify-between gap-3">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white">Search</h1>
+            <span class="text-[11px] text-neutral-400">${state.albums.length} albums indexed</span>
           </div>
+          <form onsubmit="event.preventDefault(); const inp = document.getElementById('search-input'); if (inp) { handleSearchInput(inp.value); inp.blur(); }" class="flex items-center gap-2">
+            <div class="relative flex-1">
+              <input id="search-input" type="search" enterkeyhint="search" autocomplete="off" autocorrect="off" spellcheck="false"
+                value="${escapeHtml(state.searchQuery)}"
+                oninput="handleSearchInput(this.value)"
+                onsearch="handleSearchInput(this.value)"
+                onchange="handleSearchInput(this.value)"
+                placeholder="Search artists, songs, or albums..."
+                class="w-full bg-white/[0.08] border border-white/15 focus:border-[#FA243C] rounded-2xl px-4 py-3 text-sm text-white placeholder-neutral-400 outline-none" />
+            </div>
+            <button type="submit" class="px-5 py-3 rounded-2xl bg-[#FA243C] hover:bg-[#E01E34] text-white text-xs sm:text-sm font-bold shrink-0 shadow transition">
+              Search
+            </button>
+          </form>
           <div id="search-results-container"></div>
         </div>
       `;
       renderSearchResults();
-      setTimeout(() => document.getElementById('search-input')?.focus(), 40);
+      setTimeout(() => {
+        const inp = document.getElementById('search-input');
+        if (inp) {
+          inp.focus();
+          const len = inp.value.length;
+          try { inp.setSelectionRange(len, len); } catch (e) {}
+        }
+      }, 40);
     }
 
     function handleSearchInput(val) {
@@ -2901,54 +2895,91 @@
       }
     }
 
+    function openAddSearchTrackToPlaylist(idx, event) {
+      if (event) event.stopPropagation();
+      const tr = lastSearchResults[idx];
+      if (tr) openAddTrackToPlaylist(tr);
+    }
+
     function renderSearchResults() {
       const box = document.getElementById('search-results-container');
       if (!box) return;
-      const q = state.searchQuery.trim().toLowerCase();
-      if (!q) {
+      const rawQ = state.searchQuery.trim();
+      const normQ = normalizeSearchText(rawQ);
+      if (!normQ) {
         box.innerHTML = `<div class="text-xs text-neutral-400">Type a song, movie album, or composer name above to search.</div>`;
         return;
       }
 
-      const albums = state.albums.filter(a => a.title.toLowerCase().includes(q) || a.artist.toLowerCase().includes(q));
+      const tokens = normQ.split(' ').filter(Boolean);
+      const matchedArtists = ARTISTS_DIRECTORY.filter(ar => matchesSearchQuery(`${ar.name} ${ar.tagline}`, tokens));
+      const albums = state.albums.filter(a => matchesSearchQuery(`${a.title} ${a.artist} ${a.year || ''}`, tokens));
       const tracks = [];
       state.albums.forEach(a => (a.tracks || []).forEach(t => {
-        if (t.title.toLowerCase().includes(q) || a.title.toLowerCase().includes(q) || t.artist.toLowerCase().includes(q)) {
+        if (matchesSearchQuery(`${t.title} ${a.title} ${t.artist} ${a.artist}`, tokens)) {
           tracks.push(t);
         }
       }));
       lastSearchResults = tracks.slice(0, 60);
 
-      if (!albums.length && !lastSearchResults.length) {
+      if (!matchedArtists.length && !albums.length && !lastSearchResults.length) {
         box.innerHTML = `<div class="text-sm text-neutral-400 py-8 text-center">No results found for "${escapeHtml(state.searchQuery)}".</div>`;
         return;
       }
 
       box.innerHTML = `
         <div class="space-y-6">
+          ${matchedArtists.length ? `
+            <div>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-400 mb-3">Artists (${matchedArtists.length})</h3>
+              <div class="flex items-stretch gap-3 overflow-x-auto pb-1">
+                ${matchedArtists.map(ar => `
+                  <button onclick="switchView('artist', '${ar.id}')" class="luxury-card shrink-0 px-3.5 py-2.5 rounded-2xl flex items-center gap-2.5 text-left transition">
+                    <img src="${ar.cover}" class="w-9 h-9 rounded-full object-cover border border-white/15" />
+                    <div>
+                      <div class="text-xs font-bold text-white">${escapeHtml(ar.name)}</div>
+                      <div class="text-[10px] text-neutral-400">Maestro</div>
+                    </div>
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
           ${albums.length ? `
             <div>
               <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-400 mb-3">Albums (${albums.length})</h3>
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">${renderAlbumGridCards(albums.slice(0, 12))}</div>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">${renderAlbumGridCards(albums.slice(0, 12))}</div>
             </div>
           ` : ''}
           ${lastSearchResults.length ? `
             <div>
-              <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-400 mb-3">Songs (${tracks.length})</h3>
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-400">Songs (${tracks.length})</h3>
+                <button onclick="playSearchTrackByIndex(0)" class="text-xs font-semibold text-[#FA243C] hover:underline">Play Top Match →</button>
+              </div>
               <div class="luxury-card rounded-2xl overflow-hidden divide-y divide-white/[0.05]">
                 ${lastSearchResults.map((tr, idx) => {
                   const isCurrent = isTrackCurrentlyActive(tr);
                   return `
                     <div onclick="playSearchTrackByIndex(${idx})" class="flex items-center justify-between gap-3 px-4 py-3 ${isCurrent ? 'bg-[#FA243C]/15' : 'hover:bg-white/[0.06]'} cursor-pointer">
-                      <div class="flex items-center gap-3 min-w-0">
+                      <div class="flex items-center gap-3 min-w-0 flex-1">
                         ${isCurrent ? renderEqualizerBars('bg-[#FA243C]') : ''}
-                        <img src="${tr.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-10 h-10 rounded-lg object-cover" />
-                        <div class="min-w-0">
+                        <img src="${tr.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-10 h-10 rounded-lg object-cover shrink-0" />
+                        <div class="min-w-0 flex-1">
                           <div class="text-xs sm:text-sm font-semibold truncate ${isCurrent ? 'text-[#FA243C]' : 'text-white'}">${escapeHtml(tr.title)}</div>
                           <div class="text-[11px] text-neutral-400 truncate">${escapeHtml(tr.artist)} • ${escapeHtml(tr.albumTitle)}</div>
                         </div>
                       </div>
-                      <span class="text-xs text-neutral-400">${tr.duration ? formatTime(tr.duration) : '--:--'}</span>
+                      <div class="flex items-center gap-2.5 shrink-0" onclick="event.stopPropagation()">
+                        <button onclick="openAddSearchTrackToPlaylist(${idx}, event)" title="Add to Playlist or Create New Playlist"
+                          aria-label="Add to Playlist"
+                          class="w-7 h-7 rounded-full bg-white/[0.08] hover:bg-[#FA243C] active:scale-95 text-neutral-200 hover:text-white flex items-center justify-center transition">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" d="M12 5v14M5 12h14"/>
+                          </svg>
+                        </button>
+                        <span class="text-xs text-neutral-400 tabular-nums">${tr.duration ? formatTime(tr.duration) : '--:--'}</span>
+                      </div>
                     </div>
                   `;
                 }).join('')}
