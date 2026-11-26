@@ -3,6 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0B0B0F" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="tune-S" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <title>tune-S — Lossless South Indian &amp; Film Music</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -55,8 +60,6 @@
       background: #FFFFFF;
       box-shadow: 0 1px 4px rgba(0,0,0,0.65);
     }
-    .apple-bottom-nav { bottom: 8px; }
-    @media (min-width: 640px) { .apple-bottom-nav { bottom: 10px; } }
     #main-scroll-area { padding-bottom: 24px; }
 
     /* Smooth 3D Cover Flow Stage */
@@ -96,13 +99,13 @@
 </head>
 <body class="h-[100dvh] w-screen overflow-hidden flex flex-col bg-[#0B0B0F] text-white select-none">
 
-  <audio id="bg-audio-engine" crossorigin="anonymous"></audio>
-  <audio id="bg-audio-preload" preload="none" crossorigin="anonymous"></audio>
+  <!-- Native HTML5 Audio Elements (No crossorigin attribute so Archive.org 302 redirects stream cleanly in background & lock-screen) -->
+  <audio id="bg-audio-engine" preload="auto" playsinline webkit-playsinline x-webkit-airplay="allow"></audio>
+  <audio id="bg-audio-preload" preload="none" playsinline webkit-playsinline></audio>
 
-  <!-- Single-Device Browser Authorization Gate (Shown at startup until unlocked or signed in as Admin) -->
+  <!-- Single-Device Browser Authorization Gate -->
   <div id="device-access-gate" class="fixed inset-0 z-[200] flex items-center justify-center bg-[#09090D] p-4 overflow-y-auto">
     <div class="max-w-md w-full rounded-3xl bg-[#16161E] border border-white/15 p-6 sm:p-8 space-y-5 shadow-[0_25px_70px_rgba(0,0,0,0.9)] text-center my-auto">
-      <!-- Top Red Lock Icon Badge -->
       <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-[#FA243C] to-[#FF526B] flex items-center justify-center shadow-lg shadow-[#FA243C]/30">
         <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
           <path fill-rule="evenodd" d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z" clip-rule="evenodd"/>
@@ -117,7 +120,6 @@
         </p>
       </div>
 
-      <!-- Device Request Code Box -->
       <div class="rounded-2xl bg-[#0D0D12] border border-white/10 p-4 space-y-2.5">
         <div class="text-[10px] font-bold uppercase tracking-widest text-neutral-400">YOUR DEVICE REQUEST CODE</div>
         <div class="flex items-center justify-center gap-3">
@@ -131,7 +133,6 @@
         </p>
       </div>
 
-      <!-- Single-Device Unlock Key Input -->
       <div class="text-left space-y-2">
         <label for="gate-unlock-key-input" class="block text-xs font-bold text-white">Single-Device Unlock Key</label>
         <input id="gate-unlock-key-input" type="text" placeholder="E.G. UNLOCK-XXXX-XXXX-XXXX"
@@ -145,7 +146,6 @@
         Unlock Browser
       </button>
 
-      <!-- Admin Bypass Link -->
       <div class="pt-3 border-t border-white/10 space-y-2">
         <button type="button" onclick="openAdminBypassFromGate()"
           class="text-xs font-semibold text-neutral-300 hover:text-white transition leading-relaxed">
@@ -166,7 +166,6 @@
 
     <!-- Left Navigation Sidebar -->
     <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-40 w-64 glass-panel border-r border-white/[0.08] flex flex-col transform -translate-x-full lg:translate-x-0 transition-transform duration-200 shrink-0">
-      <!-- Brand Header -->
       <div class="h-14 px-4 border-b border-white/[0.08] flex items-center justify-between shrink-0">
         <button onclick="switchView('home')" class="flex items-center gap-2.5 text-left">
           <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-[#FA243C] to-[#FF5E7E] flex items-center justify-center shadow-lg shadow-[#FA243C]/30">
@@ -184,7 +183,6 @@
         </button>
       </div>
 
-      <!-- Primary Links -->
       <div class="p-3 space-y-1 overflow-y-auto flex-1">
         <button id="nav-home" onclick="switchView('home')" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition bg-white/10 text-white">
           <svg class="w-4 h-4 text-[#FA243C]" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
@@ -218,9 +216,9 @@
           <span id="sidebar-lt-live-pill" class="hidden px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[9px] font-extrabold uppercase tracking-wider">Live</span>
         </button>
 
-        <button id="nav-all-albums" onclick="switchView('all-albums')" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition text-neutral-300 hover:bg-white/[0.06]">
+        <button id="nav-all-albums" onclick="openLibraryView()" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition text-neutral-300 hover:bg-white/[0.06]">
           <svg class="w-4 h-4 text-[#FA243C]" fill="currentColor" viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
-          <span>Albums</span>
+          <span>Library</span>
         </button>
 
         <button id="nav-all-songs" onclick="switchView('all-songs')" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition text-neutral-300 hover:bg-white/[0.06]">
@@ -239,7 +237,7 @@
 
         <!-- Artists Section -->
         <div class="pt-4">
-          <div class="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-wider text-neutral-500">Maestros</div>
+          <div class="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-wider text-neutral-500">Artists</div>
           <div id="sidebar-artist-list" class="space-y-0.5"></div>
         </div>
 
@@ -269,7 +267,6 @@
         </div>
 
         <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
-          <!-- Listen Together Watch-Party Pill -->
           <button id="header-listen-together-btn" onclick="openListenTogetherModal()" title="Listen Together Watch Party"
             class="px-3 py-1.5 rounded-full bg-white/[0.07] hover:bg-white/[0.14] border border-white/10 text-xs font-semibold text-neutral-200 flex items-center gap-1.5 transition">
             <span id="header-lt-dot" class="w-2 h-2 rounded-full bg-[#FA243C]"></span>
@@ -279,12 +276,10 @@
             <span id="header-lt-label" class="hidden sm:inline">Listen Together</span>
           </button>
 
-          <!-- Admin Add Album Button (Visible only when Admin is signed in) -->
           <button id="header-add-album-btn" onclick="openAddAlbumModal()" class="hidden px-3 py-1.5 rounded-full bg-[#FA243C]/15 hover:bg-[#FA243C]/25 border border-[#FA243C]/30 text-xs font-semibold text-[#FA243C] flex items-center gap-1.5 transition">
             <span>+ Add Album</span>
           </button>
 
-          <!-- Admin Sign In / Controls -->
           <button id="admin-signin-btn" onclick="openAdminLoginModal()" class="px-3 py-1.5 rounded-full bg-white/[0.07] hover:bg-white/[0.14] text-xs font-semibold text-neutral-300 transition">
             Sign In
           </button>
@@ -293,7 +288,6 @@
             <button onclick="logoutAdmin()" class="px-2.5 py-1 rounded-full bg-white/10 text-[11px] font-semibold text-neutral-300">Sign Out</button>
           </div>
 
-          <!-- Queue Drawer Toggle -->
           <button onclick="toggleQueueDrawer()" title="Up Next Queue" class="p-2 rounded-full bg-white/[0.07] hover:bg-white/[0.14] text-neutral-200 transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 6h16M4 12h10M4 18h14"/></svg>
           </button>
@@ -308,10 +302,9 @@
       <!-- Listen Together Floating Reaction Overlay -->
       <div id="lt-floating-reactions" class="pointer-events-none fixed bottom-44 right-6 sm:right-10 z-50 flex flex-col items-center gap-1"></div>
 
-      <!-- Listen Together Bottom Messaging Window (Watch Party Chat Drawer) -->
+      <!-- Listen Together Bottom Messaging Window -->
       <section id="listen-together-chat-dock" aria-label="Listen Together Live Chat"
         class="hidden fixed bottom-[168px] sm:bottom-[178px] right-3 sm:right-6 lg:right-8 z-40 w-[calc(100vw-1.5rem)] sm:w-[370px] rounded-2xl glass-panel border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden flex-col transition-all duration-200">
-        <!-- Header Bar (Always Visible When Room Is Active) -->
         <div onclick="toggleListenTogetherChatCollapse()" class="px-3.5 py-2.5 bg-gradient-to-r from-[#261420] via-[#1B1A24] to-[#171720] border-b border-white/10 flex items-center justify-between gap-2 cursor-pointer select-none">
           <div class="flex items-center gap-2 min-w-0">
             <span id="lt-chat-status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
@@ -341,9 +334,7 @@
           </div>
         </div>
 
-        <!-- Collapsible Body: Synced Song Banner + Messages + Quick Emojis + Input -->
         <div id="lt-chat-body" class="flex flex-col">
-          <!-- Synced Track Strip -->
           <div class="px-3 py-2 bg-black/35 border-b border-white/[0.07] flex items-center justify-between gap-2">
             <div class="flex items-center gap-2 min-w-0">
               <img id="lt-synced-art" src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20400%20400%22%3E%3Crect%20width%3D%22400%22%20height%3D%22400%22%20fill%3D%22%2318181F%22%2F%3E%3Ccircle%20cx%3D%22200%22%20cy%3D%22200%22%20r%3D%2280%22%20fill%3D%22none%22%20stroke%3D%22%23FA243C%22%20stroke-width%3D%225%22%2F%3E%3C%2Fsvg%3E"
@@ -359,10 +350,8 @@
             </button>
           </div>
 
-          <!-- Message Feed -->
           <div id="lt-chat-messages" class="h-44 sm:h-52 overflow-y-auto p-3 space-y-2 text-xs"></div>
 
-          <!-- Quick Reaction Bar -->
           <div class="px-3 py-1.5 border-t border-white/[0.06] bg-black/25 flex items-center justify-between gap-1">
             <span class="text-[10px] font-semibold text-neutral-500">React:</span>
             <div class="flex items-center gap-1">
@@ -375,7 +364,6 @@
             </div>
           </div>
 
-          <!-- Bottom Chat Input Bar -->
           <form onsubmit="event.preventDefault(); sendListenTogetherMessage();" class="p-2.5 bg-[#121218] border-t border-white/10 flex items-center gap-2">
             <input id="lt-chat-input" type="text" maxlength="300" autocomplete="off"
               placeholder="Message your listening partner..."
@@ -408,9 +396,7 @@
   <!-- Solid Full-Width Bottom Chrome: Now-Playing Dock + Centered Floating Navigation Pill -->
   <div class="relative z-40 shrink-0 w-full bg-gradient-to-b from-[#141319] via-[#121118] to-[#0E0D13] border-t border-white/[0.08] shadow-[0_-12px_36px_rgba(0,0,0,0.85)]">
 
-    <!-- Full-Width Now-Playing Player Row -->
     <footer class="apple-player-dock h-[76px] sm:h-[82px] px-3 sm:px-6 flex items-center justify-between gap-3">
-
       <!-- Left: Artwork & Track Metadata -->
       <div class="flex items-center gap-3 w-[30%] min-w-[130px] sm:min-w-[200px]">
         <div onclick="switchView('now-playing')" class="relative w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden bg-neutral-900 border border-white/15 shrink-0 shadow-lg cursor-pointer group">
@@ -430,21 +416,18 @@
       <!-- Center: Transport Controls & Scrubber -->
       <div class="flex-1 max-w-xl flex flex-col items-center justify-center gap-1.5">
         <div class="flex items-center gap-4 sm:gap-6">
-          <!-- Shuffle -->
           <button id="btn-shuffle" onclick="toggleShuffle()" title="Shuffle" class="text-neutral-400 hover:text-white transition p-1">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
             </svg>
           </button>
 
-          <!-- Previous -->
           <button onclick="prevTrack()" title="Previous" class="text-neutral-200 hover:text-white transition p-1 active:scale-90">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
             </svg>
           </button>
 
-          <!-- Play / Pause -->
           <button id="btn-play-pause" onclick="togglePlayPause()" title="Play / Pause" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white text-black hover:scale-105 active:scale-95 flex items-center justify-center shadow-md shadow-white/10 transition">
             <svg id="icon-play" class="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M8 5v14l11-7z"/>
@@ -454,14 +437,12 @@
             </svg>
           </button>
 
-          <!-- Next -->
           <button onclick="nextTrack()" title="Next" class="text-neutral-200 hover:text-white transition p-1 active:scale-90">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
             </svg>
           </button>
 
-          <!-- Repeat -->
           <button id="btn-repeat" onclick="toggleRepeat()" title="Repeat" class="text-neutral-400 hover:text-white transition p-1 relative">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M17 1l4 4-4 4"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 13v2a4 4 0 01-4 4H3"/>
@@ -470,7 +451,6 @@
           </button>
         </div>
 
-        <!-- Progress Bar -->
         <div class="w-full flex items-center gap-2.5">
           <span id="time-current" class="text-[10px] font-medium text-neutral-400 w-9 text-right tabular-nums">0:00</span>
           <div class="relative flex-1 flex items-center">
@@ -492,7 +472,7 @@
 
       <!-- Right: Lossless Badge, Share, Add to Playlist, Volume -->
       <div class="flex items-center justify-end gap-2 sm:gap-2.5 w-auto md:w-[30%] shrink-0">
-        <span id="player-format-badge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/[0.08] text-[9px] sm:text-[10px] font-bold tracking-wider text-neutral-300 border border-white/10 truncate max-w-[125px] sm:max-w-[170px]">
+        <span id="player-format-badge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/[0.08] text-[9px] sm:text-[10px] font-bold tracking-wider text-neutral-300 border border-white/10 truncate max-w-[125px] sm:max-w-[175px]">
           LOSSLESS
         </span>
 
@@ -525,15 +505,14 @@
           value="1"
           style="--range-pct: 100%"
           oninput="handleVolumeChange(this.value)"
-          class="apple-slider w-24 h-1"
+          class="apple-slider w-20 sm:w-24 h-1"
         />
       </div>
     </footer>
 
-    <!-- Solid Bottom Dock Tray with Centered iOS Floating Pill Navigation -->
+    <!-- Solid Bottom Dock Tray with Centered Floating Pill Navigation -->
     <nav aria-label="Bottom Navigation" style="padding-bottom: max(12px, env(safe-area-inset-bottom));" class="w-full min-h-[78px] sm:min-h-[82px] bg-gradient-to-r from-[#121118] via-[#1B141E] to-[#121118] border-t border-white/[0.06] flex items-center justify-center px-3 pt-2">
       <div class="w-full max-w-[440px] h-[58px] rounded-full bg-[#1C1B22]/95 backdrop-blur-2xl border border-white/[0.12] shadow-[0_10px_32px_rgba(0,0,0,0.85)] grid grid-cols-5 items-center px-1.5">
-        <!-- Home Tab -->
         <button id="bottom-tab-home" onclick="switchView('home')" class="flex flex-col items-center justify-center gap-0.5 py-1 rounded-full transition text-[#FA243C]">
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
             <path d="M11.47 3.84a.75.75 0 011.06 0l8.69 8.69a.75.75 0 101.06-1.06l-8.689-8.69a2.25 2.25 0 00-3.182 0l-8.69 8.69a.75.75 0 001.061 1.06l8.69-8.69z"/>
@@ -542,7 +521,6 @@
           <span class="text-[10px] font-semibold tracking-tight">Home</span>
         </button>
 
-        <!-- Now Playing Tab -->
         <button id="bottom-tab-now-playing" onclick="switchView('now-playing')" class="flex flex-col items-center justify-center gap-0.5 py-1 rounded-full transition text-neutral-400 hover:text-white">
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
             <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm14.024-.983a1.125 1.125 0 010 1.966l-5.603 3.113A1.125 1.125 0 019 15.113V8.887c0-.857.921-1.4 1.671-.983l5.603 3.113z" clip-rule="evenodd"/>
@@ -550,7 +528,6 @@
           <span class="text-[10px] font-semibold tracking-tight">Now Playing</span>
         </button>
 
-        <!-- Radio Tab -->
         <button id="bottom-tab-radio" onclick="openRadioStationsAndPlayAll()" class="flex flex-col items-center justify-center gap-0.5 py-1 rounded-full transition text-neutral-400 hover:text-white">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z"/>
@@ -558,7 +535,6 @@
           <span class="text-[10px] font-semibold tracking-tight">Radio</span>
         </button>
 
-        <!-- Library Tab -->
         <button id="bottom-tab-library" onclick="openLibraryView()" class="flex flex-col items-center justify-center gap-0.5 py-1 rounded-full transition text-neutral-400 hover:text-white">
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
             <path d="M5 4.5A1.5 1.5 0 016.5 3h11A1.5 1.5 0 0119 4.5v1A1.5 1.5 0 0117.5 7h-11A1.5 1.5 0 015 5.5v-1zM4 9.5A1.5 1.5 0 015.5 8h13A1.5 1.5 0 0120 9.5v9a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 18.5v-9zm9.5 2.25a.75.75 0 00-1.5 0v3.34a2.25 2.25 0 101.5 2.16V13.5h1.25a.75.75 0 000-1.5h-1.25v-.25z"/>
@@ -566,7 +542,6 @@
           <span class="text-[10px] font-semibold tracking-tight">Library</span>
         </button>
 
-        <!-- Search Tab -->
         <button id="bottom-tab-search" onclick="switchView('search')" class="flex flex-col items-center justify-center gap-0.5 py-1 rounded-full transition text-neutral-400 hover:text-white">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103.5 10.5a7.5 7.5 0 0013.15 6.15z"/>
@@ -618,14 +593,12 @@
         </button>
       </div>
 
-      <!-- Display Name -->
       <div>
         <label class="block text-xs font-semibold text-neutral-300 mb-1.5">Your Display Name</label>
         <input id="lt-display-name-input" type="text" maxlength="24" placeholder="e.g. Senthil"
           class="w-full bg-black/40 border border-white/15 focus:border-[#FA243C] rounded-xl px-3.5 py-2 text-sm text-white placeholder-neutral-500 outline-none transition" />
       </div>
 
-      <!-- Active Session Panel (Shown when already connected) -->
       <div id="lt-modal-active-panel" class="hidden rounded-2xl bg-emerald-500/10 border border-emerald-500/30 p-4 space-y-3">
         <div class="flex items-center justify-between">
           <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-400">Active Watch Party</span>
@@ -650,7 +623,6 @@
         </div>
       </div>
 
-      <!-- Start or Join Options (Shown when not in a room) -->
       <div id="lt-modal-setup-panel" class="space-y-4">
         <div class="rounded-2xl bg-white/[0.04] border border-white/10 p-4 space-y-2.5">
           <div class="text-xs font-bold text-white">1. Start a New Listening Room</div>
@@ -728,7 +700,7 @@
     </div>
   </div>
 
-  <!-- Admin Sign In Modal (z-[300] so it sits cleanly above the z-[200] Device Authorization Gate) -->
+  <!-- Admin Sign In Modal -->
   <div id="admin-login-modal" class="fixed inset-0 z-[300] hidden items-center justify-center bg-black/80 backdrop-blur-md p-4">
     <div class="bg-[#1B1B22] border border-white/12 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4">
       <div class="flex items-center justify-between">
@@ -797,7 +769,7 @@
   <div id="admin-settings-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-sm p-4">
     <div class="bg-[#1B1B22] border border-white/10 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
       <div class="flex items-center justify-between">
-        <h3 class="text-lg font-bold text-white">Admin Settings & Device Keys</h3>
+        <h3 class="text-lg font-bold text-white">Admin Settings &amp; Device Keys</h3>
         <button onclick="closeAdminSettingsModal()" class="text-neutral-400 hover:text-white p-1">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
@@ -837,7 +809,6 @@
         </button>
       </div>
 
-      <!-- Visual Share Card Preview -->
       <div class="rounded-2xl bg-gradient-to-br from-[#2B121D] via-[#15141C] to-[#0E0E13] border border-white/15 p-5 shadow-xl relative overflow-hidden">
         <div class="absolute -top-12 -right-12 w-36 h-36 rounded-full bg-[#FA243C]/20 blur-2xl pointer-events-none"></div>
         <div class="flex items-center justify-between mb-3.5">
@@ -859,10 +830,8 @@
         </div>
       </div>
 
-      <!-- Hidden Hi-Res Canvas for Share Card Export -->
       <canvas id="share-card-canvas" width="1080" height="1350" class="hidden"></canvas>
 
-      <!-- Action Buttons: Download Share Card + Share + Copy Link -->
       <div class="space-y-2.5 pt-1">
         <button onclick="downloadShareCardImage()"
           class="w-full py-3 rounded-xl bg-gradient-to-r from-[#FA243C] to-[#FF4D67] hover:opacity-95 active:scale-[0.99] text-white text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-[#FA243C]/25 transition">
@@ -892,6 +861,32 @@
 
   <script>
     // ==========================================
+    // Safe Storage Wrapper (Prevents SecurityError in Sandboxed Frames/WebViews)
+    // ==========================================
+    const memoryStorageFallback = {};
+    function safeStorageGet(key) {
+      try {
+        return window.localStorage.getItem(key);
+      } catch (e) {
+        return Object.prototype.hasOwnProperty.call(memoryStorageFallback, key) ? memoryStorageFallback[key] : null;
+      }
+    }
+    function safeStorageSet(key, value) {
+      try {
+        window.localStorage.setItem(key, value);
+      } catch (e) {
+        memoryStorageFallback[key] = String(value);
+      }
+    }
+    function safeStorageRemove(key) {
+      try {
+        window.localStorage.removeItem(key);
+      } catch (e) {
+        delete memoryStorageFallback[key];
+      }
+    }
+
+    // ==========================================
     // Core Constants, Artwork & Global State
     // ==========================================
     const UNIFORM_ARTIST_AVATAR = "data:image/svg+xml;utf8," + encodeURIComponent(`
@@ -918,7 +913,8 @@
       </svg>
     `);
 
-    const FALLBACK_COVER_ART = window.FALLBACK_COVER_ART || UNIFORM_ARTIST_AVATAR;
+    const FALLBACK_COVER_ART = UNIFORM_ARTIST_AVATAR;
+    window.FALLBACK_COVER_ART = FALLBACK_COVER_ART;
 
     const ARTISTS_DIRECTORY = [
       { id: 'ar-rahman', name: 'A.R. Rahman', identifier: 'ARRTamilFlac', cover: UNIFORM_ARTIST_AVATAR, tagline: 'Academy Award-Winning Composer & Mozart of Madras', genre: 'Tamil, Hindi & International Soundtracks • Lossless' },
@@ -998,8 +994,8 @@
       selectedPlaylistId: null,
       currentPlayingPlaylist: null,
       currentView: 'home',
-      albumsViewMode: localStorage.getItem(ALBUMS_VIEW_MODE_KEY) || 'grid',
-      artistAlbumsViewMode: localStorage.getItem(ARTIST_ALBUMS_VIEW_MODE_KEY) || 'grid',
+      albumsViewMode: safeStorageGet(ALBUMS_VIEW_MODE_KEY) || 'grid',
+      artistAlbumsViewMode: safeStorageGet(ARTIST_ALBUMS_VIEW_MODE_KEY) || 'grid',
       coverFlowIndex: 0,
       artistCoverFlowIndex: 0,
       searchQuery: '',
@@ -1028,10 +1024,203 @@
     audio.volume = 1.0;
 
     // ==========================================
+    // Standalone PWA Manifest, Wake Lock & MediaSession (CarPlay / Android Auto / Lock-Screen)
+    // ==========================================
+    let screenWakeLock = null;
+    const pngArtworkCache = new Map();
+
+    function injectStandalonePwaManifest() {
+      try {
+        const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#FA243C"/><path d="M296 112v204c-14-8-30-13-48-13-53 0-96 43-96 96s43 96 96 96 96-43 96-96V192h80v-80H296z" fill="#FFFFFF"/></svg>`;
+        const iconUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(iconSvg);
+        const manifestObj = {
+          name: 'tune-S — Lossless South Indian & Film Music',
+          short_name: 'tune-S',
+          start_url: '.',
+          display: 'standalone',
+          background_color: '#0B0B0F',
+          theme_color: '#0B0B0F',
+          icons: [{ src: iconUrl, sizes: '512x512', type: 'image/svg+xml' }]
+        };
+        const blob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = URL.createObjectURL(blob);
+        document.head.appendChild(link);
+      } catch (e) {}
+    }
+
+    async function requestScreenWakeLock() {
+      try {
+        if ('wakeLock' in navigator && document.visibilityState === 'visible' && !screenWakeLock) {
+          screenWakeLock = await navigator.wakeLock.request('screen');
+          screenWakeLock.addEventListener('release', () => { screenWakeLock = null; });
+        }
+      } catch (e) {}
+    }
+
+    function releaseScreenWakeLock() {
+      try {
+        if (screenWakeLock) {
+          screenWakeLock.release().catch(() => {});
+          screenWakeLock = null;
+        }
+      } catch (e) {}
+    }
+
+    function resolveMediaSessionArtworkUrl(coverSrc) {
+      return new Promise((resolve) => {
+        if (isValidRealCoverUrl(coverSrc)) {
+          return resolve(coverSrc);
+        }
+        const key = coverSrc || 'default';
+        if (pngArtworkCache.has(key)) {
+          return resolve(pngArtworkCache.get(key));
+        }
+        try {
+          const img = new Image();
+          img.onload = () => {
+            try {
+              const c = document.createElement('canvas');
+              c.width = 512;
+              c.height = 512;
+              const ctx = c.getContext('2d');
+              ctx.fillStyle = '#0B0B0F';
+              ctx.fillRect(0, 0, 512, 512);
+              ctx.drawImage(img, 0, 0, 512, 512);
+              const pngUrl = c.toDataURL('image/png');
+              pngArtworkCache.set(key, pngUrl);
+              resolve(pngUrl);
+            } catch (err) {
+              resolve(null);
+            }
+          };
+          img.onerror = () => resolve(null);
+          img.src = coverSrc || FALLBACK_COVER_ART;
+        } catch (e) {
+          resolve(null);
+        }
+      });
+    }
+
+    async function updateHardwareMediaSession(track) {
+      if (!track || !('mediaSession' in navigator)) return;
+      try {
+        const artUrl = await resolveMediaSessionArtworkUrl(track.cover);
+        const artworkList = artUrl ? [
+          { src: artUrl, sizes: '96x96', type: 'image/png' },
+          { src: artUrl, sizes: '256x256', type: 'image/png' },
+          { src: artUrl, sizes: '512x512', type: 'image/png' }
+        ] : [];
+
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: track.title || 'tune-S',
+          artist: track.artist || 'tune-S Collection',
+          album: formatDisplayAlbumTitle(track.albumTitle || 'Lossless Soundtracks'),
+          artwork: artworkList
+        });
+
+        navigator.mediaSession.playbackState = state.isPlaying ? 'playing' : 'paused';
+        syncMediaSessionPositionState();
+      } catch (e) {}
+    }
+
+    function syncMediaSessionPositionState() {
+      try {
+        if ('mediaSession' in navigator && typeof navigator.mediaSession.setPositionState === 'function') {
+          const dur = isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 0;
+          const pos = isFinite(audio.currentTime) && audio.currentTime >= 0 ? Math.min(audio.currentTime, dur) : 0;
+          if (dur > 0) {
+            navigator.mediaSession.setPositionState({
+              duration: dur,
+              playbackRate: audio.playbackRate || 1.0,
+              position: pos
+            });
+          }
+        }
+      } catch (e) {}
+    }
+
+    function registerMediaSessionActionHandlers() {
+      if (!('mediaSession' in navigator)) return;
+      const handlers = {
+        play: () => {
+          userPausedManually = false;
+          if (!audio.src && state.lastPlayedTrack) {
+            playTrackFromList([state.lastPlayedTrack], 0);
+          } else {
+            audio.play().catch(() => {});
+          }
+        },
+        pause: () => {
+          userPausedManually = true;
+          audio.pause();
+        },
+        previoustrack: () => prevTrack(),
+        nexttrack: () => nextTrack(),
+        seekbackward: (details) => {
+          const offset = details?.seekOffset || 10;
+          if (isFinite(audio.currentTime)) {
+            audio.currentTime = Math.max(0, audio.currentTime - offset);
+            syncMediaSessionPositionState();
+          }
+        },
+        seekforward: (details) => {
+          const offset = details?.seekOffset || 10;
+          if (isFinite(audio.duration) && audio.duration > 0) {
+            audio.currentTime = Math.min(audio.duration, (audio.currentTime || 0) + offset);
+            syncMediaSessionPositionState();
+          }
+        },
+        seekto: (details) => {
+          if (details && typeof details.seekTime === 'number' && isFinite(details.seekTime)) {
+            if (details.fastSeek && typeof audio.fastSeek === 'function') {
+              audio.fastSeek(details.seekTime);
+            } else {
+              audio.currentTime = Math.max(0, details.seekTime);
+            }
+            syncMediaSessionPositionState();
+          }
+        },
+        stop: () => {
+          userPausedManually = true;
+          audio.pause();
+          audio.currentTime = 0;
+        }
+      };
+
+      Object.entries(handlers).forEach(([action, fn]) => {
+        try {
+          navigator.mediaSession.setActionHandler(action, fn);
+        } catch (e) {}
+      });
+    }
+
+    function setupBackgroundPlaybackRecovery() {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          if (state.isPlaying) requestScreenWakeLock();
+          if (!userPausedManually && state.isPlaying && audio.paused && audio.src) {
+            audio.play().catch(() => {});
+          }
+          const cur = getCurrentTrack();
+          if (cur) updateHardwareMediaSession(cur);
+        }
+      });
+
+      window.addEventListener('pageshow', () => {
+        if (!userPausedManually && state.isPlaying && audio.paused && audio.src) {
+          audio.play().catch(() => {});
+        }
+      });
+    }
+
+    // ==========================================
     // App Entry & Initialization
     // ==========================================
     function initializeTuneSApp() {
       try {
+        injectStandalonePwaManifest();
         loadPlayStats();
         loadPermanentCoverVault();
         loadAdminSession();
@@ -1055,6 +1244,8 @@
         } catch (e) {}
 
         setupAudioEvents();
+        registerMediaSessionActionHandlers();
+        setupBackgroundPlaybackRecovery();
         setupKeyboardShortcuts();
         syncSliderVisualFills();
         updateShuffleRepeatUI();
@@ -1080,12 +1271,12 @@
     // ==========================================
     function getOrCreateDeviceRequestCode() {
       try {
-        let code = localStorage.getItem(DEVICE_CODE_STORAGE_KEY);
+        let code = safeStorageGet(DEVICE_CODE_STORAGE_KEY);
         if (code && /^TS-[A-Z0-9]{4}-[A-Z0-9]{2}$/.test(code)) return code;
         const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
         const rand = (n) => Array.from({ length: n }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
         code = `TS-${rand(4)}-${rand(2)}`;
-        localStorage.setItem(DEVICE_CODE_STORAGE_KEY, code);
+        safeStorageSet(DEVICE_CODE_STORAGE_KEY, code);
         return code;
       } catch (e) {
         return 'TS-7K9M-4P';
@@ -1116,9 +1307,9 @@
     }
 
     function isCurrentBrowserAuthorized() {
-      if (state.isAdmin || localStorage.getItem(ADMIN_SESSION_KEY) === 'true') return true;
+      if (state.isAdmin || safeStorageGet(ADMIN_SESSION_KEY) === 'true') return true;
       try {
-        const raw = localStorage.getItem(DEVICE_UNLOCK_STORAGE_KEY);
+        const raw = safeStorageGet(DEVICE_UNLOCK_STORAGE_KEY);
         if (!raw) return false;
         const grant = JSON.parse(raw);
         if (!grant || !grant.key) return false;
@@ -1127,7 +1318,7 @@
         if (check.days > 0 && grant.unlockedAt) {
           const expiresAt = grant.unlockedAt + check.days * 24 * 60 * 60 * 1000;
           if (Date.now() > expiresAt) {
-            localStorage.removeItem(DEVICE_UNLOCK_STORAGE_KEY);
+            safeStorageRemove(DEVICE_UNLOCK_STORAGE_KEY);
             return false;
           }
         }
@@ -1164,7 +1355,7 @@
         return;
       }
       errEl?.classList.add('hidden');
-      localStorage.setItem(DEVICE_UNLOCK_STORAGE_KEY, JSON.stringify({ key: res.key, unlockedAt: Date.now() }));
+      safeStorageSet(DEVICE_UNLOCK_STORAGE_KEY, JSON.stringify({ key: res.key, unlockedAt: Date.now() }));
       evaluateDeviceAccessGate();
       showToast('Browser unlocked!', 'info');
     }
@@ -1199,14 +1390,14 @@
 
     function getAdminCredentials() {
       try {
-        const saved = JSON.parse(localStorage.getItem(ADMIN_CREDS_KEY));
+        const saved = JSON.parse(safeStorageGet(ADMIN_CREDS_KEY));
         if (saved?.username && saved?.password) return saved;
       } catch (e) {}
       return { username: 'admin', password: 'hummingjays' };
     }
 
     function loadAdminSession() {
-      state.isAdmin = localStorage.getItem(ADMIN_SESSION_KEY) === 'true';
+      state.isAdmin = safeStorageGet(ADMIN_SESSION_KEY) === 'true';
       updateAdminUI();
     }
 
@@ -1244,7 +1435,7 @@
       if (u === creds.username && p === creds.password) {
         err?.classList.add('hidden');
         state.isAdmin = true;
-        localStorage.setItem(ADMIN_SESSION_KEY, 'true');
+        safeStorageSet(ADMIN_SESSION_KEY, 'true');
         updateAdminUI();
         closeAdminLoginModal();
         evaluateDeviceAccessGate();
@@ -1261,7 +1452,7 @@
 
     function logoutAdmin() {
       state.isAdmin = false;
-      localStorage.removeItem(ADMIN_SESSION_KEY);
+      safeStorageRemove(ADMIN_SESSION_KEY);
       updateAdminUI();
       evaluateDeviceAccessGate();
       renderSidebarAlbums();
@@ -1283,13 +1474,13 @@
 
     function loadHiddenAlbums() {
       try {
-        state.hiddenAlbumIds = JSON.parse(localStorage.getItem(HIDDEN_ALBUMS_KEY)) || [];
+        state.hiddenAlbumIds = JSON.parse(safeStorageGet(HIDDEN_ALBUMS_KEY)) || [];
       } catch (e) { state.hiddenAlbumIds = []; }
     }
 
     function restoreHiddenAlbums() {
       state.hiddenAlbumIds = [];
-      localStorage.setItem(HIDDEN_ALBUMS_KEY, '[]');
+      safeStorageSet(HIDDEN_ALBUMS_KEY, '[]');
       closeAdminSettingsModal();
       MULTI_ALBUM_COLLECTIONS.forEach(c => fetchMultiAlbumCollection(c.identifier, c.defaultArtist, c.genre, c.artistId));
       showToast('Restored deleted albums', 'info');
@@ -1304,7 +1495,7 @@
 
     function loadPermanentCoverVault() {
       try {
-        permanentCoverVault = JSON.parse(localStorage.getItem(PERMANENT_COVERS_KEY)) || {};
+        permanentCoverVault = JSON.parse(safeStorageGet(PERMANENT_COVERS_KEY)) || {};
       } catch (e) { permanentCoverVault = {}; }
     }
 
@@ -1313,7 +1504,7 @@
       if (isValidRealCoverUrl(candidate)) {
         if (albumId) {
           permanentCoverVault[`id::${albumId}`] = candidate;
-          try { localStorage.setItem(PERMANENT_COVERS_KEY, JSON.stringify(permanentCoverVault)); } catch (e) {}
+          safeStorageSet(PERMANENT_COVERS_KEY, JSON.stringify(permanentCoverVault));
         }
         return candidate;
       }
@@ -1333,7 +1524,7 @@
 
     function loadAlbumsFromStorage() {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        const raw = safeStorageGet(STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
           if (Array.isArray(parsed)) {
@@ -1344,12 +1535,12 @@
     }
 
     function saveAlbumsToStorage() {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.albums)); } catch (e) {}
+      safeStorageSet(STORAGE_KEY, JSON.stringify(state.albums));
     }
 
     function loadPlaylistsFromStorage() {
       try {
-        const raw = localStorage.getItem(PLAYLISTS_STORAGE_KEY);
+        const raw = safeStorageGet(PLAYLISTS_STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
           if (Array.isArray(parsed)) { state.playlists = parsed; return; }
@@ -1359,12 +1550,12 @@
     }
 
     function savePlaylistsToStorage() {
-      try { localStorage.setItem(PLAYLISTS_STORAGE_KEY, JSON.stringify(state.playlists)); } catch (e) {}
+      safeStorageSet(PLAYLISTS_STORAGE_KEY, JSON.stringify(state.playlists));
     }
 
     function loadPlayStats() {
       try {
-        const parsed = JSON.parse(localStorage.getItem(PLAY_STATS_STORAGE_KEY));
+        const parsed = JSON.parse(safeStorageGet(PLAY_STATS_STORAGE_KEY));
         if (parsed) playStats = { songs: parsed.songs || {}, albums: parsed.albums || {}, artists: parsed.artists || {} };
       } catch (e) {}
     }
@@ -1373,15 +1564,15 @@
       if (!track) return;
       if (track.id) playStats.songs[track.id] = (playStats.songs[track.id] || 0) + 1;
       if (track.albumId) playStats.albums[track.albumId] = (playStats.albums[track.albumId] || 0) + 1;
-      try { localStorage.setItem(PLAY_STATS_STORAGE_KEY, JSON.stringify(playStats)); } catch (e) {}
+      safeStorageSet(PLAY_STATS_STORAGE_KEY, JSON.stringify(playStats));
 
       state.recentTracks = [track, ...state.recentTracks.filter(t => t.id !== track.id)].slice(0, 14);
-      try { localStorage.setItem(RECENT_HISTORY_STORAGE_KEY, JSON.stringify(state.recentTracks)); } catch (e) {}
+      safeStorageSet(RECENT_HISTORY_STORAGE_KEY, JSON.stringify(state.recentTracks));
     }
 
     function loadRecentHistory() {
       try {
-        const raw = JSON.parse(localStorage.getItem(RECENT_HISTORY_STORAGE_KEY));
+        const raw = JSON.parse(safeStorageGet(RECENT_HISTORY_STORAGE_KEY));
         if (Array.isArray(raw)) state.recentTracks = raw;
       } catch (e) {}
     }
@@ -1428,7 +1619,8 @@
           group.files.forEach(file => {
             const baseName = file.name.replace(/\.[^/.]+$/, '');
             const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
-            const score = ext === '.flac' ? 5 : (ext === '.mp3' ? 4 : (ext === '.m4a' ? 3 : 1));
+            // Prioritize FLAC (5) > WAV (4) > M4A (3) > MP3 (2) > OGG (1)
+            const score = ext === '.flac' ? 5 : (ext === '.wav' ? 4 : (ext === '.m4a' ? 3 : (ext === '.mp3' ? 2 : 1)));
             const parsedDur = parseDuration(file.length);
             const fileSizeBytes = parseInt(file.size, 10) || 0;
             const rawSr = parseInt(file.sample_rate || file.samplerate || file['sample-rate'], 10) || 0;
@@ -1585,7 +1777,6 @@
       const isFlac = String(track.codec || '').toUpperCase() === 'FLAC' || /\.flac$/i.test(track.filename || track.url || '');
       const codecLabel = isFlac ? 'FLAC' : (String(track.codec || 'AUDIO').toUpperCase());
 
-      // Calculate live kbps if duration just became known on the <audio> element
       let kbpsStr = track.bitrateKbps || '';
       if (!kbpsStr && track.fileSize > 0) {
         const dur = (isFinite(audio.duration) && audio.duration > 0) ? audio.duration : (track.duration || 0);
@@ -1615,7 +1806,6 @@
         });
         if (!res.ok && res.status !== 206) return;
 
-        // Capture total file size from Content-Range if not already known
         if (!track.fileSize) {
           const contentRange = res.headers.get('Content-Range') || '';
           const totalMatch = contentRange.match(/\/(\d+)$/);
@@ -1644,7 +1834,6 @@
           }
           track.formatBadge = buildCompactFormatBadge('FLAC', track.sampleRateKhz, track.bitDepth);
 
-          // Persist enriched specs back into state.albums & localStorage
           if (track.albumId) {
             const alb = state.albums.find(a => a.id === track.albumId);
             const albTrack = alb?.tracks?.find(t => t.id === track.id);
@@ -1768,15 +1957,15 @@
       } else if (state.currentView === 'search') {
         crumb.innerHTML = `<button onclick="switchView('home')" class="hover:text-white">Home</button> <span class="mx-1">/</span> <span class="text-white font-semibold">Search</span>`;
       } else if (state.currentView === 'all-albums') {
-        crumb.innerHTML = `<button onclick="switchView('home')" class="hover:text-white">Home</button> <span class="mx-1">/</span> <span class="text-white font-semibold">Albums (${state.albums.length})</span>`;
+        crumb.innerHTML = `<button onclick="switchView('home')" class="hover:text-white">Home</button> <span class="mx-1">/</span> <span class="text-white font-semibold">Library (${state.albums.length})</span>`;
       } else if (state.currentView === 'all-songs') {
         crumb.innerHTML = `<button onclick="switchView('home')" class="hover:text-white">Home</button> <span class="mx-1">/</span> <span class="text-white font-semibold">Songs</span>`;
       } else if (state.currentView === 'artist') {
         const ar = ARTISTS_DIRECTORY.find(a => a.id === state.selectedArtistId);
-        crumb.innerHTML = `<button onclick="switchView('home')" class="hover:text-white">Home</button> <span class="mx-1">/</span> <span class="text-white font-semibold">${escapeHtml(ar?.name || 'Maestro')}</span>`;
+        crumb.innerHTML = `<button onclick="switchView('home')" class="hover:text-white">Home</button> <span class="mx-1">/</span> <span class="text-white font-semibold">${escapeHtml(ar?.name || 'Artist')}</span>`;
       } else if (state.currentView === 'album') {
         const alb = state.albums.find(a => a.id === state.selectedAlbumId);
-        crumb.innerHTML = `<button onclick="switchView('all-albums')" class="hover:text-white">Albums</button> <span class="mx-1">/</span> <span class="text-white font-semibold">${escapeHtml(alb?.title || 'Album')}</span>`;
+        crumb.innerHTML = `<button onclick="openLibraryView()" class="hover:text-white">Library</button> <span class="mx-1">/</span> <span class="text-white font-semibold">${escapeHtml(alb?.title || 'Album')}</span>`;
       } else if (state.currentView === 'playlist') {
         const pl = state.playlists.find(p => p.id === state.selectedPlaylistId);
         crumb.innerHTML = `<button onclick="switchView('home')" class="hover:text-white">Home</button> <span class="mx-1">/</span> <span class="text-white font-semibold">${escapeHtml(pl?.name || 'Playlist')}</span>`;
@@ -1892,7 +2081,6 @@
 
       container.innerHTML = `
         <div class="max-w-6xl mx-auto space-y-6">
-          <!-- Library Header & Quick Section Switcher -->
           <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
               <div class="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#FA243C]">YOUR COLLECTION</div>
@@ -1912,7 +2100,6 @@
             </div>
           </div>
 
-          <!-- Playlists Shelf inside Library -->
           ${state.playlists.length ? `
             <section class="space-y-2.5">
               <div class="flex items-center justify-between">
@@ -1936,7 +2123,6 @@
             </section>
           ` : ''}
 
-          <!-- Filter Bar: Search Albums & Composer Pill Filter -->
           <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
             <input type="search" value="${escapeHtml(state.albumFilterQuery || '')}"
               oninput="state.albumFilterQuery = this.value; renderCurrentView();"
@@ -1951,7 +2137,6 @@
             </select>
           </div>
 
-          <!-- Albums Grid -->
           ${filteredAlbums.length ? `
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-5">
               ${renderAlbumGridCards(filteredAlbums)}
@@ -2044,7 +2229,7 @@
     }
 
     // ==========================================
-    // Home View (Hero Mosaic, Recently Played, Top 10 Albums, Top 10 Songs, Continue Listening)
+    // Home View
     // ==========================================
     function getDynamicGreeting() {
       const h = new Date().getHours();
@@ -2073,6 +2258,7 @@
         .slice(0, 10);
 
       const resumeTrack = getCurrentTrack() || state.lastPlayedTrack;
+      const isResumeActivePlaying = resumeTrack && state.isPlaying && isTrackCurrentlyActive(resumeTrack);
 
       container.innerHTML = `
         <div class="max-w-6xl mx-auto space-y-10">
@@ -2089,7 +2275,7 @@
             </p>
 
             <div class="flex flex-wrap items-center justify-center gap-2.5 mt-5">
-              <button onclick="startRadioShuffle(true)"
+              <button onclick="openRadioStationsAndPlayAll()"
                 class="px-5 py-2.5 rounded-full bg-[#FA243C] hover:bg-[#E01E34] text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-[#FA243C]/30 transition">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                 <span>Play Radio</span>
@@ -2141,11 +2327,11 @@
             </section>
           ` : ''}
 
-          <!-- Maestros Strip -->
+          <!-- Artists Strip -->
           <section class="space-y-3">
             <div class="flex items-center justify-between">
               <h2 class="text-lg sm:text-xl font-extrabold text-white">Artists</h2>
-              <button onclick="startRadioShuffle(true)" class="text-xs font-bold text-[#FA243C] hover:underline">Live Stations →</button>
+              <button onclick="openRadioStationsAndPlayAll()" class="text-xs font-bold text-[#FA243C] hover:underline">Live Stations →</button>
             </div>
             <div class="flex items-stretch gap-4 overflow-x-auto pb-2">
               ${ARTISTS_DIRECTORY.map(ar => `
@@ -2167,7 +2353,7 @@
                   <div class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#FA243C]">MOST LISTENED SOUNDTRACKS</div>
                   <h2 class="text-xl sm:text-2xl font-black text-white mt-0.5">Top 10 Albums</h2>
                 </div>
-                <button onclick="switchView('all-albums')" class="text-xs font-bold text-[#FA243C] hover:underline">All ${totalAlbums} Albums →</button>
+                <button onclick="openLibraryView()" class="text-xs font-bold text-[#FA243C] hover:underline">All ${totalAlbums} Albums →</button>
               </div>
               <div class="flex items-stretch gap-3.5 overflow-x-auto pb-2">
                 ${topAlbums.map((alb, idx) => {
@@ -2244,8 +2430,10 @@
                 </div>
               </div>
               <button onclick="resumeOrToggleLastTrack()"
-                class="px-5 py-2.5 rounded-full bg-white text-black hover:bg-neutral-200 text-xs font-extrabold flex items-center gap-1.5 shrink-0 shadow transition">
-                <span>${state.isPlaying && isTrackCurrentlyActive(resumeTrack) ? '❚❚ Pause' : '▶ Resume'}</span>
+                class="px-4 py-2 rounded-full bg-white text-black hover:bg-neutral-200 text-xs font-semibold inline-flex items-center gap-1.5 shrink-0 shadow-sm transition">
+                ${isResumeActivePlaying
+                  ? `<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg><span>Pause</span>`
+                  : `<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span>Resume</span>`}
               </button>
             </section>
           ` : ''}
@@ -2280,7 +2468,7 @@
           <div class="max-w-md mx-auto text-center py-20 space-y-4">
             <h2 class="text-xl font-extrabold text-white">Nothing Playing Yet</h2>
             <p class="text-xs text-neutral-400">Pick any soundtrack or launch Radio to start listening.</p>
-            <button onclick="startRadioShuffle(true)" class="px-5 py-2.5 rounded-full bg-[#FA243C] text-white text-xs font-bold">Play Radio</button>
+            <button onclick="openRadioStationsAndPlayAll()" class="px-5 py-2.5 rounded-full bg-[#FA243C] text-white text-xs font-bold">Play Radio</button>
           </div>
         `;
         return;
@@ -2308,7 +2496,6 @@
             </div>
           </div>
 
-          <!-- Scrubber -->
           <div class="w-full space-y-1.5 px-2">
             <input id="np-progress-slider" type="range" min="0" max="100" step="0.1" value="${pct}"
               style="--range-pct: ${pct}%"
@@ -2321,7 +2508,6 @@
             </div>
           </div>
 
-          <!-- Main Transport Controls -->
           <div class="flex items-center justify-center gap-6 sm:gap-8">
             <button onclick="toggleShuffle()" title="Shuffle" class="p-2 transition ${state.isShuffle ? 'text-[#FA243C]' : 'text-neutral-400 hover:text-white'}">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
@@ -2331,10 +2517,10 @@
             <button onclick="prevTrack()" class="p-2 text-white hover:scale-110 transition">
               <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
             </button>
-            <button onclick="togglePlayPause()" class="w-16 h-16 rounded-full bg-white text-black hover:scale-105 active:scale-95 flex items-center justify-center shadow-xl transition">
+            <button onclick="togglePlayPause()" class="w-15 h-15 sm:w-16 sm:h-16 rounded-full bg-white text-black hover:scale-105 active:scale-95 flex items-center justify-center shadow-xl transition">
               ${state.isPlaying
-                ? `<svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`
-                : `<svg class="w-7 h-7 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`}
+                ? `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`
+                : `<svg class="w-6 h-6 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`}
             </button>
             <button onclick="nextTrack()" class="p-2 text-white hover:scale-110 transition">
               <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
@@ -2347,7 +2533,6 @@
             </button>
           </div>
 
-          <!-- Quick Action Pills -->
           <div class="flex flex-wrap items-center justify-center gap-2 pt-2">
             <button onclick="shareCurrentTrack()" class="px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-xs font-semibold text-white transition">
               Share Song
@@ -2360,7 +2545,7 @@
             </button>
           </div>
 
-          <!-- Source FLAC / Audio Telemetry Readout -->
+          <!-- Source FLAC kHz / bit / kbps & Output Hardware Telemetry Pill -->
           <div class="pt-1 flex justify-center">
             <div id="np-audio-telemetry"
               class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/45 border border-white/10 text-[11px] font-mono font-semibold tracking-wide text-neutral-300 shadow-inner">
@@ -2417,7 +2602,7 @@
 
     function setArtistAlbumsViewMode(mode) {
       state.artistAlbumsViewMode = mode === 'coverflow' ? 'coverflow' : 'grid';
-      try { localStorage.setItem(ARTIST_ALBUMS_VIEW_MODE_KEY, state.artistAlbumsViewMode); } catch (e) {}
+      safeStorageSet(ARTIST_ALBUMS_VIEW_MODE_KEY, state.artistAlbumsViewMode);
       renderCurrentView();
     }
 
@@ -2505,14 +2690,12 @@
 
       return `
         <div class="rounded-3xl bg-gradient-to-b from-white/[0.04] to-transparent border border-white/[0.08] py-6 sm:py-8 px-3 sm:px-6 overflow-hidden select-none">
-          <!-- 3D Cover Flow Stage -->
           <div id="artist-coverflow-stage"
             ontouchstart="window.__cfTouchStartX = event.touches[0].clientX"
             ontouchend="const dx = event.changedTouches[0].clientX - (window.__cfTouchStartX || 0); if (Math.abs(dx) > 35) stepArtistCoverFlow(dx < 0 ? 1 : -1);"
             onwheel="if (Math.abs(event.deltaX) > 12 || Math.abs(event.deltaY) > 12) { event.preventDefault(); const now = Date.now(); if (now - (window.__cfWheelTs || 0) > 140) { window.__cfWheelTs = now; stepArtistCoverFlow((event.deltaX || event.deltaY) > 0 ? 1 : -1); } }"
             class="coverflow-stage relative h-[250px] sm:h-[310px] w-full flex items-center justify-center">
 
-            <!-- Left / Right Quick Nav Buttons -->
             <button onclick="stepArtistCoverFlow(-1)" aria-label="Previous Album"
               class="absolute left-1 sm:left-3 z-40 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/65 hover:bg-black/90 border border-white/15 text-white flex items-center justify-center shadow-lg transition">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
@@ -2523,7 +2706,6 @@
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
             </button>
 
-            <!-- Cover Cards -->
             ${artistAlbums.map((alb, idx) => `
               <div data-cf-index="${idx}"
                 onclick="if (state.artistCoverFlowIndex === ${idx}) { switchView('album', '${alb.id}'); } else { setArtistCoverFlowIndex(${idx}); }"
@@ -2534,7 +2716,6 @@
             `).join('')}
           </div>
 
-          <!-- Focused Album Details & Controls -->
           <div class="mt-8 sm:mt-10 text-center max-w-md mx-auto space-y-2.5">
             <h3 id="artist-cf-title" class="text-base sm:text-xl font-black text-white truncate px-2">
               ${escapeHtml(activeAlb.title)}
@@ -2580,7 +2761,7 @@
           <div class="rounded-3xl bg-gradient-to-br from-[#2B121E] via-[#17141E] to-[#111117] border border-white/10 p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-6">
             <img src="${ar.cover}" class="w-28 h-28 sm:w-36 sm:h-36 rounded-full object-cover border-2 border-white/15 shadow-2xl shrink-0" />
             <div class="text-center sm:text-left space-y-2 flex-1">
-              <div class="text-[10px] font-extrabold uppercase tracking-widest text-[#FA243C]">VERIFIED MAESTRO</div>
+              <div class="text-[10px] font-extrabold uppercase tracking-widest text-[#FA243C]">VERIFIED ARTIST</div>
               <h1 class="text-2xl sm:text-4xl font-black text-white">${escapeHtml(ar.name)}</h1>
               <p class="text-xs sm:text-sm text-neutral-300">${escapeHtml(ar.tagline)}</p>
               <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 pt-2">
@@ -2598,7 +2779,6 @@
             </div>
           </div>
 
-          <!-- Albums Section Header with Grid / Cover Flow Toggle -->
           <div class="flex items-center justify-between gap-3">
             <h2 class="text-lg sm:text-xl font-extrabold text-white">Discography (${artistAlbums.length})</h2>
             <div class="inline-flex items-center p-1 rounded-full bg-white/[0.07] border border-white/10">
@@ -2652,15 +2832,17 @@
               <div class="text-xs text-neutral-400">${escapeHtml(alb.year || '2026')} • ${alb.tracks.length} Songs</div>
               <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 pt-3">
                 <button onclick="${isAlbumPlaying ? 'togglePlayPause()' : 'playTrackFromList(window.__currentAlbumTracks, 0)'}"
-                  class="px-6 py-2.5 rounded-full bg-[#FA243C] hover:bg-[#E01E34] text-white text-xs font-extrabold shadow-lg">
-                  ${isAlbumPlaying ? '❚❚ Pause' : '▶ Play'}
+                  class="px-5 py-2 rounded-full bg-[#FA243C] hover:bg-[#E01E34] text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md transition">
+                  ${isAlbumPlaying
+                    ? `<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg><span>Pause</span>`
+                    : `<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span>Play</span>`}
                 </button>
                 <button onclick="playTrackFromList(shuffleArray(window.__currentAlbumTracks), 0)"
-                  class="px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/15 text-white text-xs font-bold">
+                  class="px-5 py-2 rounded-full bg-white/10 hover:bg-white/15 text-white text-xs font-bold transition">
                   Shuffle
                 </button>
                 <button onclick="shareAlbum('${alb.id}', event)"
-                  class="px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/15 text-white text-xs font-bold">
+                  class="px-5 py-2 rounded-full bg-white/10 hover:bg-white/15 text-white text-xs font-bold transition">
                   Share
                 </button>
               </div>
@@ -2725,7 +2907,6 @@
       pl.tracks.splice(toIdx, 0, moved);
       savePlaylistsToStorage();
 
-      // Keep active queue order synchronized if this playlist is currently playing
       if (state.currentPlayingPlaylist === plId && activeTrack) {
         state.queue = [...pl.tracks];
         const newIdx = state.queue.findIndex(t => (t.id && activeTrack.id && t.id === activeTrack.id) || (t.url && activeTrack.url && t.url === activeTrack.url));
@@ -2758,7 +2939,6 @@
       draggedPlaylistTrackIndex = null;
     }
 
-    // Touch & Pointer Press-and-Hold Drag Reordering for Mobile & Desktop
     function beginPlaylistHoldTimer(plId, idx, clientX, clientY, immediate = false) {
       cancelPlaylistHoldDrag(false);
       holdDragState.plId = plId;
@@ -2901,11 +3081,13 @@
             </div>
             <div class="flex flex-wrap items-center gap-2">
               <button onclick="${isPlaylistPlaying ? 'togglePlayPause()' : `playPlaylistById('${pl.id}', 0)`}"
-                class="px-5 py-2.5 rounded-full bg-[#FA243C] hover:bg-[#E01E34] text-white text-xs font-extrabold shadow-lg transition">
-                ${isPlaylistPlaying ? '❚❚ Pause' : '▶ Play'}
+                class="px-5 py-2 rounded-full bg-[#FA243C] hover:bg-[#E01E34] text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-md transition">
+                ${isPlaylistPlaying
+                  ? `<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg><span>Pause</span>`
+                  : `<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span>Play</span>`}
               </button>
-              <button onclick="sharePlaylist('${pl.id}', event)" class="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/15 text-white text-xs font-bold">Share</button>
-              <button onclick="openRenamePlaylistModal('${pl.id}')" class="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/15 text-white text-xs font-bold">Rename</button>
+              <button onclick="sharePlaylist('${pl.id}', event)" class="px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 text-white text-xs font-bold transition">Share</button>
+              <button onclick="openRenamePlaylistModal('${pl.id}')" class="px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 text-white text-xs font-bold transition">Rename</button>
             </div>
           </div>
 
@@ -2928,7 +3110,6 @@
                     onclick="playPlaylistById('${pl.id}', ${idx})"
                     class="flex items-center justify-between gap-2 px-3 sm:px-4 py-3 cursor-pointer transition select-none ${active ? 'bg-[#FA243C]/15' : 'hover:bg-white/[0.06]'}">
                     <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                      <!-- Press-and-Hold Drag Grip -->
                       <div data-drag-grip="true"
                         onmousedown="handlePlaylistMouseDownGrip('${pl.id}', ${idx}, event)"
                         onclick="event.stopPropagation()"
@@ -3103,6 +3284,7 @@
     function playTrackFromList(list, startIndex = 0) {
       if (!Array.isArray(list) || !list.length) return;
       state.isRadioMode = false;
+      state.activeRadioArtistId = null;
       state.queue = [...list];
       state.currentIndex = Math.max(0, Math.min(startIndex, list.length - 1));
       loadAndPlayCurrentTrack();
@@ -3148,7 +3330,6 @@
 
       container.innerHTML = `
         <div class="max-w-6xl mx-auto space-y-8">
-          <!-- Featured All Artists on Shuffle Station -->
           <section class="rounded-3xl bg-gradient-to-br from-[#2B121E] via-[#17141E] to-[#111117] border border-white/10 p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl">
             <div class="space-y-2 text-center sm:text-left">
               <div class="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#FA243C]">LIVE RADIO STATION</div>
@@ -3172,7 +3353,6 @@
             </div>
           </section>
 
-          <!-- Specific Artist Radio Stations -->
           <section class="space-y-3">
             <div>
               <div class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#FA243C]">COMPOSER CHANNELS</div>
@@ -3220,6 +3400,7 @@
       audio.dataset.triedFallback = 'false';
 
       updatePlayerBarMetadata(track);
+      updateHardwareMediaSession(track);
       saveLastPlayedState(track);
       recordTrackPlay(track);
       inspectFlacStreamInfo(track);
@@ -3230,6 +3411,10 @@
         p.then(() => {
           state.isPlaying = true;
           updatePlayPauseUI();
+          requestScreenWakeLock();
+          if ('mediaSession' in navigator) {
+            try { navigator.mediaSession.playbackState = 'playing'; } catch (e) {}
+          }
           renderCurrentView();
           broadcastListenTogetherPlayback('track-change');
         }).catch(() => {
@@ -3279,6 +3464,7 @@
         audio.play().then(() => {
           state.isPlaying = true;
           updatePlayPauseUI();
+          requestScreenWakeLock();
           renderCurrentView();
           broadcastListenTogetherPlayback('play');
         }).catch(() => {});
@@ -3287,6 +3473,7 @@
         audio.pause();
         state.isPlaying = false;
         updatePlayPauseUI();
+        releaseScreenWakeLock();
         renderCurrentView();
         broadcastListenTogetherPlayback('pause');
       }
@@ -3312,6 +3499,7 @@
       if (!state.queue.length) return;
       if (audio.currentTime > 4) {
         audio.currentTime = 0;
+        syncMediaSessionPositionState();
         broadcastListenTogetherPlayback('seek');
         return;
       }
@@ -3360,6 +3548,7 @@
       const pct = parseFloat(val) || 0;
       if (isFinite(audio.duration) && audio.duration > 0) {
         audio.currentTime = (pct / 100) * audio.duration;
+        syncMediaSessionPositionState();
         broadcastListenTogetherPlayback('seek');
       }
     }
@@ -3391,15 +3580,16 @@
     function saveLastPlayedState(track) {
       if (!track) return;
       state.lastPlayedTrack = track;
-      try { localStorage.setItem(LAST_PLAYED_STORAGE_KEY, JSON.stringify(track)); } catch (e) {}
+      safeStorageSet(LAST_PLAYED_STORAGE_KEY, JSON.stringify(track));
     }
 
     function restoreLastPlayedState() {
       try {
-        const saved = JSON.parse(localStorage.getItem(LAST_PLAYED_STORAGE_KEY));
+        const saved = JSON.parse(safeStorageGet(LAST_PLAYED_STORAGE_KEY));
         if (saved && saved.title) {
           state.lastPlayedTrack = saved;
           updatePlayerBarMetadata(saved);
+          updateHardwareMediaSession(saved);
         }
       } catch (e) {}
     }
@@ -3413,20 +3603,30 @@
             if (kbps > 0) curTrack.bitrateKbps = `${kbps}kbps`;
           }
           refreshLiveTelemetryUI(curTrack);
+          syncMediaSessionPositionState();
         }
       });
       audio.addEventListener('play', () => {
         state.isPlaying = true;
         updatePlayPauseUI();
+        if ('mediaSession' in navigator) {
+          try { navigator.mediaSession.playbackState = 'playing'; } catch (e) {}
+        }
       });
       audio.addEventListener('playing', () => {
         state.isPlaying = true;
         updatePlayPauseUI();
+        requestScreenWakeLock();
+        syncMediaSessionPositionState();
         renderCurrentView();
       });
       audio.addEventListener('pause', () => {
         state.isPlaying = false;
         updatePlayPauseUI();
+        if ('mediaSession' in navigator) {
+          try { navigator.mediaSession.playbackState = 'paused'; } catch (e) {}
+        }
+        syncMediaSessionPositionState();
         renderCurrentView();
       });
       audio.addEventListener('timeupdate', () => {
@@ -3449,13 +3649,29 @@
         if (d2) d2.textContent = formatTime(dur);
         if (s2) { s2.value = pct; s2.style.setProperty('--range-pct', `${pct}%`); }
       });
+      // Synchronous auto-advance inside 'ended' preserves background & lock-screen audio focus
       audio.addEventListener('ended', () => {
         if (state.repeatMode === 'one') {
           audio.currentTime = 0;
           audio.play().catch(() => {});
-        } else {
-          nextTrack();
+          return;
         }
+        if (!state.queue.length) return;
+        if (state.isShuffle && state.queue.length > 1) {
+          let nextIdx = Math.floor(Math.random() * state.queue.length);
+          if (nextIdx === state.currentIndex) nextIdx = (state.currentIndex + 1) % state.queue.length;
+          state.currentIndex = nextIdx;
+        } else if (state.currentIndex + 1 < state.queue.length) {
+          state.currentIndex += 1;
+        } else if (state.repeatMode === 'all' || state.isRadioMode) {
+          state.currentIndex = 0;
+        } else {
+          state.isPlaying = false;
+          updatePlayPauseUI();
+          releaseScreenWakeLock();
+          return;
+        }
+        loadAndPlayCurrentTrack();
       });
       audio.addEventListener('error', () => {
         if (audio.dataset.fallbackUrl && audio.dataset.triedFallback !== 'true') {
@@ -3489,7 +3705,7 @@
     }
 
     // ==========================================
-    // Search View (Safe Indexed Handlers, Add-to-Playlist "+" Button & GitHub Pages Live Sync)
+    // Search View
     // ==========================================
     function normalizeSearchText(str) {
       return String(str || '')
@@ -3531,14 +3747,11 @@
         </div>
       `;
       renderSearchResults();
-      setTimeout(() => {
-        const inp = document.getElementById('search-input');
-        if (inp) {
-          inp.focus();
-          const len = inp.value.length;
-          try { inp.setSelectionRange(len, len); } catch (e) {}
-        }
-      }, 40);
+      const inp = document.getElementById('search-input');
+      if (inp) {
+        inp.focus();
+        inp.setSelectionRange(inp.value.length, inp.value.length);
+      }
     }
 
     function handleSearchInput(val) {
@@ -3546,97 +3759,99 @@
       renderSearchResults();
     }
 
-    function playSearchTrackByIndex(idx) {
-      if (lastSearchResults[idx]) {
-        playTrackFromList(lastSearchResults, idx);
-      }
-    }
-
-    function openAddSearchTrackToPlaylist(idx, event) {
-      if (event) event.stopPropagation();
-      const tr = lastSearchResults[idx];
-      if (tr) openAddTrackToPlaylist(tr);
-    }
-
     function renderSearchResults() {
       const box = document.getElementById('search-results-container');
       if (!box) return;
-      const rawQ = state.searchQuery.trim();
-      const normQ = normalizeSearchText(rawQ);
-      if (!normQ) {
-        box.innerHTML = `<div class="text-xs text-neutral-400">Type a song, movie album, or composer name above to search.</div>`;
+      const rawQuery = String(state.searchQuery || '').trim();
+      const normQuery = normalizeSearchText(rawQuery);
+      const queryTokens = normQuery ? normQuery.split(' ').filter(Boolean) : [];
+
+      if (!queryTokens.length) {
+        box.innerHTML = `
+          <div class="space-y-4">
+            <h2 class="text-sm font-bold text-neutral-300 uppercase tracking-wider">Browse Artists</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              ${ARTISTS_DIRECTORY.map(ar => `
+                <button onclick="switchView('artist', '${ar.id}')" class="luxury-card rounded-2xl p-3 flex items-center gap-3 text-left transition">
+                  <img src="${ar.cover}" class="w-10 h-10 rounded-full object-cover shrink-0" />
+                  <span class="text-xs font-bold text-white truncate">${escapeHtml(ar.name)}</span>
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `;
         return;
       }
 
-      const tokens = normQ.split(' ').filter(Boolean);
-      const matchedArtists = ARTISTS_DIRECTORY.filter(ar => matchesSearchQuery(`${ar.name} ${ar.tagline}`, tokens));
-      const albums = state.albums.filter(a => matchesSearchQuery(`${a.title} ${a.artist} ${a.year || ''}`, tokens));
-      const tracks = [];
+      const matchedArtists = ARTISTS_DIRECTORY.filter(ar =>
+        matchesSearchQuery(`${ar.name} ${ar.tagline} ${ar.genre}`, queryTokens)
+      );
+
+      const matchedAlbums = state.albums.filter(a =>
+        matchesSearchQuery(`${a.title} ${a.artist} ${a.year || ''}`, queryTokens)
+      );
+
+      const matchedTracks = [];
       state.albums.forEach(a => (a.tracks || []).forEach(t => {
-        if (matchesSearchQuery(`${t.title} ${a.title} ${t.artist} ${a.artist}`, tokens)) {
-          tracks.push(t);
+        if (matchesSearchQuery(`${t.title} ${t.artist} ${t.albumTitle || a.title}`, queryTokens)) {
+          matchedTracks.push(t);
         }
       }));
-      lastSearchResults = tracks.slice(0, 60);
+      lastSearchResults = matchedTracks.slice(0, 60);
 
-      if (!matchedArtists.length && !albums.length && !lastSearchResults.length) {
-        box.innerHTML = `<div class="text-sm text-neutral-400 py-8 text-center">No results found for "${escapeHtml(state.searchQuery)}".</div>`;
+      if (!matchedArtists.length && !matchedAlbums.length && !lastSearchResults.length) {
+        box.innerHTML = `
+          <div class="luxury-card rounded-2xl p-8 text-center space-y-2">
+            <div class="text-sm font-bold text-white">No matches found for "${escapeHtml(rawQuery)}"</div>
+            <p class="text-xs text-neutral-400">Try searching for an artist (e.g. Rahman, Anirudh, Yuvan, Harris), movie, or song title.</p>
+          </div>
+        `;
         return;
       }
 
       box.innerHTML = `
-        <div class="space-y-6">
+        <div class="space-y-8">
           ${matchedArtists.length ? `
-            <div>
-              <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-400 mb-3">Artists (${matchedArtists.length})</h3>
-              <div class="flex items-stretch gap-3 overflow-x-auto pb-1">
+            <div class="space-y-3">
+              <h2 class="text-base font-bold text-white">Artists (${matchedArtists.length})</h2>
+              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 ${matchedArtists.map(ar => `
-                  <button onclick="switchView('artist', '${ar.id}')" class="luxury-card shrink-0 px-3.5 py-2.5 rounded-2xl flex items-center gap-2.5 text-left transition">
-                    <img src="${ar.cover}" class="w-9 h-9 rounded-full object-cover border border-white/15" />
-                    <div>
-                      <div class="text-xs font-bold text-white">${escapeHtml(ar.name)}</div>
-                      <div class="text-[10px] text-neutral-400">Maestro</div>
+                  <button onclick="switchView('artist', '${ar.id}')" class="luxury-card rounded-2xl p-3 flex items-center gap-3 text-left transition">
+                    <img src="${ar.cover}" class="w-11 h-11 rounded-full object-cover shrink-0" />
+                    <div class="min-w-0">
+                      <div class="text-xs sm:text-sm font-bold text-white truncate">${escapeHtml(ar.name)}</div>
+                      <div class="text-[10px] text-neutral-400 truncate">Artist</div>
                     </div>
                   </button>
                 `).join('')}
               </div>
             </div>
           ` : ''}
-          ${albums.length ? `
-            <div>
-              <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-400 mb-3">Albums (${albums.length})</h3>
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">${renderAlbumGridCards(albums.slice(0, 12))}</div>
+
+          ${matchedAlbums.length ? `
+            <div class="space-y-3">
+              <h2 class="text-base font-bold text-white">Albums (${matchedAlbums.length})</h2>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">${renderAlbumGridCards(matchedAlbums.slice(0, 16))}</div>
             </div>
           ` : ''}
+
           ${lastSearchResults.length ? `
-            <div>
-              <div class="flex items-center justify-between mb-3">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-400">Songs (${tracks.length})</h3>
-                <button onclick="playSearchTrackByIndex(0)" class="text-xs font-semibold text-[#FA243C] hover:underline">Play Top Match →</button>
-              </div>
+            <div class="space-y-3">
+              <h2 class="text-base font-bold text-white">Songs (${matchedTracks.length})</h2>
               <div class="luxury-card rounded-2xl overflow-hidden divide-y divide-white/[0.05]">
                 ${lastSearchResults.map((tr, idx) => {
-                  const isCurrent = isTrackCurrentlyActive(tr);
+                  const active = isTrackCurrentlyActive(tr);
                   return `
-                    <div onclick="playSearchTrackByIndex(${idx})" class="flex items-center justify-between gap-3 px-4 py-3 ${isCurrent ? 'bg-[#FA243C]/15' : 'hover:bg-white/[0.06]'} cursor-pointer">
-                      <div class="flex items-center gap-3 min-w-0 flex-1">
-                        ${isCurrent ? renderEqualizerBars('bg-[#FA243C]') : ''}
-                        <img src="${tr.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-10 h-10 rounded-lg object-cover shrink-0" />
-                        <div class="min-w-0 flex-1">
-                          <div class="text-xs sm:text-sm font-semibold truncate ${isCurrent ? 'text-[#FA243C]' : 'text-white'}">${escapeHtml(tr.title)}</div>
+                    <div onclick="playTrackFromList(lastSearchResults, ${idx})"
+                      class="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer ${active ? 'bg-[#FA243C]/15' : 'hover:bg-white/[0.06]'}">
+                      <div class="flex items-center gap-3 min-w-0">
+                        <img src="${tr.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-9 h-9 rounded-lg object-cover shrink-0" />
+                        <div class="min-w-0">
+                          <div class="text-xs sm:text-sm font-bold truncate ${active ? 'text-[#FA243C]' : 'text-white'}">${escapeHtml(tr.title)}</div>
                           <div class="text-[11px] text-neutral-400 truncate">${escapeHtml(tr.artist)} • ${escapeHtml(tr.albumTitle)}</div>
                         </div>
                       </div>
-                      <div class="flex items-center gap-2.5 shrink-0" onclick="event.stopPropagation()">
-                        <button onclick="openAddSearchTrackToPlaylist(${idx}, event)" title="Add to Playlist or Create New Playlist"
-                          aria-label="Add to Playlist"
-                          class="w-7 h-7 rounded-full bg-white/[0.08] hover:bg-[#FA243C] active:scale-95 text-neutral-200 hover:text-white flex items-center justify-center transition">
-                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" d="M12 5v14M5 12h14"/>
-                          </svg>
-                        </button>
-                        <span class="text-xs text-neutral-400 tabular-nums">${tr.duration ? formatTime(tr.duration) : '--:--'}</span>
-                      </div>
+                      <span class="text-xs text-neutral-400 shrink-0">${tr.duration ? formatTime(tr.duration) : '--:--'}</span>
                     </div>
                   `;
                 }).join('')}
@@ -3648,148 +3863,203 @@
     }
 
     // ==========================================
-    // Queue, Social Share & Download Share Card
+    // Admin Add Album Modal
     // ==========================================
-    function toggleQueueDrawer(force = null) {
-      state.queueOpen = force !== null ? force : !state.queueOpen;
-      const drawer = document.getElementById('queue-drawer');
-      drawer?.classList.toggle('translate-x-full', !state.queueOpen);
-      if (state.queueOpen) {
-        const list = document.getElementById('queue-list');
-        const sub = document.getElementById('queue-subtitle');
-        if (sub) sub.textContent = `${state.queue.length} tracks in queue`;
-        if (list) {
-          list.innerHTML = state.queue.slice(0, 80).map((t, i) => `
-            <div onclick="state.currentIndex=${i}; loadAndPlayCurrentTrack(); toggleQueueDrawer(true);"
-              class="flex items-center gap-2.5 p-2 rounded-xl cursor-pointer ${i === state.currentIndex ? 'bg-[#FA243C]/20 text-[#FA243C]' : 'hover:bg-white/[0.06] text-white'}">
-              <img src="${t.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-8 h-8 rounded object-cover" />
-              <div class="text-xs font-semibold truncate flex-1">${escapeHtml(t.title)}</div>
-              ${i === state.currentIndex ? renderEqualizerBars('bg-[#FA243C]') : ''}
-            </div>
-          `).join('');
-        }
-      }
-    }
-
-    function getCleanShareBaseUrl() {
-      try {
-        const loc = window.location;
-        if (loc && (loc.protocol === 'http:' || loc.protocol === 'https:') && loc.hostname && !loc.hostname.includes('usercontent') && !loc.hostname.includes('srcdoc')) {
-          return loc.origin + loc.pathname;
-        }
-      } catch (e) {}
-      return 'https://hummingjays.github.io/tuneS/';
-    }
-
-    function shareAlbum(albumId, e) {
-      if (e) e.stopPropagation();
-      const alb = state.albums.find(a => a.id === albumId);
-      if (!alb) return;
-      const shareUrl = `${getCleanShareBaseUrl()}?share=album&id=${encodeURIComponent(alb.id)}`;
-      openShareModal({
-        type: 'Album',
-        cardTitle: alb.title,
-        cardSubtitle: alb.artist,
-        cardMeta: `${alb.tracks.length} Songs • ${alb.year || '2026'}`,
-        title: `${alb.title} by ${alb.artist}`,
-        subtitle: `${alb.artist} • ${alb.tracks.length} Songs on tune-S`,
-        cover: alb.cover,
-        url: shareUrl
-      });
-    }
-
-    function sharePlaylist(playlistId, e) {
-      if (e) e.stopPropagation();
-      const pl = state.playlists.find(p => p.id === playlistId);
-      if (!pl) return;
-      const cover = pl.tracks[0]?.cover || FALLBACK_COVER_ART;
-      const artistsPreview = [...new Set(pl.tracks.map(t => t.artist).filter(Boolean))].slice(0, 3).join(', ') || 'Curated Mix';
-      openShareModal({
-        type: 'Playlist',
-        cardTitle: pl.name,
-        cardSubtitle: artistsPreview,
-        cardMeta: `${pl.tracks.length} Songs • Custom Playlist`,
-        title: `${pl.name} — tune-S Playlist`,
-        subtitle: `${pl.tracks.length} Songs • ${artistsPreview}`,
-        cover,
-        url: getCleanShareBaseUrl()
-      });
-    }
-
-    function shareSpecificTrack(track) {
-      if (!track) return;
-      const shareUrl = track.albumId
-        ? `${getCleanShareBaseUrl()}?share=album&id=${encodeURIComponent(track.albumId)}`
-        : (track.url || getCleanShareBaseUrl());
-      openShareModal({
-        type: 'Song',
-        cardTitle: track.title,
-        cardSubtitle: track.artist,
-        cardMeta: `${track.albumTitle || 'Soundtrack'} • ${track.formatBadge || 'LOSSLESS'}`,
-        title: `${track.title} — ${track.artist}`,
-        subtitle: `${track.artist} • ${track.albumTitle || 'tune-S'}`,
-        cover: track.cover || FALLBACK_COVER_ART,
-        url: shareUrl
-      });
-    }
-
-    function shareCurrentTrack() {
-      const t = getCurrentTrack() || state.lastPlayedTrack;
-      if (t) shareSpecificTrack(t);
-    }
-
-    function openShareModal(payload) {
-      currentSharePayload = payload;
-      document.getElementById('share-modal-heading').textContent = `Share ${payload.type}`;
-      document.getElementById('share-card-type-pill').textContent = String(payload.type || 'MUSIC').toUpperCase();
-      document.getElementById('share-preview-art').src = payload.cover || FALLBACK_COVER_ART;
-      document.getElementById('share-preview-title').textContent = payload.cardTitle || payload.title;
-      document.getElementById('share-preview-subtitle').textContent = payload.cardSubtitle || payload.subtitle;
-      document.getElementById('share-preview-meta').textContent = payload.cardMeta || 'Lossless • Hi-Fi Audio';
-      const m = document.getElementById('share-modal');
+    function openAddAlbumModal() {
+      const m = document.getElementById('add-album-modal');
       m?.classList.remove('hidden');
       m?.classList.add('flex');
     }
 
-    function closeShareModal() {
-      const m = document.getElementById('share-modal');
+    function closeAddAlbumModal() {
+      const m = document.getElementById('add-album-modal');
       m?.classList.add('hidden');
       m?.classList.remove('flex');
     }
 
-    function drawRoundedRectPath(ctx, x, y, w, h, r) {
-      ctx.beginPath();
-      ctx.moveTo(x + r, y);
-      ctx.lineTo(x + w - r, y);
-      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-      ctx.lineTo(x + w, y + h - r);
-      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-      ctx.lineTo(x + r, y + h);
-      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-      ctx.lineTo(x, y + r);
-      ctx.quadraticCurveTo(x, y, x + r, y);
-      ctx.closePath();
+    async function submitNewAlbum() {
+      const raw = (document.getElementById('input-archive-id')?.value || '').trim();
+      const artist = (document.getElementById('input-album-artist')?.value || 'A.R. Rahman').trim();
+      if (!raw) return;
+      const match = raw.match(/archive\.org\/(?:details|download)\/([^\/?#]+)/i);
+      const identifier = match ? match[1] : raw.split('/')[0];
+      closeAddAlbumModal();
+      showToast(`Fetching ${identifier}...`, 'info');
+      await fetchMultiAlbumCollection(identifier, artist, 'Soundtracks • Hi-Fi', 'ar-rahman');
     }
 
-    function wrapCanvasLines(ctx, text, maxWidth, maxLines = 2) {
-      const words = String(text || '').split(/\s+/);
-      const lines = [];
-      let current = '';
-      for (const word of words) {
-        const test = current ? `${current} ${word}` : word;
-        if (ctx.measureText(test).width <= maxWidth) {
-          current = test;
-        } else {
-          if (current) lines.push(current);
-          current = word;
-          if (lines.length === maxLines) break;
+    // ==========================================
+    // Rich Social Share & PNG Share Card Generator
+    // ==========================================
+    function getShareablePageUrl(params = {}) {
+      try {
+        const u = new URL(window.location.href);
+        u.search = '';
+        Object.entries(params).forEach(([k, v]) => {
+          if (v !== undefined && v !== null && String(v).trim() !== '') u.searchParams.set(k, String(v));
+        });
+        return u.toString();
+      } catch (e) {
+        return window.location.href || '';
+      }
+    }
+
+    function openShareModal(payload) {
+      currentSharePayload = payload;
+      const heading = document.getElementById('share-modal-heading');
+      const pill = document.getElementById('share-card-type-pill');
+      const art = document.getElementById('share-preview-art');
+      const title = document.getElementById('share-preview-title');
+      const sub = document.getElementById('share-preview-subtitle');
+      const meta = document.getElementById('share-preview-meta');
+
+      if (heading) heading.textContent = `Share ${payload.typeLabel || 'Music'}`;
+      if (pill) pill.textContent = (payload.typeLabel || 'SONG').toUpperCase();
+      if (art) art.src = payload.cover || FALLBACK_COVER_ART;
+      if (title) title.textContent = payload.title || 'tune-S';
+      if (sub) sub.textContent = payload.subtitle || '';
+      if (meta) meta.textContent = payload.meta || 'Lossless • tune-S';
+
+      const modal = document.getElementById('share-modal');
+      modal?.classList.remove('hidden');
+      modal?.classList.add('flex');
+    }
+
+    function closeShareModal() {
+      const modal = document.getElementById('share-modal');
+      modal?.classList.add('hidden');
+      modal?.classList.remove('flex');
+    }
+
+    function shareCurrentTrack() {
+      const tr = getCurrentTrack() || state.lastPlayedTrack;
+      if (!tr) return showToast('Play any song first to share it!', 'info');
+      const albumTitle = formatDisplayAlbumTitle(tr.albumTitle || 'Soundtrack');
+      const link = getShareablePageUrl({ share: 'song', track: tr.title, album: albumTitle });
+      openShareModal({
+        typeLabel: 'Song',
+        title: tr.title,
+        subtitle: `${tr.artist} • ${albumTitle}`,
+        meta: `${tr.formatBadge || 'Lossless'} • tune-S`,
+        cover: tr.cover || FALLBACK_COVER_ART,
+        shareText: `Listening to "${tr.title}" by ${tr.artist} (${albumTitle}) on tune-S`,
+        url: link
+      });
+    }
+
+    function shareAlbum(albumId, event) {
+      if (event) event.stopPropagation();
+      const alb = state.albums.find(a => a.id === albumId);
+      if (!alb) return;
+      const link = getShareablePageUrl({ share: 'album', id: alb.id });
+      openShareModal({
+        typeLabel: 'Album',
+        title: alb.title,
+        subtitle: alb.artist,
+        meta: `${alb.year || '2026'} • ${alb.tracks?.length || 0} Songs`,
+        cover: alb.cover || FALLBACK_COVER_ART,
+        shareText: `Listen to "${alb.title}" by ${alb.artist} on tune-S`,
+        url: link
+      });
+    }
+
+    function sharePlaylist(playlistId, event) {
+      if (event) event.stopPropagation();
+      const pl = state.playlists.find(p => p.id === playlistId);
+      if (!pl) return;
+      const firstCover = pl.tracks?.[0]?.cover || FALLBACK_COVER_ART;
+      const link = getShareablePageUrl({ share: 'playlist', name: pl.name });
+      openShareModal({
+        typeLabel: 'Playlist',
+        title: pl.name,
+        subtitle: `${pl.tracks.length} Curated Songs`,
+        meta: 'Custom Playlist • tune-S',
+        cover: firstCover,
+        shareText: `Check out my "${pl.name}" playlist (${pl.tracks.length} songs) on tune-S`,
+        url: link
+      });
+    }
+
+    function copyShareLinkToClipboard() {
+      if (!currentSharePayload) return;
+      copyPlainText(`${currentSharePayload.shareText}\n${currentSharePayload.url}`, 'Share link copied!');
+    }
+
+    async function triggerNativeSystemShare() {
+      if (!currentSharePayload) return;
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: `${currentSharePayload.title} — tune-S`,
+            text: currentSharePayload.shareText,
+            url: currentSharePayload.url
+          });
+          return;
+        } catch (err) {
+          if (err?.name === 'AbortError') return;
         }
       }
-      if (current && lines.length < maxLines) lines.push(current);
-      if (lines.length === maxLines && words.join(' ') !== lines.join(' ')) {
-        lines[maxLines - 1] = lines[maxLines - 1].replace(/.{0,3}$/, '...');
+      copyShareLinkToClipboard();
+    }
+
+    async function downloadShareCardImage() {
+      if (!currentSharePayload) return;
+      const canvas = document.getElementById('share-card-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const W = 1080, H = 1350;
+
+      const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+      bgGrad.addColorStop(0, '#2B111D');
+      bgGrad.addColorStop(0.55, '#13131A');
+      bgGrad.addColorStop(1, '#09090D');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.fillStyle = '#FA243C';
+      ctx.beginPath();
+      ctx.roundRect(96, 92, 54, 54, 14);
+      ctx.fill();
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '900 32px Inter, sans-serif';
+      ctx.fillText('♪', 112, 130);
+      ctx.font = '900 36px Inter, sans-serif';
+      ctx.fillText('tune-S', 168, 131);
+
+      const artX = 160, artY = 230, artSize = 760;
+      const loadedImg = await loadImageForCanvas(currentSharePayload.cover);
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(artX, artY, artSize, artSize, 48);
+      ctx.clip();
+      if (loadedImg) ctx.drawImage(loadedImg, artX, artY, artSize, artSize);
+      ctx.restore();
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '900 54px Inter, sans-serif';
+      ctx.fillText(String(currentSharePayload.title || '').slice(0, 28), 96, 1085);
+
+      ctx.fillStyle = '#D4D4D8';
+      ctx.font = '600 34px Inter, sans-serif';
+      ctx.fillText(String(currentSharePayload.subtitle || '').slice(0, 38), 96, 1145);
+
+      ctx.fillStyle = '#FA243C';
+      ctx.font = '800 24px Inter, sans-serif';
+      ctx.fillText(String(currentSharePayload.meta || 'LOSSLESS AUDIO').toUpperCase(), 96, 1210);
+
+      try {
+        const dataUrl = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = `tuneS-${(currentSharePayload.title || 'share').replace(/[^a-z0-9]/gi, '_')}.png`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        showToast('Share Card downloaded!', 'info');
+      } catch (e) {
+        copyShareLinkToClipboard();
       }
-      return lines;
     }
 
     function loadImageForCanvas(src) {
@@ -3803,840 +4073,446 @@
       });
     }
 
-    async function downloadShareCardImage() {
-      if (!currentSharePayload) return;
-      const canvas = document.getElementById('share-card-canvas');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      const W = canvas.width;
-      const H = canvas.height;
-
-      showToast('Generating Share Card...', 'info');
-
-      const bgGrad = ctx.createLinearGradient(0, 0, W, H);
-      bgGrad.addColorStop(0, '#2B111E');
-      bgGrad.addColorStop(0.45, '#13121A');
-      bgGrad.addColorStop(1, '#09090D');
-      ctx.fillStyle = bgGrad;
-      ctx.fillRect(0, 0, W, H);
-
-      const radGrad = ctx.createRadialGradient(W * 0.5, H * 0.36, 40, W * 0.5, H * 0.36, 520);
-      radGrad.addColorStop(0, 'rgba(250, 36, 60, 0.32)');
-      radGrad.addColorStop(1, 'rgba(250, 36, 60, 0)');
-      ctx.fillStyle = radGrad;
-      ctx.fillRect(0, 0, W, H);
-
-      ctx.save();
-      drawRoundedRectPath(ctx, 44, 44, W - 88, H - 88, 52);
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.14)';
-      ctx.lineWidth = 3;
-      ctx.stroke();
-      ctx.restore();
-
-      ctx.fillStyle = '#FA243C';
-      drawRoundedRectPath(ctx, 96, 98, 54, 54, 16);
-      ctx.fill();
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = '900 30px Inter, sans-serif';
-      ctx.fillText('♪', 113, 136);
-
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = '900 34px Inter, sans-serif';
-      ctx.fillText('tune-S', 168, 137);
-
-      const badgeLabel = String(currentSharePayload.type || 'MUSIC').toUpperCase();
-      ctx.font = '800 22px Inter, sans-serif';
-      const badgeW = ctx.measureText(badgeLabel).width + 52;
-      ctx.fillStyle = 'rgba(250, 36, 60, 0.2)';
-      drawRoundedRectPath(ctx, W - 96 - badgeW, 102, badgeW, 48, 24);
-      ctx.fill();
-      ctx.fillStyle = '#FF7A90';
-      ctx.fillText(badgeLabel, W - 96 - badgeW + 26, 134);
-
-      const artSize = 640;
-      const artX = (W - artSize) / 2;
-      const artY = 215;
-
-      let artImg = await loadImageForCanvas(currentSharePayload.cover);
-      if (!artImg) artImg = await loadImageForCanvas(FALLBACK_COVER_ART);
-
-      ctx.save();
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.72)';
-      ctx.shadowBlur = 55;
-      ctx.shadowOffsetY = 28;
-      drawRoundedRectPath(ctx, artX, artY, artSize, artSize, 46);
-      ctx.fillStyle = '#181822';
-      ctx.fill();
-      ctx.restore();
-
-      ctx.save();
-      drawRoundedRectPath(ctx, artX, artY, artSize, artSize, 46);
-      ctx.clip();
-      if (artImg) {
-        ctx.drawImage(artImg, artX, artY, artSize, artSize);
-      }
-      ctx.restore();
-
-      ctx.save();
-      drawRoundedRectPath(ctx, artX, artY, artSize, artSize, 46);
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
-      ctx.lineWidth = 3;
-      ctx.stroke();
-      ctx.restore();
-
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = '900 54px Inter, sans-serif';
-      const titleLines = wrapCanvasLines(ctx, currentSharePayload.cardTitle || currentSharePayload.title, W - 180, 2);
-      let textY = 945;
-      titleLines.forEach((line, idx) => {
-        ctx.fillText(line, W / 2, textY + idx * 66);
-      });
-
-      const subY = textY + titleLines.length * 66 + 18;
-      ctx.fillStyle = '#D4D4D8';
-      ctx.font = '600 34px Inter, sans-serif';
-      const subLines = wrapCanvasLines(ctx, currentSharePayload.cardSubtitle || currentSharePayload.subtitle, W - 200, 1);
-      ctx.fillText(subLines[0] || '', W / 2, subY);
-
-      const metaY = subY + 54;
-      ctx.fillStyle = '#FA243C';
-      ctx.font = '800 24px Inter, sans-serif';
-      ctx.fillText(String(currentSharePayload.cardMeta || 'LOSSLESS • HI-FI AUDIO').toUpperCase(), W / 2, metaY);
-
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(140, H - 140);
-      ctx.lineTo(W - 140, H - 140);
-      ctx.stroke();
-
-      ctx.fillStyle = '#71717A';
-      ctx.font = '600 24px Inter, sans-serif';
-      ctx.fillText('Listen Lossless on tune-S', W / 2, H - 90);
-      ctx.textAlign = 'left';
-
-      try {
-        const dataUrl = canvas.toDataURL('image/png');
-        const safeSlug = String(currentSharePayload.cardTitle || 'tune-s-share')
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-|-$/g, '') || 'tune-s-card';
-        const link = document.createElement('a');
-        link.download = `tuneS-${safeSlug}.png`;
-        link.href = dataUrl;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showToast('Share Card downloaded!', 'info');
-      } catch (e) {
-        showToast('Could not export image in this browser.', 'error');
-      }
-    }
-
-    async function triggerNativeSystemShare() {
-      if (!currentSharePayload) return;
-      if (navigator.share) {
-        try { await navigator.share({ title: currentSharePayload.title, text: currentSharePayload.subtitle, url: currentSharePayload.url }); closeShareModal(); return; } catch (e) {}
-      }
-      copyShareLinkToClipboard();
-    }
-
-    function copyShareLinkToClipboard() {
-      if (currentSharePayload) copyPlainText(`${currentSharePayload.title}\n${currentSharePayload.url}`, 'Share link copied!');
-    }
-
-    function openAddAlbumModal() {
-      const m = document.getElementById('add-album-modal');
-      m?.classList.remove('hidden');
-      m?.classList.add('flex');
-    }
-
-    function closeAddAlbumModal() {
-      const m = document.getElementById('add-album-modal');
-      m?.classList.add('hidden');
-      m?.classList.remove('flex');
-    }
-
-    function submitNewAlbum() {
-      const raw = (document.getElementById('input-archive-id')?.value || '').trim();
-      const title = (document.getElementById('input-album-title')?.value || '').trim();
-      const artist = (document.getElementById('input-album-artist')?.value || '').trim() || 'A.R. Rahman';
-      if (!raw) return;
-      const m = raw.match(/archive\.org\/(?:details|download)\/([^/?#]+)/i);
-      const id = m ? m[1] : raw;
-      fetchMultiAlbumCollection(id, artist, 'Soundtrack', artist.toLowerCase().replace(/\s+/g, '-'));
-      closeAddAlbumModal();
-      showToast(`Syncing "${title || id}"...`, 'info');
-    }
-
-    function toggleMobileSidebar(open) {
-      document.getElementById('sidebar')?.classList.toggle('-translate-x-full', !open);
-      document.getElementById('mobile-backdrop')?.classList.toggle('hidden', !open);
-    }
-
-    function shuffleArray(arr) {
-      const c = [...arr];
-      for (let i = c.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [c[i], c[j]] = [c[j], c[i]];
-      }
-      return c;
-    }
-
-    function escapeHtml(str) {
-      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-    }
-
-    function copyPlainText(text, msg = 'Copied!') {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
-      try { document.execCommand('copy'); showToast(msg, 'info'); } catch (e) {}
-      document.body.removeChild(ta);
-    }
-
-    let toastTimer = null;
-    function showToast(msg, type = 'info') {
-      const toast = document.getElementById('toast');
-      const inner = document.getElementById('toast-inner');
-      if (!toast || !inner) return;
-      inner.textContent = msg;
-      toast.classList.remove('opacity-0');
-      toast.classList.add('opacity-100');
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => { toast.classList.remove('opacity-100'); toast.classList.add('opacity-0'); }, 2600);
-    }
-
     // ==========================================
-    // Listen Together (Live Watch-Party Sync & Chat)
+    // Listen Together Watch Party & Live Chat
     // ==========================================
-    const LT_DISPLAY_NAME_KEY = 'tunes_listen_together_name_v1';
+    const LISTEN_TOGETHER_NAME_KEY = 'tunes_listen_together_display_name_v1';
     const listenTogetherState = {
       active: false,
-      role: null,
+      role: 'host',
       roomCode: '',
-      displayName: 'Music Lover',
+      displayName: safeStorageGet(LISTEN_TOGETHER_NAME_KEY) || `Listener-${Math.floor(100 + Math.random() * 899)}`,
       peer: null,
       connections: [],
       broadcastChannel: null,
       messages: [],
-      isChatCollapsed: false,
-      isApplyingRemoteSync: false,
-      heartbeatTimer: null,
-      pendingJoinRoomCode: null
+      collapsed: false,
+      applyingRemoteSync: false,
+      pendingJoinRoomCode: ''
     };
 
     function initListenTogetherFeature() {
-      try {
-        const savedName = localStorage.getItem(LT_DISPLAY_NAME_KEY);
-        if (savedName) {
-          listenTogetherState.displayName = savedName;
-        } else {
-          const code = getOrCreateDeviceRequestCode();
-          listenTogetherState.displayName = `Listener-${code.slice(-2)}`;
-        }
-      } catch (e) {}
-
+      const nameInput = document.getElementById('lt-display-name-input');
+      if (nameInput) nameInput.value = listenTogetherState.displayName;
       if (listenTogetherState.pendingJoinRoomCode) {
-        const roomToJoin = listenTogetherState.pendingJoinRoomCode;
-        listenTogetherState.pendingJoinRoomCode = null;
-        joinListenTogetherRoom(roomToJoin);
+        const codeToJoin = listenTogetherState.pendingJoinRoomCode;
+        listenTogetherState.pendingJoinRoomCode = '';
+        setTimeout(() => joinListenTogetherRoom(codeToJoin), 450);
       }
     }
 
     function openListenTogetherModal() {
       const modal = document.getElementById('listen-together-modal');
-      if (!modal) return;
       const nameInput = document.getElementById('lt-display-name-input');
-      if (nameInput) nameInput.value = listenTogetherState.displayName || '';
-
-      const activePanel = document.getElementById('lt-modal-active-panel');
-      const setupPanel = document.getElementById('lt-modal-setup-panel');
-
-      if (listenTogetherState.active) {
-        activePanel?.classList.remove('hidden');
-        setupPanel?.classList.add('hidden');
-        const codeEl = document.getElementById('lt-modal-room-code');
-        const roleEl = document.getElementById('lt-modal-role-badge');
-        if (codeEl) codeEl.textContent = listenTogetherState.roomCode;
-        if (roleEl) roleEl.textContent = (listenTogetherState.role || 'HOST').toUpperCase();
-      } else {
-        activePanel?.classList.add('hidden');
-        setupPanel?.classList.remove('hidden');
-        const joinInput = document.getElementById('lt-join-code-input');
-        if (joinInput) joinInput.value = '';
-      }
-
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
+      if (nameInput) nameInput.value = listenTogetherState.displayName;
+      updateListenTogetherModalState();
+      modal?.classList.remove('hidden');
+      modal?.classList.add('flex');
     }
 
     function closeListenTogetherModal() {
       const modal = document.getElementById('listen-together-modal');
-      if (!modal) return;
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
+      modal?.classList.add('hidden');
+      modal?.classList.remove('flex');
     }
 
-    function captureDisplayNameFromModal() {
-      const nameInput = document.getElementById('lt-display-name-input');
-      const raw = (nameInput?.value || '').trim();
-      if (raw) {
-        listenTogetherState.displayName = raw;
-        try { localStorage.setItem(LT_DISPLAY_NAME_KEY, raw); } catch (e) {}
+    function updateListenTogetherModalState() {
+      const activePanel = document.getElementById('lt-modal-active-panel');
+      const setupPanel = document.getElementById('lt-modal-setup-panel');
+      if (listenTogetherState.active) {
+        activePanel?.classList.remove('hidden');
+        setupPanel?.classList.add('hidden');
+        document.getElementById('lt-modal-room-code').textContent = listenTogetherState.roomCode;
+        document.getElementById('lt-modal-role-badge').textContent = listenTogetherState.role.toUpperCase();
+      } else {
+        activePanel?.classList.add('hidden');
+        setupPanel?.classList.remove('hidden');
       }
     }
 
+    function readListenTogetherDisplayName() {
+      const val = (document.getElementById('lt-display-name-input')?.value || '').trim();
+      if (val) {
+        listenTogetherState.displayName = val.slice(0, 24);
+        safeStorageSet(LISTEN_TOGETHER_NAME_KEY, listenTogetherState.displayName);
+      }
+      return listenTogetherState.displayName;
+    }
+
     function generateRoomCode() {
-      const num = Math.floor(1000 + Math.random() * 9000);
-      return `TUNES-${num}`;
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = 'TUNES-';
+      for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+      return code;
     }
 
     function hostListenTogetherRoom() {
-      captureDisplayNameFromModal();
-      cleanupListenTogetherConnections();
-
+      readListenTogetherDisplayName();
+      teardownListenTogetherTransport();
       const roomCode = generateRoomCode();
       listenTogetherState.active = true;
       listenTogetherState.role = 'host';
       listenTogetherState.roomCode = roomCode;
       listenTogetherState.messages = [];
 
-      setupBroadcastChannelSync(roomCode);
-      setupPeerJsHost(roomCode);
+      setupBroadcastChannelBridge(roomCode);
+      if (typeof Peer !== 'undefined') {
+        try {
+          const peer = new Peer(`tunes-lt-${roomCode.toLowerCase()}`, { debug: 0 });
+          listenTogetherState.peer = peer;
+          peer.on('open', () => updateListenTogetherStatusUI('Room live! Share code or Invite link.'));
+          peer.on('connection', (conn) => registerPeerConnection(conn));
+        } catch (e) {}
+      }
 
-      addListenTogetherSystemMessage(`Room ${roomCode} created. Share the invite link so your friend can listen & chat with you!`);
-      updateListenTogetherUI();
+      activateListenTogetherDock();
+      appendListenTogetherSystemMessage(`Room ${roomCode} created by ${listenTogetherState.displayName}.`);
       closeListenTogetherModal();
-      expandListenTogetherChat();
-      startListenTogetherHeartbeat();
-      showToast(`Listen Together room ${roomCode} started!`, 'info');
+      copyListenTogetherInvite();
     }
 
     function joinListenTogetherRoomFromInput() {
-      captureDisplayNameFromModal();
-      const input = document.getElementById('lt-join-code-input');
-      let raw = (input?.value || '').trim().toUpperCase();
-      if (!raw) {
-        showToast('Enter a Room Code or Invite Link.', 'error');
-        return;
-      }
-      if (raw.includes('ROOM=')) {
-        const match = raw.match(/ROOM=([A-Z0-9-]+)/i);
-        if (match && match[1]) raw = match[1].toUpperCase();
-      }
-      if (!raw.startsWith('TUNES-')) {
-        raw = `TUNES-${raw.replace(/[^A-Z0-9]/g, '')}`;
-      }
-      joinListenTogetherRoom(raw);
+      const raw = (document.getElementById('lt-join-code-input')?.value || '').trim().toUpperCase();
+      if (!raw) return showToast('Enter a valid Room Code', 'error');
+      const normalized = raw.startsWith('TUNES-') ? raw : `TUNES-${raw.replace(/^TUNES-?/i, '')}`;
+      joinListenTogetherRoom(normalized);
     }
 
     function joinListenTogetherRoom(roomCode) {
-      cleanupListenTogetherConnections();
-
+      readListenTogetherDisplayName();
+      teardownListenTogetherTransport();
       listenTogetherState.active = true;
       listenTogetherState.role = 'guest';
       listenTogetherState.roomCode = roomCode;
       listenTogetherState.messages = [];
 
-      setupBroadcastChannelSync(roomCode);
-      setupPeerJsGuest(roomCode);
+      setupBroadcastChannelBridge(roomCode);
+      if (typeof Peer !== 'undefined') {
+        try {
+          const peer = new Peer(undefined, { debug: 0 });
+          listenTogetherState.peer = peer;
+          peer.on('open', () => {
+            const conn = peer.connect(`tunes-lt-${roomCode.toLowerCase()}`, { reliable: true });
+            registerPeerConnection(conn);
+          });
+        } catch (e) {}
+      }
 
-      addListenTogetherSystemMessage(`Joining room ${roomCode} as ${listenTogetherState.displayName}...`);
-      updateListenTogetherUI();
+      activateListenTogetherDock();
+      appendListenTogetherSystemMessage(`Joining room ${roomCode} as ${listenTogetherState.displayName}...`);
       closeListenTogetherModal();
-      expandListenTogetherChat();
-      startListenTogetherHeartbeat();
+      sendListenTogetherPacket({ type: 'join', sender: listenTogetherState.displayName, roomCode });
+    }
 
-      dispatchListenTogetherPacket({
-        type: 'hello',
-        sender: listenTogetherState.displayName
+    function setupBroadcastChannelBridge(roomCode) {
+      if (typeof BroadcastChannel === 'undefined') return;
+      try {
+        const bc = new BroadcastChannel(`tunes_lt_${roomCode}`);
+        listenTogetherState.broadcastChannel = bc;
+        bc.onmessage = (ev) => { if (ev?.data) handleIncomingListenTogetherPacket(ev.data, null); };
+      } catch (e) {}
+    }
+
+    function registerPeerConnection(conn) {
+      if (!conn) return;
+      conn.on('open', () => {
+        if (!listenTogetherState.connections.includes(conn)) listenTogetherState.connections.push(conn);
+        updateListenTogetherStatusUI('Friend connected • Live Sync Active');
+        conn.send({ type: 'join', sender: listenTogetherState.displayName, roomCode: listenTogetherState.roomCode });
+        const cur = getCurrentTrack();
+        if (cur) conn.send(buildPlaybackSyncPacket('sync-snapshot'));
+      });
+      conn.on('data', (packet) => handleIncomingListenTogetherPacket(packet, conn));
+      conn.on('close', () => {
+        listenTogetherState.connections = listenTogetherState.connections.filter(c => c !== conn);
+        updateListenTogetherStatusUI(listenTogetherState.connections.length ? 'Friend connected' : 'Waiting for friend...');
       });
     }
 
-    function setupBroadcastChannelSync(roomCode) {
-      try {
-        if ('BroadcastChannel' in window) {
-          const bc = new BroadcastChannel(`tunes_watchparty_${roomCode}`);
-          bc.onmessage = (ev) => {
-            if (ev && ev.data) handleListenTogetherPacket(ev.data, null);
-          };
-          listenTogetherState.broadcastChannel = bc;
-        }
-      } catch (e) {}
-    }
-
-    function setupPeerJsHost(roomCode) {
-      if (typeof Peer === 'undefined') return;
-      try {
-        const peerId = `tunes-wp-${roomCode.toLowerCase()}`;
-        const peer = new Peer(peerId, { debug: 0 });
-        listenTogetherState.peer = peer;
-
-        peer.on('open', () => {
-          updateListenTogetherPeerStatus();
-        });
-
-        peer.on('connection', (conn) => {
-          listenTogetherState.connections.push(conn);
-          conn.on('open', () => {
-            updateListenTogetherPeerStatus();
-            const currentTrack = getCurrentTrack() || state.lastPlayedTrack;
-            if (currentTrack) {
-              conn.send({
-                type: 'sync',
-                reason: 'welcome',
-                sender: listenTogetherState.displayName,
-                track: currentTrack,
-                currentTime: audio.currentTime || 0,
-                isPlaying: state.isPlaying,
-                sentAt: Date.now()
-              });
-            }
-          });
-          conn.on('data', (packet) => handleListenTogetherPacket(packet, conn));
-          conn.on('close', () => {
-            listenTogetherState.connections = listenTogetherState.connections.filter(c => c !== conn);
-            updateListenTogetherPeerStatus();
-            addListenTogetherSystemMessage('A listener left the room.');
-          });
-        });
-
-        peer.on('error', () => {
-          updateListenTogetherPeerStatus();
-        });
-      } catch (e) {}
-    }
-
-    function setupPeerJsGuest(roomCode) {
-      if (typeof Peer === 'undefined') return;
-      try {
-        const peer = new Peer(undefined, { debug: 0 });
-        listenTogetherState.peer = peer;
-
-        peer.on('open', () => {
-          const hostPeerId = `tunes-wp-${roomCode.toLowerCase()}`;
-          const conn = peer.connect(hostPeerId, { reliable: true });
-          listenTogetherState.connections = [conn];
-
-          conn.on('open', () => {
-            updateListenTogetherPeerStatus();
-            conn.send({
-              type: 'hello',
-              sender: listenTogetherState.displayName
-            });
-          });
-
-          conn.on('data', (packet) => handleListenTogetherPacket(packet, conn));
-          conn.on('close', () => {
-            listenTogetherState.connections = [];
-            updateListenTogetherPeerStatus();
-            addListenTogetherSystemMessage('Host disconnected from the room.');
-          });
-        });
-
-        peer.on('error', () => {
-          updateListenTogetherPeerStatus();
-        });
-      } catch (e) {}
-    }
-
-    function dispatchListenTogetherPacket(packet) {
+    function sendListenTogetherPacket(packet) {
       if (!listenTogetherState.active) return;
-      if (listenTogetherState.broadcastChannel) {
-        try { listenTogetherState.broadcastChannel.postMessage(packet); } catch (e) {}
-      }
-      listenTogetherState.connections.forEach(conn => {
-        if (conn && conn.open) {
-          try { conn.send(packet); } catch (e) {}
-        }
-      });
+      listenTogetherState.connections.forEach(conn => { if (conn?.open) try { conn.send(packet); } catch (e) {} });
+      if (listenTogetherState.broadcastChannel) try { listenTogetherState.broadcastChannel.postMessage(packet); } catch (e) {}
     }
 
-    function handleListenTogetherPacket(packet, sourceConn) {
-      if (!packet || !listenTogetherState.active) return;
-
-      if (packet.type === 'hello') {
-        addListenTogetherSystemMessage(`${packet.sender || 'A friend'} joined Listen Together!`);
-        updateListenTogetherPeerStatus(packet.sender);
-        const currentTrack = getCurrentTrack() || state.lastPlayedTrack;
-        if (currentTrack) {
-          dispatchListenTogetherPacket({
-            type: 'sync',
-            reason: 'welcome',
-            sender: listenTogetherState.displayName,
-            track: currentTrack,
-            currentTime: audio.currentTime || 0,
-            isPlaying: state.isPlaying,
-            sentAt: Date.now()
-          });
-        }
-        return;
-      }
-
-      if (packet.type === 'request-sync') {
-        const currentTrack = getCurrentTrack() || state.lastPlayedTrack;
-        if (currentTrack) {
-          dispatchListenTogetherPacket({
-            type: 'sync',
-            reason: 'manual-resync',
-            sender: listenTogetherState.displayName,
-            track: currentTrack,
-            currentTime: audio.currentTime || 0,
-            isPlaying: state.isPlaying,
-            sentAt: Date.now()
-          });
-        }
-        return;
-      }
-
-      if (packet.type === 'sync') {
-        applyRemotePlaybackSync(packet);
-        return;
-      }
-
-      if (packet.type === 'chat') {
-        appendListenTogetherChatMessage({
-          sender: packet.sender || 'Friend',
-          text: packet.text || '',
-          time: packet.time || formatClockTime(),
-          isSelf: false
-        });
-        if (listenTogetherState.isChatCollapsed) {
-          showToast(`${packet.sender}: ${packet.text}`, 'info');
-        }
-        return;
-      }
-
-      if (packet.type === 'reaction') {
-        spawnFloatingReaction(packet.emoji || '🔥', packet.sender || 'Friend');
-      }
-    }
-
-    function broadcastListenTogetherPlayback(reason = 'update') {
-      if (!listenTogetherState.active || listenTogetherState.isApplyingRemoteSync) return;
-      const track = getCurrentTrack() || state.lastPlayedTrack;
-      if (!track) return;
-
-      updateSyncedTrackBanner(track);
-      dispatchListenTogetherPacket({
-        type: 'sync',
-        reason,
+    function buildPlaybackSyncPacket(action) {
+      const tr = getCurrentTrack() || state.lastPlayedTrack;
+      return {
+        type: 'playback',
+        action,
         sender: listenTogetherState.displayName,
-        track,
-        currentTime: audio.currentTime || 0,
         isPlaying: state.isPlaying,
-        sentAt: Date.now()
-      });
+        currentTime: isFinite(audio.currentTime) ? audio.currentTime : 0,
+        track: tr ? {
+          id: tr.id, albumId: tr.albumId, albumTitle: tr.albumTitle, artistId: tr.artistId,
+          artist: tr.artist, title: tr.title, cover: tr.cover, url: tr.url, altUrl: tr.altUrl, duration: tr.duration
+        } : null
+      };
     }
 
-    function applyRemotePlaybackSync(packet) {
-      if (!packet || !packet.track) return;
-      listenTogetherState.isApplyingRemoteSync = true;
-
-      try {
-        const remoteTrack = packet.track;
-        const current = getCurrentTrack();
-        const isSameTrack = current && (current.id === remoteTrack.id || current.url === remoteTrack.url);
-
-        const latencySec = packet.isPlaying && packet.sentAt
-          ? Math.min(3, Math.max(0, (Date.now() - packet.sentAt) / 1000))
-          : 0;
-        const targetTime = Math.max(0, (Number(packet.currentTime) || 0) + latencySec);
-
-        if (!isSameTrack) {
-          const alb = state.albums.find(a => a.id === remoteTrack.albumId);
-          if (alb && Array.isArray(alb.tracks) && alb.tracks.length) {
-            const idx = alb.tracks.findIndex(t => t.id === remoteTrack.id || t.url === remoteTrack.url);
-            state.queue = [...alb.tracks];
-            state.currentIndex = idx !== -1 ? idx : 0;
-          } else {
-            state.queue = [remoteTrack];
-            state.currentIndex = 0;
-          }
-
-          const { primaryUrl, fallbackUrl } = getFastStreamCandidate(remoteTrack);
-          audio.src = primaryUrl;
-          audio.dataset.fallbackUrl = fallbackUrl || '';
-          audio.dataset.triedFallback = 'false';
-
-          updatePlayerBarMetadata(remoteTrack);
-          saveLastPlayedState(remoteTrack);
-
-          audio.addEventListener('loadedmetadata', function onRemoteMeta() {
-            audio.removeEventListener('loadedmetadata', onRemoteMeta);
-            if (targetTime > 0.5 && isFinite(audio.duration)) {
-              audio.currentTime = Math.min(targetTime, Math.max(0, audio.duration - 1));
-            }
-          });
-
-          if (packet.isPlaying) {
-            userPausedManually = false;
-            audio.play().catch(() => {
-              showToast('Tap Play once to enable synced audio', 'info');
-            });
-          } else {
-            userPausedManually = true;
-            audio.pause();
-          }
-
-          if (packet.reason === 'track-change') {
-            addListenTogetherSystemMessage(`${packet.sender || 'Partner'} switched to "${remoteTrack.title}"`);
-          }
-        } else {
-          if (Math.abs((audio.currentTime || 0) - targetTime) > 1.75) {
-            if (isFinite(audio.duration) && audio.duration > 0) {
-              audio.currentTime = Math.min(targetTime, Math.max(0, audio.duration - 1));
-            } else {
-              audio.currentTime = targetTime;
-            }
-          }
-
-          if (packet.isPlaying && audio.paused) {
-            userPausedManually = false;
-            audio.play().catch(() => {});
-          } else if (!packet.isPlaying && !audio.paused) {
-            userPausedManually = true;
-            audio.pause();
-          }
-        }
-
-        updateSyncedTrackBanner(remoteTrack);
-        updateListenTogetherPeerStatus(packet.sender);
-      } finally {
-        setTimeout(() => {
-          listenTogetherState.isApplyingRemoteSync = false;
-        }, 250);
-      }
+    function broadcastListenTogetherPlayback(action) {
+      if (!listenTogetherState.active || listenTogetherState.applyingRemoteSync) return;
+      updateListenTogetherSyncedBanner();
+      sendListenTogetherPacket(buildPlaybackSyncPacket(action));
     }
 
     function requestManualResync() {
-      if (!listenTogetherState.active) return;
-      dispatchListenTogetherPacket({
-        type: 'request-sync',
-        sender: listenTogetherState.displayName
-      });
-      broadcastListenTogetherPlayback('manual-resync');
-      showToast('Synced playback!', 'info');
+      sendListenTogetherPacket({ type: 'request-sync', sender: listenTogetherState.displayName });
+      showToast('Syncing playback...', 'info');
     }
 
-    function startListenTogetherHeartbeat() {
-      clearInterval(listenTogetherState.heartbeatTimer);
-      listenTogetherState.heartbeatTimer = setInterval(() => {
-        if (listenTogetherState.active && state.isPlaying && listenTogetherState.role === 'host') {
-          broadcastListenTogetherPlayback('heartbeat');
+    function handleIncomingListenTogetherPacket(packet, sourceConn) {
+      if (!packet || !listenTogetherState.active) return;
+      if (packet.type === 'join') {
+        updateListenTogetherStatusUI(`${packet.sender} is listening with you`);
+        appendListenTogetherSystemMessage(`${packet.sender} joined the room.`);
+        if (listenTogetherState.role === 'host') {
+          const snap = buildPlaybackSyncPacket('sync-snapshot');
+          if (sourceConn?.open) sourceConn.send(snap);
+          else sendListenTogetherPacket(snap);
         }
-      }, 6000);
+      } else if (packet.type === 'request-sync') {
+        const snap = buildPlaybackSyncPacket('sync-snapshot');
+        if (sourceConn?.open) sourceConn.send(snap);
+        else sendListenTogetherPacket(snap);
+      } else if (packet.type === 'chat') {
+        appendListenTogetherChatBubble(packet.sender, packet.text, false);
+      } else if (packet.type === 'reaction') {
+        spawnFloatingListenTogetherEmoji(packet.emoji, packet.sender);
+      } else if (packet.type === 'playback' && packet.track) {
+        applyRemoteListenTogetherPlayback(packet);
+      }
+    }
+
+    function applyRemoteListenTogetherPlayback(packet) {
+      listenTogetherState.applyingRemoteSync = true;
+      try {
+        const remoteTrack = packet.track;
+        const curTrack = getCurrentTrack();
+        const isDifferentTrack = !curTrack || curTrack.url !== remoteTrack.url;
+        if (isDifferentTrack) {
+          state.queue = [remoteTrack];
+          state.currentIndex = 0;
+          audio.src = remoteTrack.url;
+          updatePlayerBarMetadata(remoteTrack);
+          updateHardwareMediaSession(remoteTrack);
+        }
+        if (typeof packet.currentTime === 'number' && Math.abs((audio.currentTime || 0) - packet.currentTime) > 1.5) {
+          try { audio.currentTime = packet.currentTime; } catch (e) {}
+        }
+        if (packet.isPlaying && audio.paused) {
+          audio.play().then(() => { state.isPlaying = true; updatePlayPauseUI(); }).catch(() => {});
+        } else if (!packet.isPlaying && !audio.paused) {
+          audio.pause();
+          state.isPlaying = false;
+          updatePlayPauseUI();
+        }
+        updateListenTogetherSyncedBanner();
+      } finally {
+        setTimeout(() => { listenTogetherState.applyingRemoteSync = false; }, 350);
+      }
+    }
+
+    function activateListenTogetherDock() {
+      const dock = document.getElementById('listen-together-chat-dock');
+      dock?.classList.remove('hidden');
+      dock?.classList.add('flex');
+      document.getElementById('lt-chat-room-badge').textContent = listenTogetherState.roomCode;
+      document.getElementById('sidebar-lt-live-pill')?.classList.remove('hidden');
+      const dot = document.getElementById('header-lt-dot');
+      if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+      const lbl = document.getElementById('header-lt-label');
+      if (lbl) lbl.textContent = listenTogetherState.roomCode;
+      updateListenTogetherSyncedBanner();
+      renderListenTogetherMessages();
+    }
+
+    function updateListenTogetherStatusUI(text) {
+      const el = document.getElementById('lt-chat-peer-status');
+      if (el) el.textContent = text;
+    }
+
+    function updateListenTogetherSyncedBanner() {
+      const tr = getCurrentTrack() || state.lastPlayedTrack;
+      const art = document.getElementById('lt-synced-art');
+      const title = document.getElementById('lt-synced-song-title');
+      const sub = document.getElementById('lt-synced-song-sub');
+      if (tr) {
+        if (art) art.src = tr.cover || FALLBACK_COVER_ART;
+        if (title) title.textContent = tr.title;
+        if (sub) sub.textContent = `${state.isPlaying ? 'Playing' : 'Paused'} • ${tr.artist}`;
+      }
+    }
+
+    function toggleListenTogetherChatCollapse() {
+      listenTogetherState.collapsed = !listenTogetherState.collapsed;
+      document.getElementById('lt-chat-body')?.classList.toggle('hidden', listenTogetherState.collapsed);
+    }
+
+    function expandListenTogetherChat() {
+      listenTogetherState.collapsed = false;
+      document.getElementById('lt-chat-body')?.classList.remove('hidden');
     }
 
     function sendListenTogetherMessage() {
       const input = document.getElementById('lt-chat-input');
       const text = (input?.value || '').trim();
       if (!text || !listenTogetherState.active) return;
-
-      const timeStr = formatClockTime();
-      appendListenTogetherChatMessage({
-        sender: listenTogetherState.displayName,
-        text,
-        time: timeStr,
-        isSelf: true
-      });
-
-      dispatchListenTogetherPacket({
-        type: 'chat',
-        sender: listenTogetherState.displayName,
-        text,
-        time: timeStr
-      });
-
-      if (input) input.value = '';
+      input.value = '';
+      appendListenTogetherChatBubble(listenTogetherState.displayName, text, true);
+      sendListenTogetherPacket({ type: 'chat', sender: listenTogetherState.displayName, text });
     }
 
     function sendListenTogetherReaction(emoji) {
       if (!listenTogetherState.active) return;
-      spawnFloatingReaction(emoji, 'You');
-      dispatchListenTogetherPacket({
-        type: 'reaction',
-        sender: listenTogetherState.displayName,
-        emoji
-      });
+      spawnFloatingListenTogetherEmoji(emoji, 'You');
+      sendListenTogetherPacket({ type: 'reaction', sender: listenTogetherState.displayName, emoji });
     }
 
-    function spawnFloatingReaction(emoji, sender) {
-      const container = document.getElementById('lt-floating-reactions');
-      if (!container) return;
-      const bubble = document.createElement('div');
-      bubble.className = 'px-2.5 py-1 rounded-full bg-black/80 border border-white/15 text-sm font-bold text-white shadow-lg flex items-center gap-1.5 transition-all duration-1000 transform translate-y-0 opacity-100';
-      bubble.innerHTML = `<span class="text-base">${escapeHtml(emoji)}</span><span class="text-[10px] text-neutral-300">${escapeHtml(sender)}</span>`;
-      container.appendChild(bubble);
-
-      requestAnimationFrame(() => {
-        bubble.style.transform = 'translateY(-48px)';
-        bubble.style.opacity = '0';
-      });
-      setTimeout(() => bubble.remove(), 1100);
+    function spawnFloatingListenTogetherEmoji(emoji, sender) {
+      const layer = document.getElementById('lt-floating-reactions');
+      if (!layer) return;
+      const badge = document.createElement('div');
+      badge.className = 'px-2.5 py-1 rounded-full bg-black/80 border border-white/15 text-xs font-bold text-white shadow-xl animate-bounce';
+      badge.textContent = `${emoji} ${sender}`;
+      layer.appendChild(badge);
+      setTimeout(() => badge.remove(), 2200);
     }
 
-    function addListenTogetherSystemMessage(text) {
-      listenTogetherState.messages.push({ type: 'system', text });
+    function appendListenTogetherSystemMessage(text) {
+      listenTogetherState.messages.push({ kind: 'system', text });
       renderListenTogetherMessages();
     }
 
-    function appendListenTogetherChatMessage(msg) {
-      listenTogetherState.messages.push({ type: 'chat', ...msg });
-      if (listenTogetherState.messages.length > 80) {
-        listenTogetherState.messages.shift();
-      }
+    function appendListenTogetherChatBubble(sender, text, isSelf) {
+      listenTogetherState.messages.push({ kind: 'chat', sender, text, isSelf });
       renderListenTogetherMessages();
     }
 
     function renderListenTogetherMessages() {
-      const feed = document.getElementById('lt-chat-messages');
-      if (!feed) return;
-      feed.innerHTML = listenTogetherState.messages.map(m => {
-        if (m.type === 'system') {
-          return `<div class="text-center text-[10px] text-neutral-400 bg-white/[0.04] rounded-lg py-1 px-2.5">${escapeHtml(m.text)}</div>`;
-        }
-        if (m.isSelf) {
-          return `
-            <div class="flex flex-col items-end">
-              <div class="text-[9px] text-neutral-500 mb-0.5 pr-1">You • ${escapeHtml(m.time)}</div>
-              <div class="max-w-[82%] px-3 py-1.5 rounded-2xl rounded-br-sm bg-[#FA243C] text-white text-xs leading-snug break-words shadow">
-                ${escapeHtml(m.text)}
-              </div>
-            </div>
-          `;
+      const box = document.getElementById('lt-chat-messages');
+      if (!box) return;
+      box.innerHTML = listenTogetherState.messages.map(m => {
+        if (m.kind === 'system') {
+          return `<div class="text-center text-[10px] text-neutral-400 bg-white/[0.04] rounded-lg py-1 px-2">${escapeHtml(m.text)}</div>`;
         }
         return `
-          <div class="flex flex-col items-start">
-            <div class="text-[9px] text-neutral-400 mb-0.5 pl-1">${escapeHtml(m.sender)} • ${escapeHtml(m.time)}</div>
-            <div class="max-w-[82%] px-3 py-1.5 rounded-2xl rounded-bl-sm bg-white/10 text-white text-xs leading-snug break-words">
+          <div class="flex flex-col ${m.isSelf ? 'items-end' : 'items-start'}">
+            <span class="text-[9px] text-neutral-500 mb-0.5 px-1">${escapeHtml(m.isSelf ? 'You' : m.sender)}</span>
+            <div class="max-w-[82%] px-3 py-1.5 rounded-2xl text-xs ${m.isSelf ? 'bg-[#FA243C] text-white' : 'bg-white/[0.1] text-neutral-100'}">
               ${escapeHtml(m.text)}
             </div>
           </div>
         `;
       }).join('');
-      feed.scrollTop = feed.scrollHeight;
-    }
-
-    function updateListenTogetherUI() {
-      const dock = document.getElementById('listen-together-chat-dock');
-      const headerDot = document.getElementById('header-lt-dot');
-      const headerLabel = document.getElementById('header-lt-label');
-      const sidebarPill = document.getElementById('sidebar-lt-live-pill');
-      const roomBadge = document.getElementById('lt-chat-room-badge');
-
-      if (listenTogetherState.active) {
-        dock?.classList.remove('hidden');
-        dock?.classList.add('flex');
-        if (roomBadge) roomBadge.textContent = listenTogetherState.roomCode;
-        if (headerDot) {
-          headerDot.classList.remove('bg-[#FA243C]');
-          headerDot.classList.add('bg-emerald-400', 'animate-pulse');
-        }
-        if (headerLabel) headerLabel.textContent = listenTogetherState.roomCode;
-        sidebarPill?.classList.remove('hidden');
-
-        const currentTrack = getCurrentTrack() || state.lastPlayedTrack;
-        if (currentTrack) updateSyncedTrackBanner(currentTrack);
-        updateListenTogetherPeerStatus();
-      } else {
-        dock?.classList.add('hidden');
-        dock?.classList.remove('flex');
-        if (headerDot) {
-          headerDot.classList.add('bg-[#FA243C]');
-          headerDot.classList.remove('bg-emerald-400', 'animate-pulse');
-        }
-        if (headerLabel) headerLabel.textContent = 'Listen Together';
-        sidebarPill?.classList.add('hidden');
-      }
-    }
-
-    function updateListenTogetherPeerStatus(peerName = null) {
-      const statusEl = document.getElementById('lt-chat-peer-status');
-      if (!statusEl) return;
-      const openCount = listenTogetherState.connections.filter(c => c && c.open).length;
-      if (peerName) {
-        statusEl.textContent = `Connected with ${peerName}`;
-      } else if (openCount > 0) {
-        statusEl.textContent = `${openCount + 1} listeners synced live`;
-      } else {
-        statusEl.textContent = 'Share room code to invite a friend';
-      }
-    }
-
-    function updateSyncedTrackBanner(track) {
-      if (!track) return;
-      const artEl = document.getElementById('lt-synced-art');
-      const titleEl = document.getElementById('lt-synced-song-title');
-      const subEl = document.getElementById('lt-synced-song-sub');
-      if (artEl) artEl.src = track.cover || FALLBACK_COVER_ART;
-      if (titleEl) titleEl.textContent = track.title || 'Unknown Track';
-      if (subEl) subEl.textContent = `${track.artist || 'Artist'} • ${state.isPlaying ? 'Playing live' : 'Paused'}`;
-    }
-
-    function toggleListenTogetherChatCollapse() {
-      listenTogetherState.isChatCollapsed = !listenTogetherState.isChatCollapsed;
-      const body = document.getElementById('lt-chat-body');
-      const chevron = document.getElementById('lt-chat-chevron');
-      if (listenTogetherState.isChatCollapsed) {
-        body?.classList.add('hidden');
-        chevron?.classList.add('rotate-180');
-      } else {
-        body?.classList.remove('hidden');
-        chevron?.classList.remove('rotate-180');
-      }
-    }
-
-    function expandListenTogetherChat() {
-      listenTogetherState.isChatCollapsed = false;
-      document.getElementById('lt-chat-body')?.classList.remove('hidden');
-      document.getElementById('lt-chat-chevron')?.classList.remove('rotate-180');
+      box.scrollTop = box.scrollHeight;
     }
 
     function copyListenTogetherInvite() {
       if (!listenTogetherState.roomCode) return;
-      const inviteUrl = `${getCleanShareBaseUrl()}?room=${encodeURIComponent(listenTogetherState.roomCode)}`;
-      copyPlainText(
-        `Join my tune-S Listen Together party!\nRoom Code: ${listenTogetherState.roomCode}\n${inviteUrl}`,
-        'Listen Together invite link copied!'
-      );
+      const inviteUrl = getShareablePageUrl({ room: listenTogetherState.roomCode });
+      copyPlainText(`Join my tune-S Listen Together party! Room Code: ${listenTogetherState.roomCode}\n${inviteUrl}`, `Invite link copied (${listenTogetherState.roomCode})`);
+    }
+
+    function teardownListenTogetherTransport() {
+      listenTogetherState.connections.forEach(c => { try { c.close(); } catch (e) {} });
+      listenTogetherState.connections = [];
+      if (listenTogetherState.peer) { try { listenTogetherState.peer.destroy(); } catch (e) {} listenTogetherState.peer = null; }
+      if (listenTogetherState.broadcastChannel) { try { listenTogetherState.broadcastChannel.close(); } catch (e) {} listenTogetherState.broadcastChannel = null; }
     }
 
     function leaveListenTogetherRoom() {
-      cleanupListenTogetherConnections();
+      teardownListenTogetherTransport();
       listenTogetherState.active = false;
-      listenTogetherState.role = null;
       listenTogetherState.roomCode = '';
-      listenTogetherState.messages = [];
-      updateListenTogetherUI();
-      showToast('Left Listen Together session.', 'info');
+      const dock = document.getElementById('listen-together-chat-dock');
+      dock?.classList.add('hidden');
+      dock?.classList.remove('flex');
+      document.getElementById('sidebar-lt-live-pill')?.classList.add('hidden');
+      const dot = document.getElementById('header-lt-dot');
+      if (dot) dot.className = 'w-2 h-2 rounded-full bg-[#FA243C]';
+      const lbl = document.getElementById('header-lt-label');
+      if (lbl) lbl.textContent = 'Listen Together';
     }
 
-    function cleanupListenTogetherConnections() {
-      clearInterval(listenTogetherState.heartbeatTimer);
-      listenTogetherState.heartbeatTimer = null;
-      if (listenTogetherState.broadcastChannel) {
-        try { listenTogetherState.broadcastChannel.close(); } catch (e) {}
-        listenTogetherState.broadcastChannel = null;
-      }
-      listenTogetherState.connections.forEach(c => {
-        try { c.close(); } catch (e) {}
-      });
-      listenTogetherState.connections = [];
-      if (listenTogetherState.peer) {
-        try { listenTogetherState.peer.destroy(); } catch (e) {}
-        listenTogetherState.peer = null;
-      }
+    // ==========================================
+    // Utilities: Queue Drawer, Sidebar, Toast, Clipboard
+    // ==========================================
+    function toggleMobileSidebar(force) {
+      const sb = document.getElementById('sidebar');
+      const bd = document.getElementById('mobile-backdrop');
+      const open = typeof force === 'boolean' ? force : sb?.classList.contains('-translate-x-full');
+      sb?.classList.toggle('-translate-x-full', !open);
+      bd?.classList.toggle('hidden', !open);
     }
 
-    function formatClockTime() {
-      const now = new Date();
-      return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    function toggleQueueDrawer(force) {
+      const qd = document.getElementById('queue-drawer');
+      state.queueOpen = typeof force === 'boolean' ? force : !state.queueOpen;
+      qd?.classList.toggle('translate-x-full', !state.queueOpen);
+      renderQueueDrawer();
+    }
+
+    function renderQueueDrawer() {
+      const list = document.getElementById('queue-list');
+      const sub = document.getElementById('queue-subtitle');
+      if (!list) return;
+      if (sub) sub.textContent = state.queue.length ? `${state.queue.length} songs in queue` : 'Queue is empty';
+      list.innerHTML = state.queue.slice(0, 60).map((tr, idx) => {
+        const active = idx === state.currentIndex;
+        return `
+          <div onclick="state.currentIndex = ${idx}; loadAndPlayCurrentTrack(); renderQueueDrawer();"
+            class="flex items-center gap-2.5 p-2 rounded-xl cursor-pointer ${active ? 'bg-[#FA243C]/20 text-[#FA243C]' : 'hover:bg-white/[0.06] text-white'}">
+            <img src="${tr.cover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-8 h-8 rounded object-cover shrink-0" />
+            <div class="min-w-0 flex-1">
+              <div class="text-xs font-bold truncate">${escapeHtml(tr.title)}</div>
+              <div class="text-[10px] text-neutral-400 truncate">${escapeHtml(tr.artist)}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function copyPlainText(text, successMsg = 'Copied!') {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        showToast(successMsg, 'info');
+      } catch (e) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => showToast(successMsg, 'info')).catch(() => {});
+        }
+      }
+      ta.remove();
+    }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const inner = document.getElementById('toast-inner');
+      if (!toast || !inner) return;
+      inner.textContent = msg;
+      toast.classList.remove('opacity-0');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.add('opacity-0'), 2600);
+    }
+
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     }
 
     window.addEventListener('DOMContentLoaded', initializeTuneSApp);
