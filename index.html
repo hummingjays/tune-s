@@ -4,8 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>tune-S — Lossless South Indian &amp; Film Music</title>
+  <!-- Crisp inline SVG favicon so Chrome immediately displays the tune-S emblem without /favicon.ico 404 probing -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23FA243C'/%3E%3Cstop offset='100%25' stop-color='%23FF5E7E'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='18' fill='url(%23bg)'/%3E%3Cpath fill='%23FFFFFF' d='M33 14v24.2c-1.4-.8-3.1-1.3-4.9-1.3-5.4 0-9.8 4.4-9.8 9.8s4.4 9.8 9.8 9.8 9.8-4.4 9.8-9.8V23.8h9.8V14H33z'/%3E%3C/svg%3E" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" defer></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -69,7 +71,8 @@
 </head>
 <body class="h-screen w-screen overflow-hidden flex flex-col bg-[#0B0B0F] text-white select-none">
 
-  <audio id="bg-audio-engine" crossorigin="anonymous"></audio>
+  <!-- Use preload="none" initially so Chrome finishes page load cleanly without holding open media range connections -->
+  <audio id="bg-audio-engine" preload="none" crossorigin="anonymous"></audio>
   <audio id="bg-audio-preload" preload="none" crossorigin="anonymous"></audio>
 
   <!-- Single-Device Unlock Gate (Hidden when authorized) -->
@@ -711,7 +714,7 @@
   <div id="admin-settings-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-sm p-4">
     <div class="bg-[#1B1B22] border border-white/10 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
       <div class="flex items-center justify-between">
-        <h3 class="text-lg font-bold text-white">Admin Settings & Device Keys</h3>
+        <h3 class="text-lg font-bold text-white">Admin Settings &amp; Device Keys</h3>
         <button onclick="closeAdminSettingsModal()" class="text-neutral-400 hover:text-white p-1">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
@@ -833,6 +836,7 @@
     `);
 
     const FALLBACK_COVER_ART = window.FALLBACK_COVER_ART || UNIFORM_ARTIST_AVATAR;
+    window.FALLBACK_COVER_ART = FALLBACK_COVER_ART;
 
     const ARTISTS_DIRECTORY = [
       { id: 'ar-rahman', name: 'A.R. Rahman', identifier: 'ARRTamilFlac', cover: UNIFORM_ARTIST_AVATAR, tagline: 'Academy Award-Winning Composer & Mozart of Madras', genre: 'Tamil, Hindi & International Soundtracks • Lossless' },
@@ -936,7 +940,9 @@
 
     const audio = document.getElementById('bg-audio-engine') || new Audio();
     const preloadAudio = document.getElementById('bg-audio-preload') || new Audio();
-    audio.preload = 'auto';
+    // Keep preload='none' initially so Chrome finishes page load cleanly without holding open media range connections
+    audio.preload = 'none';
+    preloadAudio.preload = 'none';
     audio.volume = 1.0;
 
     // ==========================================
@@ -979,12 +985,46 @@
         renderCurrentView();
         evaluateDeviceAccessGate();
 
-        MULTI_ALBUM_COLLECTIONS.forEach(col => {
-          fetchMultiAlbumCollection(col.identifier, col.defaultArtist, col.genre, col.artistId);
-        });
+        // Schedule Archive.org metadata sync AFTER window.load finishes so Chrome's tab spinner stops immediately
+        scheduleDeferredCollectionSync();
       } catch (e) {
         console.error('tune-S init error:', e);
       }
+    }
+
+    let collectionSyncScheduled = false;
+    function scheduleDeferredCollectionSync() {
+      if (collectionSyncScheduled) return;
+      collectionSyncScheduled = true;
+
+      const startQueueAfterLoad = () => {
+        setTimeout(() => {
+          syncCollectionsWithConcurrencyQueue(MULTI_ALBUM_COLLECTIONS, 3);
+        }, 600);
+      };
+
+      if (document.readyState === 'complete') {
+        startQueueAfterLoad();
+      } else {
+        window.addEventListener('load', startQueueAfterLoad, { once: true });
+      }
+    }
+
+    async function syncCollectionsWithConcurrencyQueue(collections, maxConcurrent = 3) {
+      const queue = [...collections];
+      state.collectionLoading = true;
+
+      async function worker() {
+        while (queue.length > 0) {
+          const col = queue.shift();
+          if (!col) break;
+          await fetchMultiAlbumCollection(col.identifier, col.defaultArtist, col.genre, col.artistId);
+        }
+      }
+
+      const workers = Array.from({ length: Math.min(maxConcurrent, queue.length) }, () => worker());
+      await Promise.allSettled(workers);
+      state.collectionLoading = false;
     }
 
     // ==========================================
@@ -1157,7 +1197,7 @@
       state.hiddenAlbumIds = [];
       localStorage.setItem(HIDDEN_ALBUMS_KEY, '[]');
       closeAdminSettingsModal();
-      MULTI_ALBUM_COLLECTIONS.forEach(c => fetchMultiAlbumCollection(c.identifier, c.defaultArtist, c.genre, c.artistId));
+      syncCollectionsWithConcurrencyQueue(MULTI_ALBUM_COLLECTIONS, 3);
       showToast('Restored deleted albums', 'info');
     }
 
@@ -1253,8 +1293,13 @@
     }
 
     async function fetchMultiAlbumCollection(identifier, defaultArtist, defaultGenre, artistId) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
       try {
-        const res = await fetch(`https://archive.org/metadata/${encodeURIComponent(identifier)}`);
+        const res = await fetch(`https://archive.org/metadata/${encodeURIComponent(identifier)}`, {
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
         if (!res.ok) return;
         const data = await res.json();
         if (!data || !Array.isArray(data.files)) return;
@@ -1340,7 +1385,9 @@
           renderSidebarAlbums();
           renderCurrentView();
         }
-      } catch (e) {}
+      } catch (e) {
+        clearTimeout(timeoutId);
+      }
     }
 
     function formatDisplayAlbumTitle(raw) {
@@ -1465,6 +1512,8 @@
       userPausedManually = false;
       recordTrackPlay(track);
 
+      // Enable auto buffering only once the user actively starts playback
+      audio.preload = 'auto';
       const { primaryUrl, fallbackUrl } = getFastStreamCandidate(track);
       audio.src = primaryUrl;
       audio.dataset.fallbackUrl = fallbackUrl || '';
@@ -3267,7 +3316,11 @@
       if (listenTogetherState.pendingJoinRoomCode) {
         const roomToJoin = listenTogetherState.pendingJoinRoomCode;
         listenTogetherState.pendingJoinRoomCode = null;
-        joinListenTogetherRoom(roomToJoin);
+        if (document.readyState === 'complete') {
+          joinListenTogetherRoom(roomToJoin);
+        } else {
+          window.addEventListener('load', () => joinListenTogetherRoom(roomToJoin), { once: true });
+        }
       }
     }
 
@@ -3574,6 +3627,7 @@
           state.queue = [remoteTrack];
           state.currentIndex = 0;
 
+          audio.preload = 'auto';
           const { primaryUrl, fallbackUrl } = getFastStreamCandidate(remoteTrack);
           audio.src = primaryUrl;
           audio.dataset.fallbackUrl = fallbackUrl || '';
