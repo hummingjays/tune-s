@@ -743,25 +743,68 @@
     </div>
   </div>
 
-  <!-- Rich Social Share Modal -->
-  <div id="share-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-md p-4">
-    <div class="bg-[#1B1B22] border border-white/12 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+  <!-- Rich Social Share & Download Share Card Modal -->
+  <div id="share-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto">
+    <div class="bg-[#1B1B22] border border-white/12 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl space-y-4 my-auto">
       <div class="flex items-center justify-between">
-        <h3 id="share-modal-heading" class="text-base font-bold text-white">Share</h3>
-        <button onclick="closeShareModal()" class="text-neutral-400 hover:text-white p-1">
+        <div>
+          <h3 id="share-modal-heading" class="text-base font-extrabold text-white">Share</h3>
+          <p class="text-[11px] text-neutral-400">Download custom Share Card or copy link</p>
+        </div>
+        <button onclick="closeShareModal()" class="text-neutral-400 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
-      <div class="rounded-2xl bg-[#111117] border border-white/12 p-4 flex items-center gap-4">
-        <img id="share-preview-art" src="" onerror="this.src=window.FALLBACK_COVER_ART" class="w-20 h-20 rounded-xl object-cover shrink-0" />
-        <div class="min-w-0">
-          <div id="share-preview-title" class="text-sm font-bold text-white line-clamp-2"></div>
-          <div id="share-preview-subtitle" class="text-xs text-neutral-400 truncate mt-1"></div>
+
+      <!-- Visual Share Card Preview -->
+      <div class="rounded-2xl bg-gradient-to-br from-[#2B121D] via-[#15141C] to-[#0E0E13] border border-white/15 p-5 shadow-xl relative overflow-hidden">
+        <div class="absolute -top-12 -right-12 w-36 h-36 rounded-full bg-[#FA243C]/20 blur-2xl pointer-events-none"></div>
+        <div class="flex items-center justify-between mb-3.5">
+          <div class="flex items-center gap-2">
+            <span class="w-5 h-5 rounded-md bg-[#FA243C] text-white flex items-center justify-center text-[10px] font-black">♪</span>
+            <span class="text-xs font-black tracking-tight text-white">tune-S</span>
+          </div>
+          <span id="share-card-type-pill" class="px-2 py-0.5 rounded-full bg-white/10 text-[9px] font-extrabold uppercase tracking-widest text-[#FF7A90]">SONG</span>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <img id="share-preview-art" src="" onerror="this.src=window.FALLBACK_COVER_ART"
+            class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border border-white/15 shadow-lg shrink-0" />
+          <div class="min-w-0 flex-1">
+            <div id="share-preview-title" class="text-sm sm:text-base font-extrabold text-white line-clamp-2 leading-snug"></div>
+            <div id="share-preview-subtitle" class="text-xs font-medium text-neutral-300 truncate mt-1"></div>
+            <div id="share-preview-meta" class="text-[10px] font-bold uppercase tracking-wider text-[#FA243C] mt-2">Lossless • Hi-Fi Audio</div>
+          </div>
         </div>
       </div>
-      <div class="grid grid-cols-2 gap-2.5">
-        <button onclick="triggerNativeSystemShare()" class="py-2.5 rounded-xl bg-[#FA243C] text-white text-xs font-bold">Share via...</button>
-        <button onclick="copyShareLinkToClipboard()" class="py-2.5 rounded-xl bg-white/10 text-white text-xs font-bold">Copy Link</button>
+
+      <!-- Hidden Hi-Res Canvas for Share Card Export -->
+      <canvas id="share-card-canvas" width="1080" height="1350" class="hidden"></canvas>
+
+      <!-- Action Buttons: Download Share Card + Share + Copy Link -->
+      <div class="space-y-2.5 pt-1">
+        <button onclick="downloadShareCardImage()"
+          class="w-full py-3 rounded-xl bg-gradient-to-r from-[#FA243C] to-[#FF4D67] hover:opacity-95 active:scale-[0.99] text-white text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-[#FA243C]/25 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3"/>
+          </svg>
+          <span>Download Share Card (PNG)</span>
+        </button>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <button onclick="triggerNativeSystemShare()" class="py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+            </svg>
+            <span>Share Link...</span>
+          </button>
+          <button onclick="copyShareLinkToClipboard()" class="py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+            <span>Copy Link</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -1435,7 +1478,6 @@
       saveLastPlayedState(track);
       updatePlayerBarMetadata(track);
 
-      // Optimistically reflect playing state immediately on click
       state.isPlaying = true;
       updatePlayPauseUI();
       renderCurrentView();
@@ -2549,10 +2591,16 @@
                     <div class="text-[11px] text-neutral-400 truncate">${escapeHtml(track.artist)}</div>
                   </div>
                 </div>
-                <div class="flex items-center gap-2 shrink-0">
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <button onclick='event.stopPropagation(); shareSpecificTrack(${JSON.stringify(track).replace(/'/g, "&#39;")})' title="Share Song"
+                    class="p-1.5 rounded-lg text-neutral-400 hover:text-[#FA243C] hover:bg-white/10 transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                    </svg>
+                  </button>
                   <button onclick='event.stopPropagation(); openAddToPlaylistModal(${JSON.stringify(track).replace(/'/g, "&#39;")})' title="Add to Playlist"
                     class="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition">+</button>
-                  <span class="text-xs text-neutral-400 tabular-nums">${track.duration ? formatTime(track.duration) : '--:--'}</span>
+                  <span class="text-xs text-neutral-400 tabular-nums ml-1">${track.duration ? formatTime(track.duration) : '--:--'}</span>
                 </div>
               </div>
             `;
@@ -2581,6 +2629,9 @@
                 </button>
                 <button onclick="togglePlaylistShuffle('${playlist.id}')" class="px-5 py-2.5 rounded-full text-xs font-bold ${state.isShuffle ? 'bg-[#FA243C] text-white' : 'bg-white/[0.08] text-neutral-200'}">
                   ${state.isShuffle ? 'Shuffle On' : 'Shuffle Off'}
+                </button>
+                <button onclick="sharePlaylist('${playlist.id}', event)" class="px-4 py-2.5 rounded-full bg-white/[0.08] hover:bg-white/[0.15] text-white text-xs font-bold">
+                  Share
                 </button>
                 <button onclick="openRenamePlaylistModal('${playlist.id}', event)" class="px-4 py-2.5 rounded-full bg-white/[0.08] hover:bg-white/[0.15] text-white text-xs font-bold">
                   Rename
@@ -2816,7 +2867,7 @@
     }
 
     // ==========================================
-    // Queue, Share & Helpers
+    // Queue, Social Share & Download Share Card
     // ==========================================
     function toggleQueueDrawer(force = null) {
       state.queueOpen = force !== null ? force : !state.queueOpen;
@@ -2839,24 +2890,81 @@
       }
     }
 
+    function getCleanShareBaseUrl() {
+      try {
+        const loc = window.location;
+        if (loc && (loc.protocol === 'http:' || loc.protocol === 'https:') && loc.hostname && !loc.hostname.includes('usercontent') && !loc.hostname.includes('srcdoc')) {
+          return loc.origin + loc.pathname;
+        }
+      } catch (e) {}
+      return 'https://hummingjays.github.io/tuneS/';
+    }
+
     function shareAlbum(albumId, e) {
       if (e) e.stopPropagation();
       const alb = state.albums.find(a => a.id === albumId);
       if (!alb) return;
-      openShareModal({ type: 'Album', title: `${alb.title} by ${alb.artist}`, subtitle: `${alb.tracks.length} Songs on tune-S`, cover: alb.cover, url: window.location.href });
+      const shareUrl = `${getCleanShareBaseUrl()}?share=album&id=${encodeURIComponent(alb.id)}`;
+      openShareModal({
+        type: 'Album',
+        cardTitle: alb.title,
+        cardSubtitle: alb.artist,
+        cardMeta: `${alb.tracks.length} Songs • ${alb.year || '2026'}`,
+        title: `${alb.title} by ${alb.artist}`,
+        subtitle: `${alb.artist} • ${alb.tracks.length} Songs on tune-S`,
+        cover: alb.cover,
+        url: shareUrl
+      });
+    }
+
+    function sharePlaylist(playlistId, e) {
+      if (e) e.stopPropagation();
+      const pl = state.playlists.find(p => p.id === playlistId);
+      if (!pl) return;
+      const cover = pl.tracks[0]?.cover || FALLBACK_COVER_ART;
+      const artistsPreview = [...new Set(pl.tracks.map(t => t.artist).filter(Boolean))].slice(0, 3).join(', ') || 'Curated Mix';
+      openShareModal({
+        type: 'Playlist',
+        cardTitle: pl.name,
+        cardSubtitle: artistsPreview,
+        cardMeta: `${pl.tracks.length} Songs • Custom Playlist`,
+        title: `${pl.name} — tune-S Playlist`,
+        subtitle: `${pl.tracks.length} Songs • ${artistsPreview}`,
+        cover,
+        url: getCleanShareBaseUrl()
+      });
+    }
+
+    function shareSpecificTrack(track) {
+      if (!track) return;
+      const shareUrl = track.albumId
+        ? `${getCleanShareBaseUrl()}?share=album&id=${encodeURIComponent(track.albumId)}`
+        : (track.url || getCleanShareBaseUrl());
+      openShareModal({
+        type: 'Song',
+        cardTitle: track.title,
+        cardSubtitle: track.artist,
+        cardMeta: `${track.albumTitle || 'Soundtrack'} • ${track.formatBadge || 'LOSSLESS'}`,
+        title: `${track.title} — ${track.artist}`,
+        subtitle: `${track.artist} • ${track.albumTitle || 'tune-S'}`,
+        cover: track.cover || FALLBACK_COVER_ART,
+        url: shareUrl
+      });
     }
 
     function shareCurrentTrack() {
       const t = getCurrentTrack() || state.lastPlayedTrack;
-      if (t) openShareModal({ type: 'Song', title: `${t.title} — ${t.artist}`, subtitle: t.albumTitle, cover: t.cover, url: t.url || window.location.href });
+      if (t) shareSpecificTrack(t);
     }
 
     function openShareModal(payload) {
       currentSharePayload = payload;
       document.getElementById('share-modal-heading').textContent = `Share ${payload.type}`;
+      document.getElementById('share-card-type-pill').textContent = String(payload.type || 'MUSIC').toUpperCase();
       document.getElementById('share-preview-art').src = payload.cover || FALLBACK_COVER_ART;
-      document.getElementById('share-preview-title').textContent = payload.title;
-      document.getElementById('share-preview-subtitle').textContent = payload.subtitle;
+      document.getElementById('share-preview-title').textContent = payload.cardTitle || payload.title;
+      document.getElementById('share-preview-subtitle').textContent = payload.cardSubtitle || payload.subtitle;
+      document.getElementById('share-preview-meta').textContent = payload.cardMeta || 'Lossless • Hi-Fi Audio';
       const m = document.getElementById('share-modal');
       m?.classList.remove('hidden');
       m?.classList.add('flex');
@@ -2866,6 +2974,192 @@
       const m = document.getElementById('share-modal');
       m?.classList.add('hidden');
       m?.classList.remove('flex');
+    }
+
+    function drawRoundedRectPath(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    function wrapCanvasLines(ctx, text, maxWidth, maxLines = 2) {
+      const words = String(text || '').split(/\s+/);
+      const lines = [];
+      let current = '';
+      for (const word of words) {
+        const test = current ? `${current} ${word}` : word;
+        if (ctx.measureText(test).width <= maxWidth) {
+          current = test;
+        } else {
+          if (current) lines.push(current);
+          current = word;
+          if (lines.length === maxLines) break;
+        }
+      }
+      if (current && lines.length < maxLines) lines.push(current);
+      if (lines.length === maxLines && words.join(' ') !== lines.join(' ')) {
+        lines[maxLines - 1] = lines[maxLines - 1].replace(/.{0,3}$/, '...');
+      }
+      return lines;
+    }
+
+    function loadImageForCanvas(src) {
+      return new Promise((resolve) => {
+        if (!src) return resolve(null);
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = src;
+      });
+    }
+
+    async function downloadShareCardImage() {
+      if (!currentSharePayload) return;
+      const canvas = document.getElementById('share-card-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width;
+      const H = canvas.height;
+
+      showToast('Generating Share Card...', 'info');
+
+      // Background Gradient
+      const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+      bgGrad.addColorStop(0, '#2B111E');
+      bgGrad.addColorStop(0.45, '#13121A');
+      bgGrad.addColorStop(1, '#09090D');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      // Ambient Crimson Glow
+      const radGrad = ctx.createRadialGradient(W * 0.5, H * 0.36, 40, W * 0.5, H * 0.36, 520);
+      radGrad.addColorStop(0, 'rgba(250, 36, 60, 0.32)');
+      radGrad.addColorStop(1, 'rgba(250, 36, 60, 0)');
+      ctx.fillStyle = radGrad;
+      ctx.fillRect(0, 0, W, H);
+
+      // Outer Card Border
+      ctx.save();
+      drawRoundedRectPath(ctx, 44, 44, W - 88, H - 88, 52);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.14)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.restore();
+
+      // Top Brand Header
+      ctx.fillStyle = '#FA243C';
+      drawRoundedRectPath(ctx, 96, 98, 54, 54, 16);
+      ctx.fill();
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '900 30px Inter, sans-serif';
+      ctx.fillText('♪', 113, 136);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '900 34px Inter, sans-serif';
+      ctx.fillText('tune-S', 168, 137);
+
+      // Type Badge Pill
+      const badgeLabel = String(currentSharePayload.type || 'MUSIC').toUpperCase();
+      ctx.font = '800 22px Inter, sans-serif';
+      const badgeW = ctx.measureText(badgeLabel).width + 52;
+      ctx.fillStyle = 'rgba(250, 36, 60, 0.2)';
+      drawRoundedRectPath(ctx, W - 96 - badgeW, 102, badgeW, 48, 24);
+      ctx.fill();
+      ctx.fillStyle = '#FF7A90';
+      ctx.fillText(badgeLabel, W - 96 - badgeW + 26, 134);
+
+      // Center Artwork Square
+      const artSize = 640;
+      const artX = (W - artSize) / 2;
+      const artY = 215;
+
+      let artImg = await loadImageForCanvas(currentSharePayload.cover);
+      if (!artImg) artImg = await loadImageForCanvas(FALLBACK_COVER_ART);
+
+      ctx.save();
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.72)';
+      ctx.shadowBlur = 55;
+      ctx.shadowOffsetY = 28;
+      drawRoundedRectPath(ctx, artX, artY, artSize, artSize, 46);
+      ctx.fillStyle = '#181822';
+      ctx.fill();
+      ctx.restore();
+
+      ctx.save();
+      drawRoundedRectPath(ctx, artX, artY, artSize, artSize, 46);
+      ctx.clip();
+      if (artImg) {
+        ctx.drawImage(artImg, artX, artY, artSize, artSize);
+      }
+      ctx.restore();
+
+      ctx.save();
+      drawRoundedRectPath(ctx, artX, artY, artSize, artSize, 46);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.restore();
+
+      // Title, Artist/Subtitle & Meta
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '900 54px Inter, sans-serif';
+      const titleLines = wrapCanvasLines(ctx, currentSharePayload.cardTitle || currentSharePayload.title, W - 180, 2);
+      let textY = 945;
+      titleLines.forEach((line, idx) => {
+        ctx.fillText(line, W / 2, textY + idx * 66);
+      });
+
+      const subY = textY + titleLines.length * 66 + 18;
+      ctx.fillStyle = '#D4D4D8';
+      ctx.font = '600 34px Inter, sans-serif';
+      const subLines = wrapCanvasLines(ctx, currentSharePayload.cardSubtitle || currentSharePayload.subtitle, W - 200, 1);
+      ctx.fillText(subLines[0] || '', W / 2, subY);
+
+      const metaY = subY + 54;
+      ctx.fillStyle = '#FA243C';
+      ctx.font = '800 24px Inter, sans-serif';
+      ctx.fillText(String(currentSharePayload.cardMeta || 'LOSSLESS • HI-FI AUDIO').toUpperCase(), W / 2, metaY);
+
+      // Footer Divider & Tagline
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(140, H - 140);
+      ctx.lineTo(W - 140, H - 140);
+      ctx.stroke();
+
+      ctx.fillStyle = '#71717A';
+      ctx.font = '600 24px Inter, sans-serif';
+      ctx.fillText('Listen Lossless on tune-S', W / 2, H - 90);
+      ctx.textAlign = 'left';
+
+      // Trigger PNG Download
+      try {
+        const dataUrl = canvas.toDataURL('image/png');
+        const safeSlug = String(currentSharePayload.cardTitle || 'tune-s-share')
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '') || 'tune-s-card';
+        const link = document.createElement('a');
+        link.download = `tuneS-${safeSlug}.png`;
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('Share Card downloaded!', 'info');
+      } catch (e) {
+        showToast('Could not export image in this browser.', 'error');
+      }
     }
 
     async function triggerNativeSystemShare() {
