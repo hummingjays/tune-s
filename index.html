@@ -201,7 +201,7 @@
           <span>Search</span>
         </button>
 
-        <button id="nav-radio" onclick="startRadioShuffle(true)" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition text-neutral-300 hover:bg-white/[0.06]">
+        <button id="nav-radio" onclick="openRadioStationsAndPlayAll()" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition text-neutral-300 hover:bg-white/[0.06]">
           <svg class="w-4 h-4 text-[#FA243C]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z"/>
           </svg>
@@ -418,7 +418,7 @@
         </div>
         <div class="min-w-0 flex-1">
           <div onclick="switchView('now-playing')" id="player-title" class="text-xs sm:text-sm font-semibold text-white truncate cursor-pointer hover:text-[#FA243C] transition" title="Open Now Playing">Select a song to play</div>
-          <div id="player-artist" class="text-[11px] sm:text-xs text-neutral-400 truncate mt-0.5">tune-S Collection</div>
+          <div onclick="navigateToArtistByTrack()" id="player-artist" class="text-[11px] sm:text-xs text-neutral-400 hover:text-white cursor-pointer truncate mt-0.5 transition">tune-S Collection</div>
           <div id="player-source-links" class="hidden sm:flex items-center gap-2 mt-1">
             <button onclick="jumpToCurrentTrackAlbum()" id="player-album-link" class="hidden text-[10px] font-medium text-[#FA243C] hover:underline truncate max-w-[140px]">
               Go to Album
@@ -491,8 +491,8 @@
       </div>
 
       <!-- Right: Lossless Badge, Share, Add to Playlist, Volume -->
-      <div class="hidden md:flex items-center justify-end gap-2.5 w-[30%]">
-        <span id="player-format-badge" class="hidden lg:inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/[0.08] text-[10px] font-bold tracking-wider text-neutral-300 border border-white/10">
+      <div class="flex items-center justify-end gap-2 sm:gap-2.5 w-auto md:w-[30%] shrink-0">
+        <span id="player-format-badge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/[0.08] text-[9px] sm:text-[10px] font-bold tracking-wider text-neutral-300 border border-white/10 truncate max-w-[125px] sm:max-w-[170px]">
           LOSSLESS
         </span>
 
@@ -551,7 +551,7 @@
         </button>
 
         <!-- Radio Tab -->
-        <button id="bottom-tab-radio" onclick="startRadioShuffle(true)" class="flex flex-col items-center justify-center gap-0.5 py-1 rounded-full transition text-neutral-400 hover:text-white">
+        <button id="bottom-tab-radio" onclick="openRadioStationsAndPlayAll()" class="flex flex-col items-center justify-center gap-0.5 py-1 rounded-full transition text-neutral-400 hover:text-white">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.1" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z"/>
           </svg>
@@ -559,7 +559,7 @@
         </button>
 
         <!-- Library Tab -->
-        <button id="bottom-tab-library" onclick="switchView('all-albums')" class="flex flex-col items-center justify-center gap-0.5 py-1 rounded-full transition text-neutral-400 hover:text-white">
+        <button id="bottom-tab-library" onclick="openLibraryView()" class="flex flex-col items-center justify-center gap-0.5 py-1 rounded-full transition text-neutral-400 hover:text-white">
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
             <path d="M5 4.5A1.5 1.5 0 016.5 3h11A1.5 1.5 0 0119 4.5v1A1.5 1.5 0 0117.5 7h-11A1.5 1.5 0 015 5.5v-1zM4 9.5A1.5 1.5 0 015.5 8h13A1.5 1.5 0 0120 9.5v9a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 014 18.5v-9zm9.5 2.25a.75.75 0 00-1.5 0v3.34a2.25 2.25 0 101.5 2.16V13.5h1.25a.75.75 0 000-1.5h-1.25v-.25z"/>
           </svg>
@@ -964,7 +964,7 @@
       { identifier: 'sushin', artistId: 'sushin-shyam', defaultArtist: 'Sushin Shyam', genre: 'Malayalam & South Indian Soundtracks • Hi-Fi' }
     ];
 
-    const STORAGE_KEY = 'apple_music_arr_albums_v4';
+    const STORAGE_KEY = 'apple_music_arr_albums_v5';
     const PLAYLISTS_STORAGE_KEY = 'apple_music_arr_playlists_v1';
     const PERMANENT_COVERS_KEY = 'tunes_permanent_album_covers_v1';
     const LAST_PLAYED_STORAGE_KEY = 'apple_music_last_played_v1';
@@ -1428,10 +1428,29 @@
           group.files.forEach(file => {
             const baseName = file.name.replace(/\.[^/.]+$/, '');
             const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
-            const score = ext === '.mp3' ? 4 : (ext === '.m4a' ? 3 : 1);
-            if (!trackMap.has(baseName) || score > trackMap.get(baseName).score) {
+            const score = ext === '.flac' ? 5 : (ext === '.mp3' ? 4 : (ext === '.m4a' ? 3 : 1));
+            const parsedDur = parseDuration(file.length);
+            const fileSizeBytes = parseInt(file.size, 10) || 0;
+            const rawSr = parseInt(file.sample_rate || file.samplerate || file['sample-rate'], 10) || 0;
+            const rawBits = parseInt(file.bits_per_sample || file.bitdepth || file.bit_depth || file['bits-per-sample'], 10) || 0;
+            const rawBitrate = parseFloat(file.bitrate) || 0;
+
+            const sampleRateKhz = rawSr > 0 ? formatSampleRateKhz(rawSr) : '';
+            const bitDepth = rawBits > 0 ? `${rawBits}bit` : '';
+            const computedKbps = rawBitrate > 0
+              ? Math.round(rawBitrate)
+              : (fileSizeBytes > 0 && parsedDur > 0 ? Math.round((fileSizeBytes * 8) / (parsedDur * 1000)) : 0);
+            const bitrateKbps = computedKbps > 0 ? `${computedKbps}kbps` : '';
+
+            const existingEntry = trackMap.get(baseName);
+            const mp3SiblingUrl = ext === '.mp3'
+              ? `https://archive.org/download/${encodeURIComponent(identifier)}/${encodeURIComponent(file.name).replace(/%2F/g, '/')}`
+              : (existingEntry?.mp3Url || `https://archive.org/download/${encodeURIComponent(identifier)}/${encodeURIComponent(baseName + '.mp3').replace(/%2F/g, '/')}`);
+
+            if (!existingEntry || score > existingEntry.score) {
               trackMap.set(baseName, {
                 score,
+                mp3Url: mp3SiblingUrl,
                 track: {
                   id: `${albumId}::${file.name}`,
                   albumId,
@@ -1441,12 +1460,20 @@
                   cover: coverArt,
                   title: cleanTrackTitle(file.title || baseName.split('/').pop()),
                   filename: file.name,
-                  duration: parseDuration(file.length),
+                  duration: parsedDur,
+                  fileSize: fileSizeBytes,
+                  codec: ext.replace('.', '').toUpperCase(),
+                  sampleRateKhz,
+                  bitDepth,
+                  bitrateKbps,
                   url: `https://archive.org/download/${encodeURIComponent(identifier)}/${encodeURIComponent(file.name).replace(/%2F/g, '/')}`,
-                  altUrl: `https://archive.org/download/${encodeURIComponent(identifier)}/${encodeURIComponent(baseName + '.mp3').replace(/%2F/g, '/')}`,
-                  formatBadge: ext === '.flac' ? 'LOSSLESS' : ext.replace('.', '').toUpperCase()
+                  altUrl: mp3SiblingUrl,
+                  formatBadge: buildCompactFormatBadge(ext.replace('.', '').toUpperCase(), sampleRateKhz, bitDepth)
                 }
               });
+            } else if (existingEntry && ext === '.mp3') {
+              existingEntry.mp3Url = mp3SiblingUrl;
+              existingEntry.track.altUrl = mp3SiblingUrl;
             }
           });
 
@@ -1517,6 +1544,138 @@
     }
 
     // ==========================================
+    // Lossless FLAC STREAMINFO & Audio Telemetry Helpers
+    // ==========================================
+    let cachedOutputDacKhz = null;
+    function getOutputDacSampleRateLabel() {
+      if (cachedOutputDacKhz) return cachedOutputDacKhz;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+          const ctx = new AudioCtx();
+          const sr = ctx.sampleRate || 48000;
+          try { ctx.close(); } catch (e) {}
+          cachedOutputDacKhz = `${formatSampleRateKhz(sr)}`;
+          return cachedOutputDacKhz;
+        }
+      } catch (e) {}
+      cachedOutputDacKhz = '48kHz';
+      return cachedOutputDacKhz;
+    }
+
+    function formatSampleRateKhz(hz) {
+      const n = Number(hz) || 0;
+      if (!n) return '';
+      const khz = n / 1000;
+      return Number.isInteger(khz) ? `${khz}kHz` : `${khz.toFixed(1).replace(/\.0$/, '')}kHz`;
+    }
+
+    function buildCompactFormatBadge(codec, sampleRateKhz, bitDepth) {
+      const c = String(codec || 'LOSSLESS').toUpperCase();
+      if (c === 'FLAC') {
+        const specs = [sampleRateKhz, bitDepth].filter(Boolean).join('/');
+        return specs ? `FLAC • ${specs}` : 'FLAC LOSSLESS';
+      }
+      return sampleRateKhz ? `${c} • ${sampleRateKhz}` : c;
+    }
+
+    function buildFullTelemetryString(track) {
+      if (!track) return 'LOSSLESS AUDIO';
+      const outKhz = getOutputDacSampleRateLabel();
+      const isFlac = String(track.codec || '').toUpperCase() === 'FLAC' || /\.flac$/i.test(track.filename || track.url || '');
+      const codecLabel = isFlac ? 'FLAC' : (String(track.codec || 'AUDIO').toUpperCase());
+
+      // Calculate live kbps if duration just became known on the <audio> element
+      let kbpsStr = track.bitrateKbps || '';
+      if (!kbpsStr && track.fileSize > 0) {
+        const dur = (isFinite(audio.duration) && audio.duration > 0) ? audio.duration : (track.duration || 0);
+        if (dur > 0) {
+          const calc = Math.round((track.fileSize * 8) / (dur * 1000));
+          if (calc > 0) kbpsStr = `${calc}kbps`;
+        }
+      }
+
+      const sourceParts = [track.sampleRateKhz, track.bitDepth, kbpsStr].filter(Boolean);
+      const sourceReadout = sourceParts.length
+        ? `${codecLabel}: ${sourceParts.join(' ')}`
+        : `${codecLabel}: ${isFlac ? 'Lossless Stream' : 'Hi-Fi Stream'}`;
+
+      return `OUT: ${outKhz}  •  ${sourceReadout}`;
+    }
+
+    async function inspectFlacStreamInfo(track) {
+      if (!track || !track.url) return;
+      const isFlac = String(track.codec || '').toUpperCase() === 'FLAC' || /\.flac(\?|$)/i.test(track.url);
+      if (!isFlac || track._flacInspected) return;
+      track._flacInspected = true;
+
+      try {
+        const res = await fetch(track.url, {
+          headers: { Range: 'bytes=0-63' }
+        });
+        if (!res.ok && res.status !== 206) return;
+
+        // Capture total file size from Content-Range if not already known
+        if (!track.fileSize) {
+          const contentRange = res.headers.get('Content-Range') || '';
+          const totalMatch = contentRange.match(/\/(\d+)$/);
+          if (totalMatch && totalMatch[1]) {
+            track.fileSize = parseInt(totalMatch[1], 10) || 0;
+          }
+        }
+
+        const buf = await res.arrayBuffer();
+        const b = new Uint8Array(buf);
+        // Verify 'fLaC' magic header (0x66 0x4C 0x61 0x43) & STREAMINFO block (bytes 0..25)
+        if (b.length >= 26 && b[0] === 0x66 && b[1] === 0x4C && b[2] === 0x61 && b[3] === 0x43) {
+          const sampleRateHz = (b[18] << 12) | (b[19] << 4) | (b[20] >> 4);
+          const bitsPerSample = (((b[20] & 0x01) << 4) | (b[21] >> 4)) + 1;
+
+          if (sampleRateHz >= 8000 && sampleRateHz <= 384000) {
+            track.sampleRateKhz = formatSampleRateKhz(sampleRateHz);
+          }
+          if (bitsPerSample >= 4 && bitsPerSample <= 32) {
+            track.bitDepth = `${bitsPerSample}bit`;
+          }
+          const dur = (isFinite(audio.duration) && audio.duration > 0) ? audio.duration : (track.duration || 0);
+          if (track.fileSize > 0 && dur > 0) {
+            const kbps = Math.round((track.fileSize * 8) / (dur * 1000));
+            if (kbps > 0) track.bitrateKbps = `${kbps}kbps`;
+          }
+          track.formatBadge = buildCompactFormatBadge('FLAC', track.sampleRateKhz, track.bitDepth);
+
+          // Persist enriched specs back into state.albums & localStorage
+          if (track.albumId) {
+            const alb = state.albums.find(a => a.id === track.albumId);
+            const albTrack = alb?.tracks?.find(t => t.id === track.id);
+            if (albTrack) {
+              albTrack.sampleRateKhz = track.sampleRateKhz;
+              albTrack.bitDepth = track.bitDepth;
+              albTrack.bitrateKbps = track.bitrateKbps;
+              albTrack.fileSize = track.fileSize;
+              albTrack.formatBadge = track.formatBadge;
+              saveAlbumsToStorage();
+            }
+          }
+          saveLastPlayedState(track);
+          refreshLiveTelemetryUI(track);
+        }
+      } catch (e) {}
+    }
+
+    function refreshLiveTelemetryUI(track) {
+      if (!track) return;
+      const badge = document.getElementById('player-format-badge');
+      if (badge) {
+        badge.textContent = buildCompactFormatBadge(track.codec || track.formatBadge, track.sampleRateKhz, track.bitDepth);
+      }
+      const npPill = document.getElementById('np-audio-telemetry');
+      if (npPill) {
+        npPill.textContent = buildFullTelemetryString(track);
+      }
+    }
+
+    // ==========================================
     // Sidebar Renderers & View Navigation
     // ==========================================
     function renderSidebarArtists() {
@@ -1570,6 +1729,7 @@
         home: 'nav-home',
         'now-playing': 'nav-now-playing',
         search: 'nav-search',
+        radio: 'nav-radio',
         'all-albums': 'nav-all-albums',
         'all-songs': 'nav-all-songs'
       };
@@ -1585,6 +1745,7 @@
       const tabMap = {
         home: 'bottom-tab-home',
         'now-playing': 'bottom-tab-now-playing',
+        radio: 'bottom-tab-radio',
         'all-albums': 'bottom-tab-library',
         search: 'bottom-tab-search'
       };
@@ -1600,6 +1761,8 @@
       if (!crumb) return;
       if (state.currentView === 'home') {
         crumb.innerHTML = `<span class="text-white font-semibold">Home</span>`;
+      } else if (state.currentView === 'radio') {
+        crumb.innerHTML = `<button onclick="switchView('home')" class="hover:text-white">Home</button> <span class="mx-1">/</span> <span class="text-white font-semibold">Radio</span>`;
       } else if (state.currentView === 'now-playing') {
         crumb.innerHTML = `<button onclick="switchView('home')" class="hover:text-white">Home</button> <span class="mx-1">/</span> <span class="text-white font-semibold">Now Playing</span>`;
       } else if (state.currentView === 'search') {
@@ -1638,6 +1801,170 @@
       if (scrollArea) scrollArea.scrollTop = 0;
     }
 
+    function openLibraryView() {
+      state.selectedArtistFilter = 'all';
+      state.albumFilterQuery = '';
+      switchView('all-albums');
+    }
+
+    function resolveAlbumForTrack(track) {
+      if (!track || !Array.isArray(state.albums) || !state.albums.length) return null;
+      if (track.albumId) {
+        const byId = state.albums.find(a => a.id === track.albumId);
+        if (byId) return byId;
+      }
+      if (track.id || track.url) {
+        const byMemberTrack = state.albums.find(a =>
+          Array.isArray(a.tracks) && a.tracks.some(t => (track.id && t.id === track.id) || (track.url && t.url === track.url))
+        );
+        if (byMemberTrack) return byMemberTrack;
+      }
+      const normTitle = normalizeSearchText(formatDisplayAlbumTitle(track.albumTitle || ''));
+      if (normTitle) {
+        const normArtist = normalizeSearchText(track.artist || '');
+        const exactTitleAndArtist = state.albums.find(a =>
+          normalizeSearchText(a.title) === normTitle && (!normArtist || normalizeSearchText(a.artist).includes(normArtist))
+        );
+        if (exactTitleAndArtist) return exactTitleAndArtist;
+
+        const fuzzyTitle = state.albums.find(a => {
+          const albNorm = normalizeSearchText(a.title);
+          return albNorm === normTitle || albNorm.includes(normTitle) || normTitle.includes(albNorm);
+        });
+        if (fuzzyTitle) return fuzzyTitle;
+      }
+      return null;
+    }
+
+    function resolveArtistIdForTrack(track) {
+      if (!track) return null;
+      if (track.artistId && ARTISTS_DIRECTORY.some(ar => ar.id === track.artistId)) {
+        return track.artistId;
+      }
+      const normArtist = normalizeSearchText(track.artist || '');
+      if (normArtist) {
+        const directMatch = ARTISTS_DIRECTORY.find(ar =>
+          normalizeSearchText(ar.name) === normArtist ||
+          normalizeSearchText(ar.id) === normArtist ||
+          normalizeSearchText(ar.name).includes(normArtist) ||
+          normArtist.includes(normalizeSearchText(ar.name))
+        );
+        if (directMatch) return directMatch.id;
+      }
+      const resolvedAlb = resolveAlbumForTrack(track);
+      if (resolvedAlb?.artistId && ARTISTS_DIRECTORY.some(ar => ar.id === resolvedAlb.artistId)) {
+        return resolvedAlb.artistId;
+      }
+      return null;
+    }
+
+    function navigateToArtistByTrack(trackOverride = null) {
+      const tr = trackOverride || getCurrentTrack() || state.lastPlayedTrack;
+      if (!tr) return;
+      const artistId = resolveArtistIdForTrack(tr);
+      if (artistId) {
+        switchView('artist', artistId);
+      } else {
+        showToast('Composer page not available for this track.', 'info');
+      }
+    }
+
+    function jumpToCurrentTrackAlbum(trackOverride = null) {
+      const tr = trackOverride || getCurrentTrack() || state.lastPlayedTrack;
+      if (!tr) return;
+      const alb = resolveAlbumForTrack(tr);
+      if (alb) {
+        switchView('album', alb.id);
+      } else {
+        showToast('Album details not found in library.', 'info');
+      }
+    }
+
+    function renderAllAlbumsView(container) {
+      const queryNorm = normalizeSearchText(state.albumFilterQuery || '');
+      const selectedArtist = state.selectedArtistFilter || 'all';
+      const filteredAlbums = state.albums.filter(alb => {
+        const matchesArtist = selectedArtist === 'all' || alb.artistId === selectedArtist;
+        const matchesQuery = !queryNorm || matchesSearchQuery(`${alb.title} ${alb.artist} ${alb.year || ''}`, queryNorm.split(' ').filter(Boolean));
+        return matchesArtist && matchesQuery;
+      });
+      const totalTracksCount = state.albums.reduce((sum, a) => sum + (a.tracks?.length || 0), 0);
+
+      container.innerHTML = `
+        <div class="max-w-6xl mx-auto space-y-6">
+          <!-- Library Header & Quick Section Switcher -->
+          <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div>
+              <div class="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#FA243C]">YOUR COLLECTION</div>
+              <h1 class="text-2xl sm:text-4xl font-black text-white mt-0.5">Library</h1>
+              <p class="text-xs text-neutral-400 mt-1">${state.albums.length} Albums • ${totalTracksCount} Tracks • ${state.playlists.length} Playlists</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="openLibraryView()" class="px-4 py-2 rounded-full bg-[#FA243C] text-white text-xs font-bold shadow">
+                Albums (${state.albums.length})
+              </button>
+              <button onclick="switchView('all-songs')" class="px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.15] text-neutral-200 text-xs font-bold transition">
+                Songs (${totalTracksCount})
+              </button>
+              <button onclick="openCreatePlaylistModal()" class="px-4 py-2 rounded-full bg-white/[0.08] hover:bg-white/[0.15] text-neutral-200 text-xs font-bold transition">
+                + New Playlist
+              </button>
+            </div>
+          </div>
+
+          <!-- Playlists Shelf inside Library -->
+          ${state.playlists.length ? `
+            <section class="space-y-2.5">
+              <div class="flex items-center justify-between">
+                <h2 class="text-sm font-extrabold uppercase tracking-wider text-neutral-400">Playlists (${state.playlists.length})</h2>
+              </div>
+              <div class="flex items-stretch gap-3 overflow-x-auto pb-1">
+                ${state.playlists.map(pl => {
+                  const plCover = pl.tracks?.[0]?.cover || FALLBACK_COVER_ART;
+                  return `
+                    <div onclick="switchView('playlist', '${pl.id}')"
+                      class="luxury-card shrink-0 w-52 rounded-2xl p-3 flex items-center gap-3 cursor-pointer transition">
+                      <img src="${plCover}" onerror="this.src='${FALLBACK_COVER_ART}'" class="w-11 h-11 rounded-xl object-cover shrink-0" />
+                      <div class="min-w-0 flex-1">
+                        <div class="text-xs font-bold text-white truncate">${escapeHtml(pl.name)}</div>
+                        <div class="text-[10px] text-neutral-400 mt-0.5">${pl.tracks?.length || 0} songs</div>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </section>
+          ` : ''}
+
+          <!-- Filter Bar: Search Albums & Composer Pill Filter -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            <input type="search" value="${escapeHtml(state.albumFilterQuery || '')}"
+              oninput="state.albumFilterQuery = this.value; renderCurrentView();"
+              placeholder="Filter ${state.albums.length} albums by movie or composer..."
+              class="flex-1 bg-white/[0.07] border border-white/12 focus:border-[#FA243C] rounded-xl px-3.5 py-2 text-xs sm:text-sm text-white placeholder-neutral-400 outline-none" />
+            <select onchange="state.selectedArtistFilter = this.value; renderCurrentView();"
+              class="bg-[#181820] border border-white/15 focus:border-[#FA243C] rounded-xl px-3.5 py-2 text-xs sm:text-sm text-white outline-none">
+              <option value="all" ${selectedArtist === 'all' ? 'selected' : ''}>All Artists (${ARTISTS_DIRECTORY.length})</option>
+              ${ARTISTS_DIRECTORY.map(ar => `
+                <option value="${ar.id}" ${selectedArtist === ar.id ? 'selected' : ''}>${escapeHtml(ar.name)}</option>
+              `).join('')}
+            </select>
+          </div>
+
+          <!-- Albums Grid -->
+          ${filteredAlbums.length ? `
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-5">
+              ${renderAlbumGridCards(filteredAlbums)}
+            </div>
+          ` : `
+            <div class="text-center py-12 text-xs text-neutral-400">
+              ${state.albums.length ? 'No albums match your filter.' : 'Syncing lossless albums from Archive.org...'}
+            </div>
+          `}
+        </div>
+      `;
+    }
+
     function renderCurrentView() {
       updateNavHighlights();
       const container = document.getElementById('main-scroll-area');
@@ -1645,6 +1972,8 @@
 
       if (state.currentView === 'home') {
         renderHomeView(container);
+      } else if (state.currentView === 'radio') {
+        renderRadioView(container);
       } else if (state.currentView === 'now-playing') {
         renderNowPlayingView(container);
       } else if (state.currentView === 'search') {
@@ -1972,10 +2301,10 @@
 
           <div class="space-y-1 w-full px-2">
             <h1 class="text-xl sm:text-2xl font-black text-white truncate">${escapeHtml(tr.title)}</h1>
-            <div class="flex items-center justify-center gap-1.5 text-xs sm:text-sm font-semibold truncate">
-              <button onclick="navigateToArtistByTrack()" class="text-[#FA243C] hover:underline truncate">${escapeHtml(tr.artist)}</button>
+            <div class="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs sm:text-sm font-semibold px-2">
+              <button type="button" onclick="navigateToArtistByTrack()" class="text-[#FA243C] hover:underline truncate max-w-[45%]">${escapeHtml(tr.artist || 'Unknown Artist')}</button>
               <span class="text-neutral-500">•</span>
-              <button onclick="jumpToCurrentTrackAlbum()" class="text-[#FA243C] hover:underline truncate">${escapeHtml(tr.albumTitle || 'Soundtrack')}</button>
+              <button type="button" onclick="jumpToCurrentTrackAlbum()" class="text-[#FA243C] hover:underline truncate max-w-[48%]">${escapeHtml(formatDisplayAlbumTitle(tr.albumTitle || 'Soundtrack'))}</button>
             </div>
           </div>
 
@@ -2030,51 +2359,13 @@
               Listen Together
             </button>
           </div>
-        </div>
-      `;
-    }
 
-    function navigateToArtistByTrack() {
-      const tr = getCurrentTrack() || state.lastPlayedTrack;
-      if (!tr) return;
-      if (tr.artistId) return switchView('artist', tr.artistId);
-      const found = ARTISTS_DIRECTORY.find(a => a.name.toLowerCase() === String(tr.artist || '').toLowerCase());
-      if (found) switchView('artist', found.id);
-    }
-
-    function jumpToCurrentTrackAlbum() {
-      const tr = getCurrentTrack() || state.lastPlayedTrack;
-      if (tr && tr.albumId) switchView('album', tr.albumId);
-    }
-
-    // ==========================================
-    // All Albums, All Songs, Artist (Grid + Smooth Cover Flow), Album & Playlist Views
-    // ==========================================
-    function renderAllAlbumsView(container) {
-      const filtered = state.albums.filter(a => {
-        const matchesArtist = state.selectedArtistFilter === 'all' || a.artistId === state.selectedArtistFilter;
-        const q = state.albumFilterQuery.trim().toLowerCase();
-        const matchesQ = !q || a.title.toLowerCase().includes(q) || a.artist.toLowerCase().includes(q);
-        return matchesArtist && matchesQ;
-      });
-
-      container.innerHTML = `
-        <div class="max-w-6xl mx-auto space-y-6">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h1 class="text-2xl sm:text-3xl font-black text-white">Albums (${filtered.length})</h1>
-              <p class="text-xs text-neutral-400">Browse all soundtracks across ${ARTISTS_DIRECTORY.length} composers</p>
+          <!-- Source FLAC / Audio Telemetry Readout -->
+          <div class="pt-1 flex justify-center">
+            <div id="np-audio-telemetry"
+              class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/45 border border-white/10 text-[11px] font-mono font-semibold tracking-wide text-neutral-300 shadow-inner">
+              ${escapeHtml(buildFullTelemetryString(tr))}
             </div>
-            <div class="flex items-center gap-2">
-              <select onchange="state.selectedArtistFilter=this.value; renderCurrentView();"
-                class="bg-white/[0.08] border border-white/15 rounded-xl px-3 py-2 text-xs text-white outline-none">
-                <option value="all">All Artists</option>
-                ${ARTISTS_DIRECTORY.map(ar => `<option value="${ar.id}" ${state.selectedArtistFilter === ar.id ? 'selected' : ''}>${escapeHtml(ar.name)}</option>`).join('')}
-              </select>
-            </div>
-          </div>
-          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-5">
-            ${renderAlbumGridCards(filtered)}
           </div>
         </div>
       `;
@@ -2293,9 +2584,12 @@
               <h1 class="text-2xl sm:text-4xl font-black text-white">${escapeHtml(ar.name)}</h1>
               <p class="text-xs sm:text-sm text-neutral-300">${escapeHtml(ar.tagline)}</p>
               <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 pt-2">
-                <button onclick="playTrackFromList(shuffleArray(window.__artistTracks), 0)"
-                  class="px-5 py-2.5 rounded-full bg-[#FA243C] hover:bg-[#E01E34] text-white text-xs font-bold shadow-lg">
-                  ▶ Shuffle ${escapeHtml(ar.name)}
+                <button onclick="startArtistRadio('${ar.id}', true)"
+                  class="px-5 py-2.5 rounded-full bg-[#FA243C] hover:bg-[#E01E34] text-white text-xs font-bold shadow-lg flex items-center gap-2 transition">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z"/>
+                  </svg>
+                  <span>${escapeHtml(ar.name)} Radio</span>
                 </button>
                 <span class="px-3.5 py-2 rounded-full bg-white/10 text-xs font-semibold text-neutral-200">
                   ${artistAlbums.length} Albums • ${artistTracks.length} Songs
@@ -2819,10 +3113,101 @@
       state.albums.forEach(a => (a.tracks || []).forEach(t => allTracks.push(t)));
       if (!allTracks.length) return showToast('Syncing catalog...', 'info');
       state.isRadioMode = true;
+      state.activeRadioArtistId = null;
       state.queue = shuffleArray(allTracks);
       state.currentIndex = 0;
       loadAndPlayCurrentTrack();
-      if (showMsg) showToast('Started Maestro Radio Mix', 'info');
+      if (showMsg) showToast('Started All Artists on Shuffle', 'info');
+    }
+
+    function openRadioStationsAndPlayAll() {
+      switchView('radio');
+      startRadioShuffle(true);
+    }
+
+    function startArtistRadio(artistId, showMsg = true) {
+      const ar = ARTISTS_DIRECTORY.find(a => a.id === artistId);
+      if (!ar) return startRadioShuffle(showMsg);
+      const artistTracks = state.albums
+        .filter(a => a.artistId === ar.id)
+        .flatMap(a => a.tracks || []);
+      if (!artistTracks.length) {
+        return showToast(`Syncing ${ar.name} tracks...`, 'info');
+      }
+      state.isRadioMode = true;
+      state.activeRadioArtistId = ar.id;
+      state.queue = shuffleArray(artistTracks);
+      state.currentIndex = 0;
+      loadAndPlayCurrentTrack();
+      if (showMsg) showToast(`Started ${ar.name} Radio`, 'info');
+    }
+
+    function renderRadioView(container) {
+      const totalTracks = state.albums.reduce((acc, a) => acc + (a.tracks?.length || 0), 0);
+      const isAllArtistsActive = state.isRadioMode && !state.activeRadioArtistId;
+
+      container.innerHTML = `
+        <div class="max-w-6xl mx-auto space-y-8">
+          <!-- Featured All Artists on Shuffle Station -->
+          <section class="rounded-3xl bg-gradient-to-br from-[#2B121E] via-[#17141E] to-[#111117] border border-white/10 p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl">
+            <div class="space-y-2 text-center sm:text-left">
+              <div class="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#FA243C]">LIVE RADIO STATION</div>
+              <h1 class="text-2xl sm:text-4xl font-black text-white tracking-tight">All Artists on Shuffle</h1>
+              <p class="text-xs sm:text-sm text-neutral-300 max-w-xl">
+                Continuous shuffled mix across all ${ARTISTS_DIRECTORY.length} artists and ${totalTracks} lossless &amp; hi-fi tracks.
+              </p>
+              <div class="pt-2 flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
+                <button onclick="startRadioShuffle(true)"
+                  class="px-5 py-2.5 rounded-full bg-[#FA243C] hover:bg-[#E01E34] text-white text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg shadow-[#FA243C]/30 transition">
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  <span>${isAllArtistsActive && state.isPlaying ? 'Playing All Artists on Shuffle' : 'Play All Artists on Shuffle'}</span>
+                </button>
+                ${isAllArtistsActive ? `<span class="px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[11px] font-bold text-emerald-300">On Air</span>` : ''}
+              </div>
+            </div>
+            <div class="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl bg-white/[0.06] border border-white/15 flex items-center justify-center shrink-0 shadow-xl">
+              <svg class="w-12 h-12 text-[#FA243C]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5.636 18.364a9 9 0 010-12.728m12.728 0a9 9 0 010 12.728m-9.9-2.829a5 5 0 010-7.07m7.072 0a5 5 0 010 7.07M13 12a1 1 0 11-2 0 1 1 0 012 0z"/>
+              </svg>
+            </div>
+          </section>
+
+          <!-- Specific Artist Radio Stations -->
+          <section class="space-y-3">
+            <div>
+              <div class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#FA243C]">COMPOSER CHANNELS</div>
+              <h2 class="text-lg sm:text-2xl font-black text-white mt-0.5">Artist Radio</h2>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              ${ARTISTS_DIRECTORY.map(ar => {
+                const trackCount = state.albums
+                  .filter(a => a.artistId === ar.id)
+                  .reduce((sum, a) => sum + (a.tracks?.length || 0), 0);
+                const isStationPlaying = state.isRadioMode && state.activeRadioArtistId === ar.id;
+                return `
+                  <button onclick="startArtistRadio('${ar.id}', true)"
+                    class="luxury-card rounded-2xl p-4 flex items-center justify-between gap-3 text-left transition ${isStationPlaying ? 'border-[#FA243C]/70 bg-[#FA243C]/10' : ''}">
+                    <div class="flex items-center gap-3 min-w-0">
+                      <img src="${ar.cover}" class="w-12 h-12 rounded-full object-cover border border-white/15 shrink-0" />
+                      <div class="min-w-0">
+                        <div class="text-sm font-bold text-white truncate">${escapeHtml(ar.name)} Radio</div>
+                        <div class="text-[11px] text-neutral-400 truncate mt-0.5">${trackCount} tracks • Shuffled Station</div>
+                      </div>
+                    </div>
+                    <div class="shrink-0 flex items-center gap-2">
+                      ${isStationPlaying ? renderEqualizerBars('bg-[#FA243C]') : `
+                        <span class="w-8 h-8 rounded-full bg-white/10 text-white flex items-center justify-center">
+                          <svg class="w-3.5 h-3.5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        </span>
+                      `}
+                    </div>
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </section>
+        </div>
+      `;
     }
 
     function loadAndPlayCurrentTrack() {
@@ -2837,6 +3222,7 @@
       updatePlayerBarMetadata(track);
       saveLastPlayedState(track);
       recordTrackPlay(track);
+      inspectFlacStreamInfo(track);
 
       userPausedManually = false;
       const p = audio.play();
@@ -2867,10 +3253,13 @@
       if (title) title.textContent = track.title || 'Unknown Track';
       if (artist) artist.textContent = track.artist || 'tune-S';
       if (albumLink) {
-        albumLink.textContent = track.albumTitle || 'Go to Album';
-        albumLink.classList.toggle('hidden', !track.albumId);
+        const hasAlbum = !!(track.albumId || track.albumTitle);
+        albumLink.textContent = formatDisplayAlbumTitle(track.albumTitle || 'Go to Album');
+        albumLink.classList.toggle('hidden', !hasAlbum);
       }
-      if (badge) badge.textContent = track.formatBadge || 'LOSSLESS';
+      if (badge) {
+        badge.textContent = buildCompactFormatBadge(track.codec || track.formatBadge, track.sampleRateKhz, track.bitDepth);
+      }
       shareBtn?.classList.remove('hidden');
       addBtn?.classList.remove('hidden');
     }
@@ -3016,6 +3405,16 @@
     }
 
     function setupAudioEvents() {
+      audio.addEventListener('loadedmetadata', () => {
+        const curTrack = getCurrentTrack();
+        if (curTrack) {
+          if (curTrack.fileSize > 0 && isFinite(audio.duration) && audio.duration > 0 && !curTrack.bitrateKbps) {
+            const kbps = Math.round((curTrack.fileSize * 8) / (audio.duration * 1000));
+            if (kbps > 0) curTrack.bitrateKbps = `${kbps}kbps`;
+          }
+          refreshLiveTelemetryUI(curTrack);
+        }
+      });
       audio.addEventListener('play', () => {
         state.isPlaying = true;
         updatePlayPauseUI();
@@ -3061,6 +3460,14 @@
       audio.addEventListener('error', () => {
         if (audio.dataset.fallbackUrl && audio.dataset.triedFallback !== 'true') {
           audio.dataset.triedFallback = 'true';
+          const curTrack = getCurrentTrack();
+          if (curTrack) {
+            curTrack.codec = 'MP3';
+            curTrack.bitDepth = '';
+            curTrack.bitrateKbps = '';
+            curTrack.formatBadge = buildCompactFormatBadge('MP3', curTrack.sampleRateKhz, '');
+            refreshLiveTelemetryUI(curTrack);
+          }
           audio.src = audio.dataset.fallbackUrl;
           audio.play().catch(() => {});
         }
